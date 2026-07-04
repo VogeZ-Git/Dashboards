@@ -101,7 +101,7 @@
 <header>
   <div class="titlerow">
     <h1>feed<span class="dot">.</span></h1>
-    <span class="meta">467 videos &middot; built 2026-07-04 18:24</span>
+    <span class="meta">467 videos &middot; built 2026-07-04 18:32</span>
   </div>
   <div class="controls">
     <input id="q" type="search" placeholder="Filter by title or channel...">
@@ -148,7 +148,7 @@ let connected = false;   // is the sync endpoint reachable?
    custom headers, so the browser sends a *simple* request with no preflight.
    Apps Script web apps cannot answer an OPTIONS preflight, so adding
    Content-Type: application/json here would silently break every write. */
-const SYNC_URL    = "https://script.google.com/macros/s/AKfycbzWwLTRga_FGluzMsjFT6k53iLE5a9wJ9waoZG_GE-ik8sDbgm-D0EjfB7GWu2H6cX_IA/exec";
+const SYNC_URL    = "";
 const SYNC_SECRET = "";
 
 async function api(payload){
@@ -191,34 +191,72 @@ function saveSettings(){
     api({action:"settings", settings}).catch(()=>{ connected=false; showBanner("err"); });
   }, 400);
 }
-async function setWatched(id, watched){
-  if(!connected){ showBanner("err"); return; }
-  if(watched) WATCHED[id] = new Date().toISOString(); else delete WATCHED[id];
-  render();  // optimistic
+/* ---- write queue: coalesce rapid marks into serial bulk writes ----
+   Instead of one request per click (which floods Apps Script with concurrent
+   redirected POSTs and trips its script lock), we update the UI instantly,
+   collect changed ids, and flush them as a single bulk write per burst. Flushes
+   never overlap, and a failed flush retries quietly -- it does NOT tear down the
+   session, so one hiccup can't block further marking. */
+const _dirty = new Set();     // ids whose server state may lag the UI
+let _flushT = null, _flushing = false, _fails = 0;
+
+function queueMark(id){
+  _dirty.add(id);
+  clearTimeout(_flushT);
+  _flushT = setTimeout(flush, 350);
+}
+async function flush(){
+  if(_flushing || !SYNC_URL || _dirty.size === 0) return;
+  _flushing = true;
+  const batch = [..._dirty];
+  _dirty.clear();                                  // will re-add on failure
+  const add = batch.filter(id => WATCHED[id]);
+  const rem = batch.filter(id => !WATCHED[id]);
   try{
-    await api({action:"watch", id, watched});
+    if(add.length) await api({action:"watch_bulk", ids:add, watched:true});
+    if(rem.length) await api({action:"watch_bulk", ids:rem, watched:false});
+    _fails = 0;
+    connected = true;
+    hideBanner();
   }catch(e){
-    if(watched) delete WATCHED[id]; else WATCHED[id] = "1";  // revert
-    connected = false; showBanner("err"); render();
+    batch.forEach(id => _dirty.add(id));           // requeue; keep optimistic UI
+    _fails++;
+    if(_fails >= 3) showBanner("saving");          // soft warning, non-blocking
+  }finally{
+    _flushing = false;
+    if(_dirty.size){                                // more pending or a retry
+      clearTimeout(_flushT);
+      _flushT = setTimeout(flush, _fails ? 1500 : 350);   // back off on failure
+    }
   }
 }
+
+function setWatched(id, watched){
+  if(!SYNC_URL){ showBanner("nourl"); return; }
+  if(watched) WATCHED[id] = new Date().toISOString(); else delete WATCHED[id];
+  render();           // instant, optimistic
+  queueMark(id);      // batched, serialized, resilient
+}
 function markVisibleWatched(){
-  if(!connected){ showBanner("err"); return; }
-  const ids = currentRows().filter(r=>!WATCHED[r.id]).map(r=>r.id);
+  if(!SYNC_URL){ showBanner("nourl"); return; }
+  const ids = currentRows().filter(r => !WATCHED[r.id]).map(r => r.id);
   if(!ids.length) return;
   const ts = new Date().toISOString();
-  ids.forEach(id => WATCHED[id] = ts);
+  ids.forEach(id => { WATCHED[id] = ts; _dirty.add(id); });
   render();
-  api({action:"watch_bulk", ids, watched:true})
-    .catch(()=>{ connected=false; showBanner("err"); });
+  clearTimeout(_flushT); _flushT = setTimeout(flush, 100);
 }
+function hideBanner(){ document.getElementById("banner").style.display = "none"; }
 function showBanner(kind){
   const b = document.getElementById("banner");
-  b.innerHTML = (kind === "nourl")
-    ? "No sync endpoint set \u2014 watched list &amp; settings are off. Put your Apps "
-      + "Script <code>/exec</code> URL in <code>SYNC_URL</code> in yt_feed.py and regenerate."
-    : "Can't reach the sync endpoint \u2014 watched list &amp; settings are off "
-      + "(you're offline, or the Apps Script URL is wrong / not deployed for 'Anyone').";
+  b.innerHTML =
+    (kind === "nourl")
+      ? "No sync endpoint set \u2014 watched list &amp; settings are off. Put your Apps "
+        + "Script <code>/exec</code> URL in <code>SYNC_URL</code> in yt_feed.py and regenerate."
+    : (kind === "saving")
+      ? "Some changes haven't saved yet \u2014 retrying. Your marks are kept; just don't close the tab."
+      : "Can't reach the sync endpoint \u2014 watched list &amp; settings are off "
+        + "(you're offline, or the Apps Script URL is wrong / not deployed for 'Anyone').";
   b.style.display = "block";
 }
 
