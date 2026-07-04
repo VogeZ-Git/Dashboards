@@ -113,7 +113,7 @@
 <header>
   <div class="titlerow">
     <h1>feed<span class="dot">.</span></h1>
-    <span class="meta">468 videos &middot; built 2026-07-04 19:56</span>
+    <span class="meta">468 videos &middot; built 2026-07-04 19:58</span>
   </div>
   <div class="controls">
     <input id="q" type="search" placeholder="Filter by title or channel...">
@@ -164,7 +164,7 @@ let connected = false;   // is the sync endpoint reachable?
    custom headers, so the browser sends a *simple* request with no preflight.
    Apps Script web apps cannot answer an OPTIONS preflight, so adding
    Content-Type: application/json here would silently break every write. */
-const SYNC_URL    = "";
+const SYNC_URL    = "https://script.google.com/macros/s/AKfycbzWwLTRga_FGluzMsjFT6k53iLE5a9wJ9waoZG_GE-ik8sDbgm-D0EjfB7GWu2H6cX_IA/exec";
 const SYNC_SECRET = "";
 
 async function api(payload){
