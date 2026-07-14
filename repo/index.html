@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vogez Dashboards</title>
+<style>
+  :root{
+    --bg:#0f1114; --panel:#14171c; --line:#23272e; --line-soft:#1a1e24;
+    --ink:#c9ccd1; --ink-dim:#7a818b; --ink-faint:#4e555e;
+    --amber:#e8b84b; --amber-dim:#8a6f2c; --stale:#3c424a;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:13px/1.5 var(--mono);-webkit-font-smoothing:antialiased;padding:0 0 64px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+  header{position:sticky;top:0;z-index:5;background:linear-gradient(var(--bg) 80%,transparent);padding:28px 0 14px}
+  .repo{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;letter-spacing:-.02em}
+  .repo b{font-weight:600;font-size:15px}
+  .repo .built{color:var(--ink-faint);font-size:11px;margin-left:auto}
+  .prompt{display:flex;align-items:center;gap:10px;margin-top:14px;border:1px solid var(--line);background:var(--panel);padding:9px 12px}
+  .prompt .caret{color:var(--amber);user-select:none}
+  .prompt input{flex:1;background:none;border:0;outline:none;color:var(--ink);font:inherit;font-size:14px;caret-color:var(--amber)}
+  .prompt input::placeholder{color:var(--ink-faint)}
+  .prompt:focus-within{border-color:var(--amber-dim)}
+  .sort{display:flex;gap:0;border:1px solid var(--line)}
+  .sort button{background:none;border:0;color:var(--ink-faint);font:inherit;font-size:11px;padding:3px 8px;cursor:pointer}
+  .sort button[aria-pressed="true"]{color:var(--bg);background:var(--amber)}
+  .hint{color:var(--ink-faint);font-size:11px;white-space:nowrap}
+  kbd{border:1px solid var(--line);padding:1px 4px;color:var(--ink-dim);font:inherit;font-size:10px}
+
+  .group{margin-top:30px}
+  .group-head{display:flex;align-items:center;gap:10px;color:var(--ink-dim);font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding-bottom:7px;border-bottom:1px solid var(--line)}
+  .group-head .n{color:var(--ink-faint);letter-spacing:0}
+  .group-head .rule{flex:1}
+
+  .row{display:grid;grid-template-columns:8px 1fr 90px 62px;align-items:center;gap:12px;padding:9px 10px 9px 8px;border-bottom:1px solid var(--line-soft);border-left:2px solid transparent;color:inherit;text-decoration:none;transition:background .08s linear,border-color .08s linear}
+  .row:hover,.row:focus-visible,.row.cursor{background:var(--panel);border-left-color:var(--amber);outline:none}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--stale)}
+  .dot.fresh{background:var(--amber)}
+  .dot.warm{background:var(--amber-dim)}
+  .name{min-width:0}
+  .title{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .title.untitled{color:var(--ink-dim);font-style:italic}
+  .path{display:block;color:var(--ink-faint);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  mark{background:none;color:var(--amber)}
+  .age,.size{color:var(--ink-faint);font-size:11px;text-align:right}
+  .empty{color:var(--ink-dim);padding:28px 8px;font-size:12.5px}
+  @media (max-width:640px){
+    .hint{display:none}.repo .built{width:100%;margin-left:0}
+    .row{grid-template-columns:8px 1fr 70px}.size{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="repo">
+    <b>Vogez Dashboards</b>
+    <span class="built">built 2026-07-14 22:09 &middot; 5 pages</span>
+  </div>
+  <div class="prompt">
+    <span class="caret">&#10095;</span>
+    <input id="q" type="text" placeholder="filter by name or path" autocomplete="off" spellcheck="false" aria-label="Filter pages">
+    <span class="sort">
+      <button id="sf" aria-pressed="true">folder</button>
+      <button id="su" aria-pressed="false">updated</button>
+    </span>
+    <span class="hint"><kbd>/</kbd> focus <kbd>&uarr;&darr;</kbd> move <kbd>&crarr;</kbd> open</span>
+  </div>
+</header>
+<main id="list" aria-live="polite"></main>
+</div>
+<script>
+(() => {
+"use strict";
+const FILES = [{"p":"dashboard.html","d":"","n":"dashboard.html","t":"BTC On-Chain Status","s":"","b":2126788,"u":"2026-07-14T20:09:40+00:00","x":true},{"p":"notes.html","d":"","n":"notes.html","t":"Notes","s":"","b":38384,"u":"2026-07-12T14:22:24+00:00","x":true},{"p":"stronglifts-logger.html","d":"","n":"stronglifts-logger.html","t":"Lift Log","s":"","b":39429,"u":"2026-07-12T14:18:21+00:00","x":true},{"p":"yt_feed.html","d":"","n":"yt_feed.html","t":"Feed","s":"","b":224683,"u":"2026-07-14T18:26:20+00:00","x":true},{"p":"yt_feed2.html","d":"","n":"yt_feed2.html","t":"Feed","s":"","b":785642,"u":"2026-07-14T17:10:39+00:00","x":true}];
+const $ = s => document.querySelector(s);
+const listEl = $("#list"), qEl = $("#q");
+let mode = "folder", cursor = -1;
+
+FILES.forEach(f => { f.hay = (f.t + " " + f.p).toLowerCase(); f.ts = Date.parse(f.u); });
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmtSize = b => b < 1024 ? b + " B" : b < 1048576 ? (b/1024).toFixed(b<10240?1:0) + " KB" : (b/1048576).toFixed(1) + " MB";
+
+function age(ts){
+  const h = (Date.now() - ts) / 36e5;
+  if (h < 1) return Math.max(1, Math.round(h*60)) + "m ago";
+  if (h < 24) return Math.round(h) + "h ago";
+  const d = h/24;
+  if (d < 14) return Math.round(d) + "d ago";
+  if (d < 60) return Math.round(d/7) + "w ago";
+  return Math.round(d/30) + "mo ago";
+}
+const dotClass = ts => { const h = (Date.now()-ts)/36e5; return h < 24 ? "fresh" : h < 168 ? "warm" : ""; };
+
+function hi(text, q){
+  if (!q) return esc(text);
+  const i = text.toLowerCase().indexOf(q);
+  if (i < 0) return esc(text);
+  return esc(text.slice(0,i)) + "<mark>" + esc(text.slice(i,i+q.length)) + "</mark>" + esc(text.slice(i+q.length));
+}
+
+function row(f, q){
+  return `<a class="row" href="${esc(f.p)}">
+    <span class="dot ${dotClass(f.ts)}" title="${esc(f.u)}"></span>
+    <span class="name">
+      <span class="title${f.x ? "" : " untitled"}">${hi(f.t, q)}</span>
+      <span class="path">${hi(f.p, q)}</span>
+    </span>
+    <span class="age">${age(f.ts)}</span>
+    <span class="size">${fmtSize(f.b)}</span>
+  </a>`;
+}
+
+function render(){
+  const q = qEl.value.trim().toLowerCase();
+  const hits = q ? FILES.filter(f => f.hay.includes(q)) : FILES.slice();
+  cursor = -1;
+
+  if (!hits.length){
+    listEl.innerHTML = `<div class="empty">Nothing matches &ldquo;${esc(qEl.value.trim())}&rdquo;. Clear the filter to see all ${FILES.length}.</div>`;
+    return;
+  }
+  if (mode === "updated"){
+    hits.sort((a,b) => b.ts - a.ts);
+    listEl.innerHTML = `<section class="group">
+      <div class="group-head"><span>most recent first</span><span class="n">${hits.length}</span><span class="rule"></span></div>
+      ${hits.map(f => row(f, q)).join("")}</section>`;
+    return;
+  }
+  const g = new Map();
+  for (const f of hits){ const k = f.d || "/"; (g.get(k) || g.set(k, []).get(k)).push(f); }
+  const keys = [...g.keys()].sort((a,b) => a === "/" ? -1 : b === "/" ? 1 : a.localeCompare(b));
+  listEl.innerHTML = keys.map(k => `<section class="group">
+      <div class="group-head"><span>${k === "/" ? "root" : esc(k)}</span><span class="n">${g.get(k).length}</span><span class="rule"></span></div>
+      ${g.get(k).map(f => row(f, q)).join("")}</section>`).join("");
+}
+
+function setMode(m){
+  mode = m;
+  $("#sf").setAttribute("aria-pressed", m === "folder");
+  $("#su").setAttribute("aria-pressed", m === "updated");
+  render();
+}
+$("#sf").onclick = () => setMode("folder");
+$("#su").onclick = () => setMode("updated");
+qEl.addEventListener("input", render);
+
+function move(step){
+  const rows = [...document.querySelectorAll(".row")];
+  if (!rows.length) return;
+  if (rows[cursor]) rows[cursor].classList.remove("cursor");
+  cursor = cursor < 0 ? (step > 0 ? 0 : rows.length - 1) : (cursor + step + rows.length) % rows.length;
+  rows[cursor].classList.add("cursor");
+  rows[cursor].scrollIntoView({block:"nearest"});
+}
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && document.activeElement !== qEl){ e.preventDefault(); qEl.focus(); qEl.select(); return; }
+  if (e.key === "Escape"){ qEl.value = ""; render(); qEl.blur(); return; }
+  if (e.key === "ArrowDown"){ e.preventDefault(); move(1); }
+  else if (e.key === "ArrowUp"){ e.preventDefault(); move(-1); }
+  else if (e.key === "Enter" && cursor >= 0){
+    const r = document.querySelectorAll(".row")[cursor];
+    if (!r) return;
+    e.preventDefault();
+    if (e.metaKey || e.ctrlKey) window.open(r.href, "_blank"); else location.href = r.href;
+  }
+});
+render();
+})();
+</script>
+</body>
+</html>
