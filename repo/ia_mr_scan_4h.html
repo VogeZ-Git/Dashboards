@@ -1,0 +1,314 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IA-MR Scan</title><style>
+:root{--bg:#0d1117;--panel:#131722;--line:#232838;--txt:#d5dae3;--dim:#787b86;
+--grn:#26a69a;--red:#ef5350;--amb:#e3a008;--blu:#5b8def}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);
+font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;gap:16px;
+align-items:center;flex-wrap:wrap}
+h1{font-size:14px;margin:0;letter-spacing:.16em;font-weight:600}
+.meta{color:var(--dim);font-size:11px}
+.tabs{margin-left:auto;display:flex;gap:6px}
+.bar{padding:9px 18px;display:flex;gap:7px;flex-wrap:wrap;align-items:center;
+border-bottom:1px solid var(--line)}
+.sep{width:1px;height:19px;background:var(--line);margin:0 5px}
+button{background:var(--panel);color:var(--dim);border:1px solid var(--line);
+padding:5px 11px;border-radius:3px;cursor:pointer;font:inherit;font-size:11px}
+button:hover{color:var(--txt)}button.on{color:#fff;border-color:var(--blu)}
+input{background:var(--panel);border:1px solid var(--line);color:var(--txt);
+padding:5px 9px;border-radius:3px;font:inherit;font-size:11px;width:110px}
+table{width:100%;border-collapse:collapse}
+th{position:sticky;top:0;background:var(--panel);color:var(--dim);font-size:10px;
+letter-spacing:.08em;text-align:right;padding:8px 9px;border-bottom:1px solid var(--line);
+cursor:pointer;white-space:nowrap;user-select:none}
+th:first-child,td:first-child{text-align:left}
+td{padding:7px 9px;text-align:right;border-bottom:1px solid #1a1f2e;white-space:nowrap}
+tr:hover td{background:#161b2b}.sym{font-weight:600;color:#fff}
+.grn{color:var(--grn)}.red{color:var(--red)}.dim{color:var(--dim)}.amb{color:var(--amb)}
+.tag{display:inline-block;padding:1px 7px;border-radius:3px;font-size:10px;font-weight:600}
+.z-buy{background:rgba(38,166,154,.16);color:var(--grn)}
+.z-sell{background:rgba(239,83,80,.16);color:var(--red)}
+.z-neu{background:#1a1f2e;color:var(--dim)}
+.fb{background:var(--grn);color:#04140f}.fs{background:var(--red);color:#1a0505}
+.badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:10px;
+font-weight:600;letter-spacing:.05em}
+.badge.on{background:rgba(38,166,154,.18);color:var(--grn)}
+.badge.old{background:rgba(227,160,8,.16);color:var(--amb)}
+.badge.off{background:#1a1f2e;color:var(--dim)}
+.lbl{color:var(--dim);font-size:10px;letter-spacing:.08em}
+button.mode.on{border-color:var(--amb);color:var(--amb)}
+.livepx{color:#fff;font-weight:600}.up{color:var(--grn)}.dn{color:var(--red)}
+.zbar{display:inline-block;width:86px;height:7px;background:#1a1f2e;border-radius:2px;
+position:relative;vertical-align:middle;margin-right:6px}
+.zbar u{position:absolute;top:0;height:7px;width:1px;background:#39405a}
+.zbar i{position:absolute;top:-2px;width:2px;height:11px;background:var(--blu)}
+.warn{margin:14px 18px;padding:10px 14px;border:1px solid #4a3a12;background:#1c170e;
+color:#e3c07a;font-size:11px;border-radius:4px;line-height:1.7}
+.fail{margin:14px 18px;padding:10px 14px;border:1px solid #4a2020;background:#1c1111;
+color:#e08a8a;font-size:11px;border-radius:4px}
+#guide{display:none;padding:8px 18px 60px;max-width:900px;line-height:1.75}
+#guide h2{font-size:13px;letter-spacing:.13em;color:#fff;margin:30px 0 10px;
+border-bottom:1px solid var(--line);padding-bottom:6px}
+#guide h2:first-child{margin-top:18px}
+#guide p{color:#b9c0cc;margin:9px 0}
+#guide code{background:var(--panel);padding:1px 5px;border-radius:3px;color:var(--amb)}
+#guide table{margin:10px 0 16px}
+#guide td{text-align:left;vertical-align:top;padding:6px 12px 6px 0;
+border-bottom:1px solid #1a1f2e;white-space:normal}
+#guide td:first-child{color:#fff;width:150px;white-space:nowrap}
+#guide .k{color:var(--amb)}
+.box{border:1px solid var(--line);background:var(--panel);border-radius:4px;
+padding:12px 15px;margin:14px 0}
+.box.red{border-color:#4a2020;background:#1a1010}
+.box.grn{border-color:#1e4a44;background:#0f1a18}
+.box b{color:#fff}
+</style></head><body>
+<header><h1>IA-MR SCAN</h1>
+<span class="meta" id="cfg"></span><span class="meta" id="built"></span>
+<span id="livebadge" class="badge off">no live feed</span>
+<span class="tabs"><button class="tab on" data-t="scan">SCANNER</button>
+<button class="tab" data-t="guide">GUIDE</button></span></header>
+
+<div id="scanpane">
+<div class="bar">
+<span class="lbl">SETTING</span>
+<button class="mode on" data-m="pre">PINE PRESET</button>
+<button class="mode" data-m="opt">OPTIMIZED</button>
+<span class="sep"></span>
+<button data-f="act" class="on">ACTIONABLE</button>
+<button data-f="all">ALL</button>
+<button data-f="buy">BUY ZONE</button>
+<button data-f="sell">SELL ZONE</button>
+<button data-f="fired">FIRED</button>
+<span class="sep"></span>
+<input id="q" placeholder="ticker..."><span class="meta" id="count"></span></div>
+<div id="notice"></div>
+<table><thead><tr>
+<th data-k="sym">TICKER</th><th data-k="cfgs">Z-LEN/BAND</th><th data-k="close">PRICE</th>
+<th data-k="z">Z</th><th data-k="zone">ZONE</th><th data-k="fired">FIRED</th>
+<th data-k="pending">FORMING</th>
+<th data-k="buyPx">BUY @</th><th data-k="buyPct">%</th>
+<th data-k="sellPx">SELL @</th><th data-k="sellPct">%</th>
+<th data-k="dist">TO BAND</th><th data-k="lastAgo">LAST SIG</th>
+<th data-k="nBuy">B/S</th><th data-k="date">AS OF</th>
+</tr></thead><tbody id="tb"></tbody></table>
+<div id="fail"></div>
+</div>
+
+<div id="guide">
+<h2>WHAT THIS IS</h2>
+<p>The IA-MR mean-reversion model run across the whole watchlist at once, with
+each ticker on its own optimized Z-Len and Band. The chart shows one symbol; this
+shows all of them, and adds the number the chart cannot: <b>the price at which
+each ticker would reach its band</b>.</p>
+
+<h2>THE MODEL</h2>
+<p>A z-score of price against its own moving average, smoothed, with signals
+taken at turning points beyond a band:</p>
+<table>
+<tr><td>Z</td><td>How many standard deviations price sits from its Z-Len-bar average,
+then smoothed with an EMA(7).</td></tr>
+<tr><td>BAND</td><td>The per-ticker threshold. Z at or beyond +band is stretched high,
+at or beyond -band is stretched low.</td></tr>
+<tr><td>SIGNAL</td><td>Not simply crossing the band - Z must make a <i>turning point</i>
+beyond it. A pivot of strength 2: the extreme must be more extreme than the
+2 bars either side of it.</td></tr>
+</table>
+<div class="box red">
+<p><b>A signal is always 2 bars late, and that is not a flaw to fix.</b> A
+turning point cannot be identified until enough bars have formed after it. So the
+FIRED column marks a pivot that was confirmed on the latest bar but actually
+occurred 2 bars ago, at a price you can no longer get.</p>
+<p>That is exactly why the FORMING and BUY @ / SELL @ columns exist - they are
+the forward-looking part.</p>
+</div>
+
+<h2>EVERY COLUMN</h2>
+<table>
+<tr><td>Z-LEN/BAND</td><td>This ticker's preset. Marked <span class="amb">fb</span> when
+no preset exists and the generic fallback is being used - treat those rows as
+unoptimized.</td></tr>
+<tr><td>Z</td><td>Current smoothed z-score, with a bar showing where it sits between
+the two bands.</td></tr>
+<tr><td>ZONE</td><td><span class="tag z-buy">BUY ZONE</span> z is at or below -band.
+<span class="tag z-sell">SELL ZONE</span> at or above +band.
+<span class="tag z-neu">NEUTRAL</span> in between.</td></tr>
+<tr><td>FIRED</td><td>A confirmed signal on the latest bar - the pivot itself was 2
+bars earlier.</td></tr>
+<tr><td>FORMING</td><td>Z has turned beyond the band but the pivot is not yet confirmed.
+This is the early warning. It can evaporate: if the next bars push z further, no
+pivot forms there and no signal appears.</td></tr>
+<tr><td>BUY @ / SELL @</td><td><b>The forward-looking numbers.</b> The price at which the
+next bar's z would reach -band or +band. A dash means no plausible price gets
+there in one bar, which is normal for a long Z-Len.</td></tr>
+<tr><td>TO BAND</td><td>How far z is from its nearest band, in z units. Negative means
+already beyond it.</td></tr>
+<tr><td>LAST SIG</td><td>Direction and bars since the most recent confirmed signal.</td></tr>
+<tr><td>B/S</td><td>Total buy and sell signals over the loaded history - a sanity check
+on whether the preset produces a sensible trade rate on this ticker.</td></tr>
+</table>
+
+<h2>HOW BUY @ AND SELL @ ARE COMPUTED</h2>
+<p>Not by rearranging a formula. A new bar changes the moving average and the
+standard deviation as well as the numerator, so the relationship between price
+and z is not linear. The smoothing is unwound first - the EMA recursion gives the
+raw z the next bar must print - and then the price producing that raw z is found
+by bisection against the actual window.</p>
+<p><b>They are not signal prices.</b> Reaching the band puts z <i>in</i> the zone.
+A signal additionally needs a pivot, which needs 2 more bars. Read these as
+"the level where this becomes interesting", not "the level where it triggers".</p>
+
+<h2>THE OPTIMIZED SETTING</h2>
+<p>The <span class="k">PINE PRESET</span> / <span class="k">OPTIMIZED</span>
+toggle switches every row between the Z-Len and Band from the original Pine
+table and a setting found by grid search here.</p>
+<p>The search runs each (Z-Len, Band) combination through a backtest using the
+actual trading rules: <b>LIFO lot matching, 60% of available cash deployed on
+each buy, 60% of the open position sold on each sell</b>. Fills at the signal
+bar's close, matching the setting the Pine presets were produced under. Cells are
+ranked on the equal-weight percentile blend of return and win rate, and the pick
+is the median of its 3x3 neighbourhood so a result that only works at one exact
+setting is discarded.</p>
+<div class="box red">
+<p><b>Only the first 70% of history is used to choose.</b> The remaining 30% is
+scored afterwards and never influences the selection. The optimizer report prints
+both, and the honest number is the out-of-sample one - specifically OOS EDGE, the
+return minus simply buying and holding over the same stretch.</p>
+<p><b>Win rate is a weak objective on its own here.</b> This is mean reversion:
+it buys weakness and sells strength, so it wins often almost by construction.
+Across the grid the median correlation between return and win rate is about
++0.6 - they usually agree, but where they disagree the high-win cell is
+frequently the lower-return one, because taking a profit constantly while the
+residual position bleeds still books a win every time. That is why the default
+ranking blends the two rather than maximising either.</p>
+<p><b>And the honest caveat.</b> Per-ticker optimization was tried three times on
+this same watchlist with the Bollinger model, with progressively stricter
+validation, and every time the out-of-sample edge was indistinguishable from
+noise. Nothing here proves this run is different. Read the OOS columns before you
+switch the toggle and leave it there.</p>
+</div>
+
+<h2>LIVE PRICES</h2>
+<p>When a live feed is attached, PRICE updates and Z is re-estimated from it,
+along with ZONE and the distance to the band. The Z-Len average and the standard
+deviation stay fixed at the last completed bar, and FIRED never moves - a signal
+needs a confirmed pivot on closed bars.</p>
+
+<h2>CAVEATS WORTH KEEPING</h2>
+<div class="box red">
+<p>The presets came from an ROI optimization on this same signal engine. Nothing
+here re-validates them, and a parallel exercise on the Bollinger version of this
+watchlist found that per-ticker optimization produced no out-of-sample edge at
+all. Treat the presets as a reasonable starting configuration, not as evidence.</p>
+<p>Scanning 39 tickers means the extremes on this page are partly selection. A
+few names sit near a band on any given day whether or not anything is happening.</p>
+</div>
+<div class="box grn">
+<p>Used well, this is a shortlist generator: it tells you which of your names are
+stretched right now and where the interesting levels sit, so you can look at the
+chart for the handful that matter instead of all 39.</p>
+</div>
+</div>
+
+<script>
+const D={"TSLA": {"date": "2026-07-31 15:30", "close": 311.1199951171875, "z": -2.669322688749937, "band": 1.61, "zlen": 197, "basis": 388.84622440241316, "sd": 31.906956888466294, "zone": "BUY ZONE", "side": "buy", "dist": -1.0593226887499367, "buyPx": 439.30626088213774, "sellPx": null, "buyPct": 41.201551741046785, "sellPct": null, "fired": "-", "lastSig": "BUY", "lastAgo": 2, "pending": "-", "nBuy": 12, "nSell": 17, "spark": [0.009, 0.016, 0.092, 0.13, -0.051, -0.223, -0.415, -0.557, -0.672, -0.748, -0.69, -0.714, -0.416, -0.161, 0.097, 0.313, 0.538, 0.694, 0.449, 0.285, 0.417, 0.549, 0.514, 0.445, 0.308, 0.196, 0.226, 0.272, 0.346, 0.375, 0.243, 0.159, 0.103, 0.07, 0.045, 0.007, -0.077, -0.116, -0.216, -0.331, -0.507, -0.664, -0.674, -0.685, -0.71, -0.762, -1.341, -1.776, -2.174, -2.414, -2.62, -2.734, -2.816, -2.853, -2.902, -2.951, -2.898, -2.827, -2.747, -2.669], "preset": true}, "MSTR": {"date": "2026-07-31 15:30", "close": 93.37000274658205, "z": -0.21893010000227414, "band": 1.89, "zlen": 56, "basis": 95.39359814780099, "sd": 4.856936214187637, "zone": "NEUTRAL", "side": null, "dist": 1.6710698999977258, "buyPx": null, "sellPx": null, "buyPct": null, "sellPct": null, "fired": "-", "lastSig": "BUY", "lastAgo": 75, "pending": "-", "nBuy": 11, "nSell": 23, "spark": [-1.336, -1.352, -1.382, -1.397, -1.435, -1.469, -1.582, -1.64, -1.745, -1.816, -1.85, -1.886, -1.792, -1.707, -1.701, -1.664, -1.516, -1.445, -1.31, -1.2, -1.085, -1.018, -0.954, -0.948, -0.964, -0.982, -0.974, -0.976, -0.97, -0.957, -0.988, -0.999, -0.943, -0.865, -0.779, -0.73, -0.742, -0.747, -0.723, -0.705, -0.594, -0.541, -0.424, -0.321, -0.277, -0.24, -0.326, -0.393, -0.445, -0.512, -0.402, -0.293, -0.23, -0.212, -0.189, -0.269, -0.169, -0.054, -0.153, -0.219], "preset": true}, "NVDA": {"date": "2026-07-31 15:30", "close": 200.80999755859372, "z": -1.0646464059814356, "band": 2.17, "zlen": 93, "basis": 205.31048567577074, "sd": 7.797796375212244, "zone": "NEUTRAL", "side": null, "dist": 1.1053535940185644, "buyPx": 152.91699858409572, "sellPx": null, "buyPct": -23.849907652393377, "sellPct": null, "fired": "-", "lastSig": "SELL", "lastAgo": 104, "pending": "-", "nBuy": 2, "nSell": 14, "spark": [-0.212, -0.176, -0.187, -0.21, -0.394, -0.601, -0.812, -0.939, -1.129, -1.258, -1.367, -1.528, -1.566, -1.583, -1.508, -1.412, -1.379, -1.364, -1.455, -1.475, -1.449, -1.431, -1.367, -1.325, -1.146, -0.987, -0.901, -0.84, -0.619, -0.438, -0.467, -0.51, -0.36, -0.231, -0.203, -0.097, -0.144, -0.173, -0.226, -0.348, -0.407, -0.458, -0.424, -0.368, -0.152, -0.025, 0.028, 0.034, 0.09, 0.038, -0.339, -0.587, -0.732, -0.86, -1.098, -1.332, -1.386, -1.373, -1.227, -1.065], "preset": true}, "SSK": {"date": "2026-07-31 15:30", "close": 9.875, "z": -0.7128394985948696, "band": 2.44, "zlen": 145, "basis": 10.691100666440766, "sd": 1.0628836953274337, "zone": "NEUTRAL", "side": null, "dist": 1.7271605014051303, "buyPx": null, "sellPx": null, "buyPct": null, "sellPct": null, "fired": "-", "lastSig": "BUY", "lastAgo": 74, "pending": "-", "nBuy": 2, "nSell": 0, "spark": [-1.744, -1.761, -1.661, -1.591, -1.652, -1.686, -1.808, -1.867, -1.89, -1.908, -1.728, -1.56, -1.37, -1.222, -1.174, -1.134, -0.976, -0.881, -0.679, -0.531, -0.384, -0.274, -0.181, -0.138, -0.232, -0.293, -0.322, -0.333, -0.338, -0.345, -0.435, -0.504, -0.492, -0.477, -0.441, -0.436, -0.475, -0.502, -0.532, -0.561, -0.507, -0.462, -0.422, -0.389, -0.352, -0.346, -0.388, -0.43, -0.51, -0.572, -0.549, -0.532, -0.579, -0.604, -0.647, -0.69, -0.679, -0.662, -0.695, -0.713], "preset": true}, "PLTR": {"date": "2026-07-31 15:30", "close": 123.05999755859376, "z": -0.45583485407130636, "band": 0.78, "zlen": 68, "basis": 126.46895173016716, "sd": 7.292792921901099, "zone": "NEUTRAL", "side": null, "dist": 0.32416514592869367, "buyPx": 113.17065397925455, "sellPx": 166.1464535449801, "buyPct": -8.036196794681793, "sellPct": 35.01256041051939, "fired": "-", "lastSig": "BUY", "lastAgo": 48, "pending": "-", "nBuy": 29, "nSell": 55, "spark": [-0.905, -0.979, -1.267, -1.497, -1.665, -1.827, -2.018, -2.108, -2.297, -2.381, -2.288, -2.194, -2.027, -1.906, -1.749, -1.655, -1.362, -1.163, -0.888, -0.733, -0.53, -0.391, -0.176, -0.088, -0.119, -0.089, -0.152, -0.178, -0.25, -0.293, -0.268, -0.232, -0.122, -0.04, 0.019, 0.068, 0.108, 0.149, 0.182, 0.164, 0.229, 0.277, 0.28, 0.294, 0.091, -0.06, -0.248, -0.341, -0.4, -0.456, -0.207, -0.02, -0.101, -0.199, -0.213, -0.294, -0.372, -0.431, -0.452, -0.456], "preset": true}, "DN3": {"date": "2026-08-03 02:00", "close": 233.0, "z": 0.3204963739712319, "band": 0.5, "zlen": 53, "basis": 225.1320754716981, "sd": 16.358066195414416, "zone": "NEUTRAL", "side": null, "dist": 0.17950362602876813, "buyPx": 172.70534632139885, "sellPx": 242.710771340397, "buyPct": -25.87753376763998, "sellPct": 4.167713021629615, "fired": "-", "lastSig": "SELL", "lastAgo": 13, "pending": "-", "nBuy": 62, "nSell": 49, "spark": [-1.093, -1.059, -1.034, -0.998, -0.995, -1.104, -1.18, -1.354, -1.487, -1.568, -1.57, -1.605, -1.618, -1.65, -1.633, -1.574, -1.456, -1.333, -1.179, -1.113, -0.91, -0.684, -0.582, -0.495, -0.434, -0.406, -0.296, 0.107, 0.48, 0.622, 0.516, 0.467, 0.5, 0.619, 0.64, 0.588, 0.549, 0.367, 0.134, 0.002, 0.196, 0.537, 0.765, 0.758, 0.776, 0.559, 0.46, 0.319, 0.202, 0.013, -0.11, -0.199, -0.306, -0.306, -0.271, -0.121, 0.024, 0.088, 0.267, 0.32], "preset": true}, "GOOGL": {"date": "2026-07-31 15:30", "close": 356.3299865722656, "z": -0.5261965124602163, "band": 2.44, "zlen": 56, "basis": 349.14084025791715, "sd": 13.604993327635313, "zone": "NEUTRAL", "side": null, "dist": 1.9138034875397838, "buyPx": null, "sellPx": null, "buyPct": null, "sellPct": null, "fired": "-", "lastSig": "BUY", "lastAgo": 170, "pending": "-", "nBuy": 2, "nSell": 5, "spark": [-0.953, -0.897, -1.192, -1.348, -1.469, -1.562, -1.572, -1.621, -1.704, -1.713, -1.724, -1.802, -1.601, -1.43, -1.252, -1.096, -0.945, -0.783, -0.76, -0.657, -0.477, -0.307, -0.105, 0.001, -0.023, -0.025, -0.15, -0.161, -0.274, -0.286, -0.313, -0.421, -0.326, -0.226, 0.168, 0.45, 0.687, 0.383, -0.077, -0.381, -0.433, -0.482, -0.595, -0.726, -0.793, -0.99, -1.602, -2.017, -2.2, -2.296, -2.211, -2.128, -1.9, -1.743, -1.552, -1.411, -1.363, -1.303, -0.878, -0.526], "preset": true}, "META": {"date": "2026-07-31 15:30", "close": 556.5, "z": -1.0182348649609507, "band": 2.44, "zlen": 65, "basis": 601.8427668644832, "sd": 39.86798403465485, "zone": "NEUTRAL", "side": null, "dist": 1.4217651350390492, "buyPx": null, "sellPx": null, "buyPct": null, "sellPct": null, "fired": "-", "lastSig": "BUY", "lastAgo": 170, "pending": "-", "nBuy": 5, "nSell": 2, "spark": [-1.41, -1.43, -1.622, -1.723, -1.754, -1.798, -1.87, -1.889, -2.023, -2.103, -2.015, -1.984, -1.795, -1.666, -1.592, -1.486, -0.866, -0.448, -0.407, -0.394, -0.261, -0.102, 0.093, 0.317, 0.381, 0.407, 0.52, 0.786, 1.251, 1.612, 1.778, 1.845, 1.921, 1.941, 2.039, 2.13, 2.101, 2.027, 1.879, 1.72, 1.617, 1.506, 1.42, 1.33, 1.164, 1.032, 0.799, 0.624, 0.473, 0.309, 0.195, 0.09, 0.007, -0.056, -0.11, -0.193, -0.6, -0.856, -0.979, -1.018], "preset": true}, "AMD": {"date": "2026-07-31 15:30", "close": 476.1400146484375, "z": -0.05405425317391042, "band": 2.44, "zlen": 133, "basis": 484.13320211539593, "sd": 61.49792853137107, "zone": "NEUTRAL", "side": null, "dist": 2.3859457468260894, "buyPx": null, "sellPx": null, "buyPct": null, "sellPct": null, "fired": "-", "lastSig": "SELL", "lastAgo": 111, "pending": "-", "nBuy": 1, "nSell": 12, "spark": [1.425, 1.436, 1.452, 1.474, 1.429, 1.383, 1.321, 1.292, 1.284, 1.282, 1.254, 1.225, 1.245, 1.252, 1.335, 1.394, 1.376, 1.332, 1.235, 1.172, 1.203, 1.212, 1.149, 1.089, 1.036, 1.0, 1.043, 1.066, 1.108, 1.134, 1.105, 1.07, 1.094, 1.088, 1.029, 0.988, 0.875, 0.796, 0.743, 0.677, 0.668, 0.635, 0.721, 0.787, 0.871, 0.917, 0.901, 0.898, 0.882, 0.824, 0.639, 0.547, 0.349, 0.18, -0.018, -0.201, -0.124, -0.079, -0.029, -0.054], "preset": true}, "STRC": {"date": "2026-07-31 15:30", "close": 89.41000366210938, "z": 0.7759790258332251, "band": 0.78, "zlen": 56, "basis": 86.15592697688511, "sd": 3.528465948152983, "zone": "NEUTRAL", "side": null, "dist": 0.004020974166774938, "buyPx": 57.33602315541462, "sellPx": 88.98258139431985, "buyPct": -35.87292158929552, "sellPct": -0.47804747822716154, "fired": "-", "lastSig": "BUY", "lastAgo": 48, "pending": "-", "nBuy": 12, "nSell": 6, "spark": [-2.709, -2.668, -2.547, -2.486, -2.464, -2.438, -2.73, -2.839, -3.031, -3.08, -3.047, -2.99, -2.613, -2.299, -2.059, -1.821, -1.495, -1.294, -1.13, -0.994, -0.77, -0.686, -0.636, -0.65, -0.666, -0.671, -0.683, -0.688, -0.658, -0.586, -0.545, -0.507, -0.41, -0.343, -0.276, -0.254, -0.305, -0.361, -0.364, -0.404, -0.305, -0.262, -0.189, -0.118, -0.072, -0.051, -0.144, -0.214, -0.17, -0.106, 0.053, 0.174, 0.312, 0.38, 0.451, 0.442, 0.58, 0.673, 0.727, 0.776], "preset": true}, "STRK": {"date": "2026-07-31 15:30", "close": 60.5, "z": -0.45393176678555636, "band": 1.06, "zlen": 99, "basis": 64.10320177945223, "sd": 5.226840463538214, "zone": "NEUTRAL", "side": null, "dist": 0.6060682332144437, "buyPx": 48.36866514019532, "sellPx": 99.34283002180973, "buyPct": -20.051793156701958, "sellPct": 64.20302482943758, "fired": "-", "lastSig": "BUY", "lastAgo": 32, "pending": "-", "nBuy": 20, "nSell": 6, "spark": [-2.286, -2.446, -2.483, -2.539, -2.531, -2.51, -2.662, -2.745, -2.91, -2.986, -2.909, -2.833, -2.551, -2.344, -2.252, -2.109, -1.866, -1.74, -1.632, -1.536, -1.393, -1.282, -1.199, -1.188, -1.183, -1.19, -1.186, -1.184, -1.164, -1.14, -1.136, -1.12, -1.088, -1.061, -0.985, -0.937, -0.917, -0.907, -0.908, -0.868, -0.789, -0.791, -0.723, -0.674, -0.646, -0.616, -0.629, -0.638, -0.617, -0.66, -0.616, -0.58, -0.554, -0.519, -0.479, -0.452, -0.387, -0.356, -0.375, -0.454], "preset": true}, "CIFR": {"date": "2026-07-31 15:30", "close": 22.32999992370605, "z": -0.5018977495570981, "band": 2.17, "zlen": 74, "basis": 23.06434471542771, "sd": 2.934333259218601, "zone": "NEUTRAL", "side": null, "dist": 1.6681022504429017, "buyPx": null, "sellPx": null, "buyPct": null, "sellPct": null, "fired": "-", "lastSig": "SELL", "lastAgo": 78, "pending": "-", "nBuy": 1, "nSell": 18, "spark": [1.795, 1.919, 1.901, 1.885, 1.87, 1.797, 1.56, 1.441, 1.285, 1.18, 1.076, 1.03, 0.957, 0.837, 0.67, 0.587, 0.411, 0.234, -0.19, -0.468, -0.51, -0.563, -0.684, -0.806, -0.864, -0.822, -0.628, -0.514, -0.472, -0.516, -0.751, -0.933, -1.112, -1.239, -1.32, -1.397, -1.629, -1.801, -1.899, -1.972, -1.745, -1.579, -1.135, -0.909, -0.655, -0.412, -0.072, 0.14, 0.197, 0.108, -0.131, -0.258, -0.468, -0.605, -0.863, -1.106, -0.876, -0.696, -0.586, -0.502], "preset": true}, "ASST": {"date": "2026-07-31 15:30", "close": 11.100000381469728, "z": -0.8644237610829448, "band": 1.61, "zlen": 185, "basis": 13.742889229027, "sd": 2.5798351173894014, "zone": "NEUTRAL", "side": null, "dist": 0.7455762389170553, "buyPx": 3.4088169972022593, "sellPx": null, "buyPct": -69.28993801754352, "sellPct": null, "fired": "-", "lastSig": "BUY", "lastAgo": 216, "pending": "-", "nBuy": 4, "nSell": 3, "spark": [0.809, 0.762, 0.737, 0.701, 0.642, 0.564, 0.42, 0.297, 0.132, -0.004, -0.102, -0.191, -0.222, -0.261, -0.35, -0.411, -0.376, -0.354, -0.255, -0.186, -0.12, -0.087, -0.069, -0.085, -0.132, -0.161, -0.165, -0.176, -0.197, -0.223, -0.295, -0.344, -0.345, -0.339, -0.303, -0.297, -0.357, -0.422, -0.457, -0.483, -0.461, -0.45, -0.376, -0.332, -0.334, -0.337, -0.379, -0.426, -0.506, -0.582, -0.592, -0.585, -0.602, -0.616, -0.689, -0.771, -0.758, -0.741, -0.811, -0.864], "preset": true}, "MRVL": {"date": "2026-07-31 15:30", "close": 187.55999755859372, "z": -0.880540461111559, "band": 2.72, "zlen": 123, "basis": 227.2404393141832, "sd": 47.78938831456662, "zone": "NEUTRAL", "side": null, "dist": 1.8394595388884412, "buyPx": null, "sellPx": null, "buyPct": null, "sellPct": null, "fired": "-", "lastSig": "SELL", "lastAgo": 76, "pending": "-", "nBuy": 2, "nSell": 7, "spark": [2.009, 2.011, 1.985, 1.961, 1.839, 1.731, 1.594, 1.528, 1.485, 1.455, 1.372, 1.301, 1.277, 1.265, 1.315, 1.36, 1.302, 1.242, 1.08, 0.966, 0.897, 0.837, 0.718, 0.621, 0.563, 0.503, 0.525, 0.517, 0.489, 0.451, 0.34, 0.255, 0.212, 0.175, 0.076, -0.007, -0.154, -0.268, -0.331, -0.406, -0.421, -0.447, -0.405, -0.379, -0.335, -0.317, -0.319, -0.317, -0.373, -0.438, -0.532, -0.586, -0.695, -0.788, -0.899, -1.0, -0.983, -0.963, -0.897, -0.881], "preset": true}, "ALB": {"date": "2026-07-31 15:30", "close": 117.6449966430664, "z": -1.488682181300134, "band": 3.0, "zlen": 142, "basis": 158.43126748313367, "sd": 29.45484902856159, "zone": "NEUTRAL", "side": null, "dist": 1.511317818699866, "buyPx": null, "sellPx": null, "buyPct": null, "sellPct": null, "fired": "-", "lastSig": "SELL", "lastAgo": 342, "pending": "-", "nBuy": 1, "nSell": 2, "spark": [-0.919, -0.992, -1.12, -1.198, -1.336, -1.457, -1.585, -1.667, -1.814, -1.926, -2.125, -2.239, -2.367, -2.438, -2.393, -2.357, -2.293, -2.249, -2.238, -2.196, -2.168, -2.143, -2.166, -2.174, -2.174, -2.15, -2.135, -2.109, -2.099, -2.085, -2.069, -2.044, -1.99, -1.935, -1.935, -1.915, -1.952, -1.96, -1.932, -1.913, -1.919, -1.908, -1.885, -1.861, -1.835, -1.817, -1.795, -1.776, -1.756, -1.749, -1.734, -1.706, -1.7, -1.691, -1.677, -1.657, -1.606, -1.56, -1.523, -1.489], "preset": true}, "BIDU": {"date": "2026-07-31 15:30", "close": 111.1500015258789, "z": -0.5914343314296195, "band": 2.17, "zlen": 59, "basis": 110.47247482558429, "sd": 4.1753999999901215, "zone": "NEUTRAL", "side": null, "dist": 1.5785656685703804, "buyPx": 40.94382515505724, "sellPx": null, "buyPct": -63.16345065859099, "sellPct": null, "fired": "-", "lastSig": "SELL", "lastAgo": 110, "pending": "-", "nBuy": 4, "nSell": 6, "spark": [-1.807, -1.77, -1.708, -1.666, -1.649, -1.628, -1.658, -1.654, -1.709, -1.744, -1.755, -1.748, -1.58, -1.421, -1.245, -1.108, -0.887, -0.744, -0.787, -0.766, -0.725, -0.679, -0.694, -0.702, -0.55, -0.441, -0.364, -0.295, -0.236, -0.187, -0.273, -0.317, -0.487, -0.574, -0.554, -0.558, -0.462, -0.429, -0.586, -0.763, -0.702, -0.734, -0.848, -0.917, -0.967, -1.032, -1.128, -1.145, -1.214, -1.31, -1.333, -1.376, -1.422, -1.436, -1.402, -1.379, -1.265, -1.126, -0.843, -0.591], "preset": true}, "AVGO": {"date": "2026-07-31 15:30", "close": 389.2799987792969, "z": 0.16172158615307886, "band": 1.33, "zlen": 62, "basis": 383.83458192886843, "sd": 11.180812268605205, "zone": "NEUTRAL", "side": null, "dist": 1.168278413846921, "buyPx": 286.0832720889739, "sellPx": 452.82322435735387, "buyPct": -26.5096401083865, "sellPct": 16.32327008254102, "fired": "-", "lastSig": "BUY", "lastAgo": 60, "pending": "-", "nBuy": 15, "nSell": 37, "spark": [-0.998, -0.804, -0.791, -0.82, -0.905, -0.999, -1.056, -1.076, -1.099, -1.115, -1.179, -1.285, -1.257, -1.251, -1.218, -1.164, -1.18, -1.181, -1.254, -1.285, -1.177, -1.105, -1.065, -1.031, -0.831, -0.708, -0.482, -0.343, -0.232, -0.159, -0.211, -0.264, -0.223, -0.223, -0.194, -0.147, -0.244, -0.345, -0.399, -0.502, -0.448, -0.465, -0.304, -0.177, 0.15, 0.39, 0.474, 0.552, 0.437, 0.287, 0.101, 0.061, -0.03, -0.094, -0.246, -0.481, -0.31, -0.125, 0.053, 0.162], "preset": true}, "MU": {"date": "2026-07-31 15:30", "close": 822.8300170898438, "z": -1.278481852733735, "band": 0.5, "zlen": 53, "basis": 963.0907753998379, "sd": 108.71866159251557, "zone": "BUY ZONE", "side": "buy", "dist": -0.7784818527337349, "buyPx": 1170.507804987064, "sellPx": 2055.5477046354245, "buyPct": 42.25390186017701, "sellPct": 149.8143798770751, "fired": "-", "lastSig": "BUY", "lastAgo": 2, "pending": "-", "nBuy": 36, "nSell": 67, "spark": [1.388, 1.467, 1.614, 1.724, 1.553, 1.372, 1.171, 1.066, 1.295, 1.426, 1.448, 1.359, 1.275, 1.258, 1.262, 1.247, 1.011, 0.776, 0.433, 0.179, 0.011, -0.129, -0.374, -0.544, -0.657, -0.728, -0.576, -0.553, -0.521, -0.54, -0.679, -0.755, -0.674, -0.62, -0.781, -0.907, -1.133, -1.285, -1.28, -1.392, -1.368, -1.404, -1.164, -1.0, -0.85, -0.788, -0.638, -0.548, -0.608, -0.688, -0.863, -0.906, -1.114, -1.249, -1.438, -1.629, -1.467, -1.329, -1.275, -1.278], "preset": true}, "MARA": {"date": "2026-07-31 15:30", "close": 11.300000190734863, "z": -1.39007330284861, "band": 2.72, "zlen": 130, "basis": 12.972279262542724, "sd": 1.142735310937109, "zone": "NEUTRAL", "side": null, "dist": 1.3299266971513901, "buyPx": 3.590009890089333, "sellPx": null, "buyPct": -68.23000150891265, "sellPct": null, "fired": "-", "lastSig": "SELL", "lastAgo": 826, "pending": "-", "nBuy": 0, "nSell": 6, "spark": [1.261, 1.247, 1.316, 1.349, 1.397, 1.382, 1.279, 1.204, 1.113, 1.06, 1.14, 1.142, 1.122, 1.067, 0.972, 0.933, 0.893, 0.804, 0.587, 0.435, 0.422, 0.376, 0.261, 0.118, -0.03, -0.12, 0.036, 0.111, 0.081, 0.032, -0.115, -0.199, -0.34, -0.385, -0.431, -0.441, -0.606, -0.753, -0.949, -1.165, -1.092, -1.086, -0.886, -0.815, -0.715, -0.658, -0.475, -0.401, -0.399, -0.488, -0.675, -0.777, -0.961, -1.072, -1.353, -1.635, -1.459, -1.347, -1.366, -1.39], "preset": true}, "IREN": {"date": "2026-07-31 15:30", "close": 36.81999969482422, "z": -1.2181064693874828, "band": 2.17, "zlen": 87, "basis": 47.66051046875702, "sd": 10.233701613038296, "zone": "NEUTRAL", "side": null, "dist": 0.9518935306125171, "buyPx": null, "sellPx": null, "buyPct": null, "sellPct": null, "fired": "-", "lastSig": "SELL", "lastAgo": 111, "pending": "-", "nBuy": 1, "nSell": 21, "spark": [0.697, 0.7, 0.579, 0.481, 0.377, 0.238, -0.038, -0.258, -0.507, -0.71, -0.849, -0.979, -1.096, -1.208, -1.285, -1.356, -1.462, -1.584, -1.842, -2.017, -1.95, -1.901, -1.949, -2.023, -2.023, -1.94, -1.871, -1.845, -1.793, -1.78, -1.834, -1.845, -1.877, -1.858, -1.8, -1.785, -1.857, -1.891, -1.897, -1.918, -1.74, -1.608, -1.449, -1.354, -1.257, -1.202, -1.16, -1.139, -1.168, -1.219, -1.282, -1.305, -1.369, -1.407, -1.499, -1.588, -1.464, -1.34, -1.271, -1.218], "preset": true}, "AMZN": {"date": "2026-07-31 15:30", "close": 271.6099853515625, "z": 0.8041617983550843, "band": 1.61, "zlen": 50, "basis": 243.21941680908202, "sd": 9.209892346442162, "zone": "NEUTRAL", "side": null, "dist": 0.8058382016449158, "buyPx": null, "sellPx": 288.8938474204517, "buyPct": null, "sellPct": 6.363485512698519, "fired": "-", "lastSig": "SELL", "lastAgo": 21, "pending": "-", "nBuy": 12, "nSell": 31, "spark": [-1.33, -1.237, -1.375, -1.472, -1.5, -1.5, -1.384, -1.382, -1.476, -1.543, -1.507, -1.471, -1.249, -1.087, -0.978, -0.905, -0.723, -0.632, -0.489, -0.427, -0.297, -0.213, -0.1, 0.024, 0.022, 0.07, 0.137, 0.321, 0.375, 0.44, 0.635, 0.75, 0.813, 0.905, 1.281, 1.519, 1.719, 1.601, 1.458, 1.285, 1.265, 1.227, 1.134, 1.016, 0.762, 0.638, 0.17, -0.201, -0.47, -0.715, -0.896, -1.027, -1.099, -1.188, -1.273, -1.432, -1.192, -1.07, 0.045, 0.804], "preset": true}, "MSFT": {"date": "2026-07-31 15:30", "close": 464.9200134277344, "z": 2.780939223102502, "band": 1.33, "zlen": 56, "basis": 390.47156252179826, "sd": 22.13283254570082, "zone": "SELL ZONE", "side": "sell", "dist": -1.4509392231025018, "buyPx": null, "sellPx": 316.61415258543764, "buyPct": null, "sellPct": -31.899220631281533, "fired": "-", "lastSig": "BUY", "lastAgo": 48, "pending": "-", "nBuy": 27, "nSell": 34, "spark": [-1.743, -1.774, -1.896, -1.974, -1.938, -1.882, -1.854, -1.871, -1.991, -2.036, -1.883, -1.741, -1.638, -1.559, -1.461, -1.365, -1.148, -1.014, -0.838, -0.722, -0.666, -0.608, -0.498, -0.457, -0.472, -0.482, -0.504, -0.481, -0.459, -0.425, -0.308, -0.223, -0.202, -0.2, -0.02, 0.117, 0.369, 0.538, 0.567, 0.586, 0.768, 0.928, 0.987, 1.0, 0.813, 0.729, 0.481, 0.298, 0.221, 0.114, 0.247, 0.301, 0.53, 0.603, 0.709, 0.703, 1.692, 2.197, 2.587, 2.781], "preset": true}, "STRF": {"date": "2026-07-31 15:30", "close": 95.01000213623048, "z": 0.06307759565643642, "band": 0.78, "zlen": 111, "basis": 95.99300893147786, "sd": 3.6211896464181703, "zone": "NEUTRAL", "side": null, "dist": 0.7169224043435636, "buyPx": 83.31546666382104, "sellPx": 107.0038024373508, "buyPct": -12.308741405606105, "sellPct": 12.623723851645586, "fired": "-", "lastSig": "BUY", "lastAgo": 46, "pending": "-", "nBuy": 18, "nSell": 7, "spark": [-2.2, -2.308, -2.228, -2.268, -2.224, -2.214, -2.436, -2.577, -2.844, -2.814, -2.934, -3.05, -2.767, -2.412, -2.205, -1.935, -1.549, -1.323, -1.131, -0.912, -0.667, -0.495, -0.375, -0.303, -0.296, -0.282, -0.298, -0.277, -0.278, -0.295, -0.34, -0.373, -0.377, -0.395, -0.402, -0.414, -0.423, -0.412, -0.368, -0.315, -0.25, -0.271, -0.16, -0.028, 0.039, 0.127, 0.136, 0.173, 0.184, 0.192, 0.187, 0.234, 0.259, 0.217, 0.174, 0.184, 0.264, 0.298, 0.175, 0.063], "preset": true}, "HOOD": {"date": "2026-07-31 15:30", "close": 86.56500244140625, "z": -1.8249089661854483, "band": 2.17, "zlen": 65, "basis": 103.49947498028095, "sd": 8.436073450609792, "zone": "NEUTRAL", "side": null, "dist": 0.34509103381455164, "buyPx": 73.70501756194551, "sellPx": null, "buyPct": -14.855870752346313, "sellPct": null, "fired": "-", "lastSig": "SELL", "lastAgo": 56, "pending": "-", "nBuy": 7, "nSell": 14, "spark": [2.564, 2.588, 2.53, 2.43, 2.314, 2.164, 1.907, 1.695, 1.462, 1.26, 1.188, 1.165, 1.222, 1.243, 1.213, 1.182, 1.336, 1.434, 1.561, 1.65, 1.788, 1.872, 1.863, 1.799, 1.714, 1.677, 1.699, 1.668, 1.594, 1.508, 1.389, 1.299, 1.286, 1.286, 1.317, 1.338, 1.17, 1.003, 0.822, 0.596, 0.437, 0.284, 0.346, 0.37, 0.366, 0.326, 0.252, 0.152, -0.082, -0.301, -0.496, -0.617, -0.795, -0.952, -1.167, -1.346, -1.524, -1.678, -1.764, -1.825], "preset": true}, "DFDV": {"date": "2026-07-31 15:30", "close": 2.559999942779541, "z": -1.1165859648610155, "band": 1.06, "zlen": 102, "basis": 3.154613730954189, "sd": 0.4902579555807313, "zone": "BUY ZONE", "side": "buy", "dist": -0.056585964861015414, "buyPx": 2.714702106025136, "sellPx": null, "buyPct": 6.043053386853825, "sellPct": null, "fired": "-", "lastSig": "BUY", "lastAgo": 48, "pending": "-", "nBuy": 17, "nSell": 4, "spark": [-1.365, -1.404, -1.431, -1.468, -1.514, -1.561, -1.656, -1.712, -1.788, -1.834, -1.78, -1.726, -1.587, -1.472, -1.424, -1.357, -1.192, -1.095, -0.963, -0.881, -0.815, -0.779, -0.739, -0.729, -0.789, -0.815, -0.821, -0.839, -0.834, -0.846, -0.907, -0.944, -0.905, -0.839, -0.776, -0.746, -0.775, -0.809, -0.838, -0.872, -0.84, -0.812, -0.75, -0.692, -0.649, -0.607, -0.651, -0.684, -0.74, -0.809, -0.849, -0.867, -0.9, -0.908, -0.931, -0.996, -1.008, -1.02, -1.084, -1.117], "preset": true}, "HIMS": {"date": "2026-07-31 15:30", "close": 27.774999618530277, "z": -0.6013197483218636, "band": 2.44, "zlen": 105, "basis": 30.3649532863072, "sd": 4.432802698892329, "zone": "NEUTRAL", "side": null, "dist": 1.8386802516781362, "buyPx": null, "sellPx": null, "buyPct": null, "sellPct": null, "fired": "-", "lastSig": "BUY", "lastAgo": 233, "pending": "-", "nBuy": 1, "nSell": 18, "spark": [1.861, 2.073, 2.074, 2.07, 2.12, 2.04, 1.952, 1.886, 1.684, 1.682, 1.756, 1.807, 1.814, 1.795, 1.831, 1.888, 2.134, 2.27, 2.278, 2.28, 2.378, 2.407, 2.34, 2.216, 2.112, 2.018, 1.934, 1.831, 1.67, 1.561, 1.465, 1.398, 1.369, 1.357, 1.425, 1.492, 1.406, 1.277, 1.159, 1.041, 0.97, 0.885, 0.8, 0.753, 0.699, 0.614, 0.731, 0.689, 0.434, 0.211, 0.123, 0.094, -0.011, -0.058, -0.297, -0.512, -0.571, -0.611, -0.607, -0.601], "preset": true}, "COPA": {"date": "2026-07-30 13:30", "close": 48.02519989013672, "z": -0.8237092201816689, "band": 0.5, "zlen": 65, "basis": 49.66649076021635, "sd": 2.8772093854471543, "zone": "BUY ZONE", "side": "buy", "dist": -0.3237092201816689, "buyPx": 51.04647594214967, "sellPx": 65.42314818842561, "buyPct": 6.291022336032914, "sellPct": 36.226706683342805, "fired": "-", "lastSig": "BUY", "lastAgo": 7, "pending": "-", "nBuy": 8, "nSell": 22, "spark": [0.936, 1.066, 1.152, 1.209, 1.244, 1.341, 1.514, 1.645, 1.63, 1.614, 1.564, 1.16, 0.795, 0.544, 0.322, 0.166, -0.073, -0.043, 0.028, 0.208, 0.63, 0.943, 1.117, 1.121, 1.063, 1.02, 0.967, 0.607, 0.138, -0.199, -0.4, -0.553, -0.71, -0.727, -0.799, -0.879, -0.911, -0.907, -0.851, -1.04, -1.315, -1.477, -1.416, -1.366, -1.281, -1.147, -1.018, -0.986, -1.116, -1.26, -1.355, -1.17, -0.947, -0.861, -0.835, -0.797, -0.84, -0.84, -0.908, -0.824], "preset": true}, "QCOM": {"date": "2026-07-31 15:30", "close": 147.61000061035156, "z": -0.7795460338902651, "band": 2.44, "zlen": 172, "basis": 182.43391405149947, "sd": 36.150913660846676, "zone": "NEUTRAL", "side": null, "dist": 1.6604539661097348, "buyPx": null, "sellPx": null, "buyPct": null, "sellPct": null, "fired": "-", "lastSig": "SELL", "lastAgo": 85, "pending": "-", "nBuy": 2, "nSell": 7, "spark": [1.269, 1.304, 1.345, 1.328, 1.199, 1.108, 0.987, 0.904, 0.937, 0.905, 0.848, 0.739, 0.672, 0.605, 0.533, 0.475, 0.424, 0.374, 0.286, 0.234, 0.256, 0.269, 0.256, 0.246, 0.258, 0.266, 0.305, 0.325, 0.327, 0.326, 0.298, 0.266, 0.212, 0.166, 0.127, 0.099, 0.035, -0.019, -0.058, -0.085, -0.105, -0.132, -0.139, -0.142, -0.125, -0.121, -0.16, -0.18, -0.211, -0.25, -0.277, -0.282, -0.326, -0.371, -0.424, -0.5, -0.581, -0.645, -0.718, -0.78], "preset": true}, "STRD": {"date": "2026-07-31 15:30", "close": 58.06999969482422, "z": -0.4727492770880719, "band": 0.5, "zlen": 71, "basis": 61.12250825049172, "sd": 4.112704779354054, "zone": "NEUTRAL", "side": null, "dist": 0.027250722911928094, "buyPx": 58.64069831850746, "sellPx": 76.33994727089717, "buyPct": 0.9827770392327295, "sellPct": 31.461938474405326, "fired": "-", "lastSig": "BUY", "lastAgo": 48, "pending": "-", "nBuy": 16, "nSell": 8, "spark": [-2.103, -2.243, -2.197, -2.202, -2.229, -2.24, -2.509, -2.669, -2.884, -3.0, -2.935, -2.839, -2.594, -2.429, -2.359, -2.204, -1.906, -1.707, -1.546, -1.407, -1.25, -1.12, -1.019, -0.966, -0.952, -0.932, -0.908, -0.878, -0.868, -0.847, -0.863, -0.857, -0.831, -0.804, -0.774, -0.759, -0.741, -0.744, -0.722, -0.714, -0.644, -0.592, -0.511, -0.468, -0.447, -0.441, -0.451, -0.469, -0.453, -0.454, -0.402, -0.398, -0.403, -0.41, -0.416, -0.405, -0.358, -0.345, -0.383, -0.473], "preset": true}, "PURR": {"date": "2026-07-31 15:30", "close": 6.195000171661377, "z": -1.4837921328306933, "band": 0.5, "zlen": 56, "basis": 7.370171427726746, "sd": 0.8330066323979393, "zone": "BUY ZONE", "side": "buy", "dist": -0.9837921328306933, "buyPx": 9.522008670639867, "sellPx": 18.28360638630783, "buyPct": 53.704736187057314, "sellPct": 195.13488102784876, "fired": "-", "lastSig": "BUY", "lastAgo": 2, "pending": "-", "nBuy": 4, "nSell": 13, "spark": [0.86, 0.791, 0.704, 0.64, 0.43, 0.206, -0.05, -0.226, -0.395, -0.473, -0.391, -0.32, -0.31, -0.341, -0.525, -0.667, -0.652, -0.675, -0.735, -0.773, -0.596, -0.474, -0.485, -0.567, -0.736, -0.846, -0.905, -1.02, -1.063, -1.114, -1.256, -1.342, -1.373, -1.372, -1.297, -1.23, -1.314, -1.471, -1.546, -1.628, -1.577, -1.512, -1.446, -1.388, -1.377, -1.381, -1.42, -1.471, -1.496, -1.572, -1.595, -1.574, -1.611, -1.617, -1.664, -1.701, -1.647, -1.573, -1.508, -1.484], "preset": true}, "SE": {"date": "2026-07-31 15:30", "close": 106.62000274658205, "z": 0.7410912810311046, "band": 2.72, "zlen": 65, "basis": 101.31124619704026, "sd": 7.756825210894274, "zone": "NEUTRAL", "side": null, "dist": 1.9789087189688956, "buyPx": null, "sellPx": null, "buyPct": null, "sellPct": null, "fired": "-", "lastSig": "BUY", "lastAgo": 388, "pending": "-", "nBuy": 1, "nSell": 2, "spark": [0.227, 0.346, 0.343, 0.274, 0.425, 0.517, 0.778, 0.841, 0.646, 0.476, 0.417, 0.458, 0.512, 0.645, 0.86, 1.118, 1.699, 2.05, 2.326, 2.438, 2.566, 2.585, 2.576, 2.481, 2.412, 2.347, 2.367, 2.384, 2.522, 2.476, 2.424, 2.329, 2.223, 2.096, 2.06, 1.992, 1.835, 1.661, 1.497, 1.341, 1.309, 1.228, 1.174, 1.127, 1.076, 1.006, 0.841, 0.683, 0.597, 0.504, 0.551, 0.571, 0.581, 0.665, 0.727, 0.792, 0.759, 0.741, 0.76, 0.741], "preset": true}, "CRCL": {"date": "2026-07-31 15:30", "close": 62.59000015258789, "z": -1.2476376629783643, "band": 0.5, "zlen": 148, "basis": 87.93864582680366, "sd": 20.885208581714604, "zone": "BUY ZONE", "side": "buy", "dist": -0.7476376629783643, "buyPx": 124.77784607512987, "sellPx": null, "buyPct": 99.35747846450631, "sellPct": null, "fired": "-", "lastSig": "BUY", "lastAgo": 2, "pending": "-", "nBuy": 21, "nSell": 8, "spark": [-1.671, -1.655, -1.64, -1.624, -1.662, -1.696, -1.797, -1.853, -1.903, -1.944, -1.892, -1.846, -1.783, -1.713, -1.835, -1.931, -1.963, -2.015, -2.004, -1.994, -1.918, -1.863, -1.839, -1.843, -1.862, -1.862, -1.857, -1.861, -1.812, -1.766, -1.768, -1.763, -1.756, -1.736, -1.68, -1.633, -1.639, -1.658, -1.644, -1.649, -1.574, -1.523, -1.406, -1.319, -1.303, -1.296, -1.32, -1.35, -1.36, -1.367, -1.354, -1.315, -1.29, -1.278, -1.29, -1.303, -1.282, -1.254, -1.259, -1.248], "preset": true}, "STRL": {"date": "2026-07-31 15:30", "close": 596.9099731445312, "z": -1.3216005307526721, "band": 1.06, "zlen": 50, "basis": 679.599849243164, "sd": 79.37491719771525, "zone": "BUY ZONE", "side": "buy", "dist": -0.2616005307526721, "buyPx": 654.8813512227766, "sellPx": null, "buyPct": 9.711913133709471, "sellPct": null, "fired": "-", "lastSig": "BUY", "lastAgo": 2, "pending": "-", "nBuy": 26, "nSell": 47, "spark": [0.344, 0.355, 0.589, 0.799, 0.825, 0.808, 0.674, 0.593, 0.578, 0.563, 0.416, 0.106, -0.082, -0.257, -0.339, -0.361, -0.653, -0.91, -1.402, -1.733, -1.896, -1.957, -2.128, -2.181, -2.22, -2.208, -2.044, -1.898, -1.847, -1.787, -1.804, -1.794, -1.714, -1.636, -1.63, -1.567, -1.574, -1.565, -1.539, -1.514, -1.43, -1.379, -1.21, -1.082, -0.91, -0.781, -0.649, -0.576, -0.595, -0.675, -0.839, -0.905, -1.192, -1.406, -1.623, -1.794, -1.701, -1.593, -1.415, -1.322], "preset": true}, "ISRG": {"date": "2026-07-31 15:30", "close": 353.3900146484375, "z": -2.055839535029427, "band": 2.44, "zlen": 200, "basis": 430.3597288513184, "sd": 39.02926317589616, "zone": "NEUTRAL", "side": null, "dist": 0.38416046497057277, "buyPx": 285.19248097962566, "sellPx": null, "buyPct": -19.298092996955983, "sellPct": null, "fired": "-", "lastSig": "BUY", "lastAgo": 10, "pending": "-", "nBuy": 1, "nSell": 4, "spark": [-1.795, -1.809, -1.848, -1.871, -1.901, -1.898, -1.911, -1.904, -1.907, -1.906, -1.863, -1.826, -1.766, -1.731, -1.738, -1.763, -1.735, -1.713, -1.536, -1.373, -1.173, -1.042, -0.993, -0.948, -0.982, -1.032, -1.092, -1.135, -1.212, -1.256, -1.262, -1.283, -1.47, -1.644, -1.684, -1.72, -1.669, -1.597, -1.939, -2.206, -2.332, -2.414, -2.442, -2.496, -2.574, -2.634, -2.729, -2.778, -2.762, -2.738, -2.571, -2.451, -2.299, -2.203, -2.168, -2.149, -2.145, -2.118, -2.084, -2.056], "preset": true}, "REMX": {"date": "2026-07-31 15:30", "close": 66.01000213623047, "z": -1.6720235407087403, "band": 0.78, "zlen": 78, "basis": 81.92076648809972, "sd": 10.255136551361614, "zone": "BUY ZONE", "side": "buy", "dist": -0.8920235407087402, "buyPx": 101.91439304388086, "sellPx": null, "buyPct": 54.392349258755424, "sellPct": null, "fired": "-", "lastSig": "BUY", "lastAgo": 2, "pending": "-", "nBuy": 35, "nSell": 50, "spark": [-0.506, -0.523, -0.457, -0.403, -0.54, -0.683, -0.842, -0.953, -1.06, -1.147, -1.299, -1.403, -1.485, -1.523, -1.466, -1.418, -1.36, -1.352, -1.396, -1.396, -1.446, -1.476, -1.636, -1.748, -1.884, -1.964, -1.98, -1.992, -2.012, -2.005, -2.099, -2.148, -2.081, -1.997, -2.007, -1.988, -2.058, -2.091, -2.094, -2.091, -2.142, -2.157, -2.091, -2.028, -1.979, -1.934, -1.912, -1.889, -1.893, -1.897, -1.875, -1.829, -1.843, -1.837, -1.853, -1.86, -1.809, -1.757, -1.712, -1.672], "preset": true}}, OPTD={}, M={"tf": "4-hour", "smooth": 7, "piv": 2, "hasOpt": false, "nOpt": 0, "opt": null, "entry": 60.0, "exitp": 60.0, "mode": "LIFO", "last": "2026-08-03 02:00", "built": "2026-08-03 12:05 UTC", "nBuy": 8, "nSell": 1, "nFired": 0, "n": 35}, FAILED=["IBIT (symbol not in data)", "ECHO (54 bars, need > 106)", "ALAB (symbol not in data)", "LAC (symbol not in data)"], NOTICE=["No optimized settings found - run: python ia_mr_scan.py --optimize --tf 4h"];
+const LIVE_URL="https://script.google.com/macros/s/AKfycbwP1ie25ufM2-9Yx0G7sviGakPJUmRlAip4KtjfyZf5kkASHbC4aJu3Sdde4AmhOhAz/exec", LIVE_POLL_S=120;
+let LIVE=null, filter='act', sortK='dist', asc=true, setting='pre';
+function SRC(){return (setting==='opt'&&Object.keys(OPTD).length)?OPTD:D;}
+const n=(v,d=2)=>v==null||isNaN(v)?'-':v.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+document.getElementById('cfg').textContent=M.tf+' bars \u00b7 EMA'+M.smooth+' \u00b7 pivot '+M.piv+' \u00b7 last '+M.last;
+document.getElementById('built').textContent='built '+M.built;
+
+// Live price re-estimates z against the LAST BAR's mean and stdev. Those need a
+// completed bar to move, so they stay put; only the numerator changes.
+function liveOne(d){
+ const q=LIVE&&LIVE.q&&LIVE.q[d.sym];
+ if(!q||!q.p||d.basis==null||!d.sd)return d;
+ const r=Object.assign({},d,{close:q.p,live:true,chg:q.d});
+ r.z=(q.p-d.basis)/d.sd;
+ r.zone=r.z>=d.band?'SELL ZONE':r.z<=-d.band?'BUY ZONE':'NEUTRAL';
+ r.side=r.z>=d.band?'sell':r.z<=-d.band?'buy':null;
+ r.dist=d.band-Math.abs(r.z);
+ r.buyPct=d.buyPx==null?null:(d.buyPx/q.p-1)*100;
+ r.sellPct=d.sellPx==null?null:(d.sellPx/q.p-1)*100;
+ return r;}
+function liveAge(){return (!LIVE||!LIVE.asof)?null:(Date.now()-Date.parse(LIVE.asof))/60000;}
+function badge(){
+ const el=document.getElementById('livebadge'),a=liveAge();
+ if(a==null){el.className='badge off';el.textContent='no live feed';return;}
+ const t=new Date(Date.parse(LIVE.asof)).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+ if(a<=25){el.className='badge on';el.textContent='LIVE '+t;}
+ else{el.className='badge old';el.textContent='prices '+Math.round(a)+'m old';}}
+async function loadLive(){
+ try{const r=await fetch(LIVE_URL+(LIVE_URL.indexOf('?')<0?'?':'&')+'t='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw 0;const j=await r.json();LIVE=(j&&j.q)?j:null;}catch(e){LIVE=null;}
+ badge();draw();}
+
+function rows(){
+ let r=Object.entries(SRC()).map(([sym,d])=>liveOne(Object.assign({sym},d)));
+ r.forEach(x=>x.cfgs=x.zlen+'/'+x.band.toFixed(2));
+ if(filter==='act')r=r.filter(x=>x.zone!=='NEUTRAL'||x.fired!=='-'||x.pending!=='-');
+ if(filter==='buy')r=r.filter(x=>x.zone==='BUY ZONE');
+ if(filter==='sell')r=r.filter(x=>x.zone==='SELL ZONE');
+ if(filter==='fired')r=r.filter(x=>x.fired!=='-');
+ const q=document.getElementById('q').value.trim().toUpperCase();
+ if(q)r=r.filter(x=>x.sym.includes(q));
+ r.sort((a,b)=>{let x=a[sortK],y=b[sortK];if(x==null)return 1;if(y==null)return -1;
+  if(typeof x==='string')return asc?x.localeCompare(y):y.localeCompare(x);return asc?x-y:y-x;});
+ return r;}
+function zbar(z,band){
+ const lim=Math.max(band*1.6,Math.abs(z)*1.05)||1;
+ const pos=(z/lim/2+0.5)*86;
+ const bl=(-band/lim/2+0.5)*86, bh=(band/lim/2+0.5)*86;
+ return `<span class="zbar"><u style="left:${bl.toFixed(0)}px"></u>`+
+        `<u style="left:${bh.toFixed(0)}px"></u>`+
+        `<i style="left:${Math.max(0,Math.min(84,pos)).toFixed(0)}px"></i></span>`;}
+function draw(){
+ const r=rows();
+ document.getElementById('tb').innerHTML=r.map(d=>{
+  const zt=d.zone==='BUY ZONE'?'z-buy':d.zone==='SELL ZONE'?'z-sell':'z-neu';
+  const fired=d.fired==='BUY'?'<span class="tag fb">BUY</span>':
+              d.fired==='SELL'?'<span class="tag fs">SELL</span>':'<span class="dim">-</span>';
+  const pend=d.pending==='-'?'<span class="dim">-</span>':
+    `<span class="${d.pending.indexOf('buy')>=0?'grn':'red'}">${d.pending}</span>`;
+  const px=d.live?`<span class="livepx">${n(d.close)}</span>`+
+    (d.chg==null?'':` <span class="${d.chg>=0?'up':'dn'}">${d.chg>=0?'+':''}${n(d.chg,1)}%</span>`)
+    :n(d.close);
+  return `<tr><td class="sym">${d.sym}</td>
+  <td class="dim">${d.cfgs}${d.preset?'':' <span class="amb">fb</span>'}</td>
+  <td>${px}</td>
+  <td>${zbar(d.z,d.band)}<b class="${d.z<=-d.band?'grn':d.z>=d.band?'red':''}">${n(d.z,2)}</b></td>
+  <td><span class="tag ${zt}">${d.zone}</span></td>
+  <td>${fired}</td><td>${pend}</td>
+  <td class="grn">${n(d.buyPx)}</td>
+  <td class="grn">${d.buyPct==null?'-':(d.buyPct>0?'+':'')+n(d.buyPct,1)+'%'}</td>
+  <td class="red">${n(d.sellPx)}</td>
+  <td class="red">${d.sellPct==null?'-':(d.sellPct>0?'+':'')+n(d.sellPct,1)+'%'}</td>
+  <td class="${d.dist<0?'amb':'dim'}">${n(d.dist,2)}</td>
+  <td class="dim">${d.lastSig}${d.lastAgo==null?'':' '+d.lastAgo+'b'}</td>
+  <td class="dim">${d.nBuy}/${d.nSell}</td>
+  <td class="dim">${d.date}</td></tr>`;}).join('');
+ document.getElementById('count').textContent=r.length+' / '+Object.keys(SRC()).length;}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+ const g=b.dataset.t==='guide';
+ document.getElementById('guide').style.display=g?'block':'none';
+ document.getElementById('scanpane').style.display=g?'none':'block';});
+document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>{
+ if(b.dataset.m==='opt'&&!Object.keys(OPTD).length){
+  alert('No optimized settings yet - run: python ia_mr_scan.py --optimize');return;}
+ document.querySelectorAll('.mode').forEach(x=>x.classList.remove('on'));
+ b.classList.add('on');setting=b.dataset.m;draw();});
+document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('[data-f]').forEach(x=>x.classList.remove('on'));
+ b.classList.add('on');filter=b.dataset.f;draw();});
+document.querySelectorAll('#scanpane th').forEach(h=>h.onclick=()=>{
+ const k=h.dataset.k;asc=(k===sortK)?!asc:true;sortK=k;draw();});
+document.getElementById('q').oninput=draw;
+if(NOTICE.length)document.getElementById('notice').innerHTML='<div class="warn">'+NOTICE.join('<br><br>')+'</div>';
+if(FAILED.length)document.getElementById('fail').innerHTML='<div class="fail">NO DATA ('+FAILED.length+'): '+FAILED.join(', ')+'</div>';
+draw();
+if(LIVE_URL){loadLive();if(LIVE_POLL_S>0)setInterval(loadLive,LIVE_POLL_S*1000);}
+else{document.getElementById('livebadge').style.display='none';}
+</script></body></html>
