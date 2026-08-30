@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Basiskamp Weekplanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#e9ebed; --panel:#fbfcfc; --panel-2:#f1f3f5; --panel-3:#e4e8ea;
+  --ink:#14181b; --ink-soft:#57616b; --ink-faint:#8a949e;
+  --line:#d4d9dd; --line-hard:#aeb6bd;
+  --deep:#1f4e5f; --deep-wash:#e2ebee;
+  --signal:#b4531f; --signal-wash:#f7ece5;
+  --goed:#2f6b45; --goed-wash:#e4efe8;
+  --waarschuw:#8a6d1f; --waarschuw-wash:#f5efdc;
+  --paars:#4a3f7a; --paars-wash:#e8e5f2;
+  --ui:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#12161a; --panel:#1a1f24; --panel-2:#20262c; --panel-3:#272e35;
+  --ink:#e6eaed; --ink-soft:#a3adb6; --ink-faint:#727d86;
+  --line:#2b333a; --line-hard:#414b53;
+  --deep:#7fb3c4; --deep-wash:#1a2b32;
+  --signal:#e0885a; --signal-wash:#2c2019;
+  --goed:#7cc39a; --goed-wash:#1a2a21;
+  --waarschuw:#d8b969; --waarschuw-wash:#2a2618;
+  --paars:#a99ede; --paars-wash:#211f2e;
+}}
+:root[data-theme="dark"]{
+  --ground:#12161a; --panel:#1a1f24; --panel-2:#20262c; --panel-3:#272e35;
+  --ink:#e6eaed; --ink-soft:#a3adb6; --ink-faint:#727d86;
+  --line:#2b333a; --line-hard:#414b53;
+  --deep:#7fb3c4; --deep-wash:#1a2b32;
+  --signal:#e0885a; --signal-wash:#2c2019;
+  --goed:#7cc39a; --goed-wash:#1a2a21;
+  --waarschuw:#d8b969; --waarschuw-wash:#2a2618;
+  --paars:#a99ede; --paars-wash:#211f2e;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--ui);font-size:14px;line-height:1.45}
+button{font:inherit;color:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--line-hard);background:var(--panel);padding:6px 11px}
+button:hover{border-color:var(--deep)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--deep);outline-offset:1px}
+button.pri{background:var(--deep);border-color:var(--deep);color:#f4f8f9;font-weight:600}
+:root[data-theme="dark"] button.pri,:root:not([data-theme="light"]) button.pri{color:#12161a}
+button.pri:hover{opacity:.9}
+input,select{font:inherit;background:var(--panel);color:var(--ink);border:1px solid var(--line-hard);border-radius:4px;padding:6px 9px;max-width:100%}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+.balk{position:sticky;top:0;z-index:30;background:var(--ground);border-bottom:1px solid var(--line-hard);padding:12px 20px}
+.balk-in{max-width:1420px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.merk{font-weight:700;font-size:1.02rem;letter-spacing:-.02em;white-space:nowrap}
+.merk span{color:var(--deep);font-weight:600}
+.weekkies{display:flex;align-items:center;gap:6px}
+.weekkies .wknaam{font-family:var(--mono);font-size:.86rem;min-width:190px;text-align:center;font-weight:500}
+.balk .rechts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.modus{display:flex;border:1px solid var(--line-hard);border-radius:4px;overflow:hidden}
+.modus button{border:none;border-radius:0;padding:6px 13px;background:var(--panel)}
+.modus button[aria-pressed="true"]{background:var(--deep);color:#f4f8f9;font-weight:600}
+:root[data-theme="dark"] .modus button[aria-pressed="true"],
+:root:not([data-theme="light"]) .modus button[aria-pressed="true"]{color:#12161a}
+.syncdot{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.72rem;color:var(--ink-faint)}
+.syncdot i{width:8px;height:8px;border-radius:50%;background:var(--ink-faint);display:block}
+.syncdot.aan i{background:var(--goed)} .syncdot.bezig i{background:var(--waarschuw)} .syncdot.fout i{background:var(--signal)}
+
+.romp{max-width:1420px;margin:0 auto;padding:16px 20px 90px;display:grid;grid-template-columns:246px 1fr;gap:16px;align-items:start}
+.romp>main{min-width:0}
+@media(max-width:1000px){.romp{grid-template-columns:1fr}}
+
+.bib{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:13px;position:sticky;top:74px;max-height:calc(100vh - 96px);display:flex;flex-direction:column;gap:10px}
+@media(max-width:1000px){.bib{position:static;max-height:none}}
+.bib h2{font-size:.7rem;font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:0;font-weight:600}
+.bib-hint{font-size:.76rem;color:var(--ink-faint);margin:0;line-height:1.35}
+.bib-lijst{overflow-y:auto;display:flex;flex-direction:column;gap:2px;flex:1;min-height:120px}
+.cat{font-family:var(--mono);font-size:.63rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:9px 0 3px;font-weight:600}
+.cat:first-child{margin-top:0}
+.eten{display:flex;align-items:baseline;gap:7px;padding:5px 7px;border-radius:3px;background:none;border:1px solid transparent;text-align:left;width:100%}
+.eten:hover{background:var(--deep-wash);border-color:var(--deep)}
+.eten .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.83rem}
+.eten .kc{font-family:var(--mono);font-size:.71rem;color:var(--ink-faint);flex:none}
+.etenrij{display:flex;align-items:stretch;gap:1px}
+.etenrij .eten{flex:1;min-width:0}
+.bewerk{opacity:0;border:1px solid transparent;background:none;color:var(--ink-faint);padding:0 5px;font-size:.85rem;border-radius:3px;line-height:1;flex:none}
+.etenrij:hover .bewerk,.bewerk:focus-visible{opacity:1}
+.bewerk:hover{color:var(--deep);background:var(--deep-wash);border-color:var(--deep)}
+.bibkop{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+#bibaantal{font-family:var(--mono);font-size:.62rem;color:var(--ink-faint)}
+.metrij{border-right:1px solid var(--line);border-top:1px solid var(--line);padding:5px 6px;background:var(--panel-2);display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.en{flex:1;min-width:17px;border:1px solid var(--line-hard);border-radius:3px;padding:2px 0;font-size:.66rem;font-family:var(--mono);text-align:center;background:var(--panel)}
+.en[aria-pressed="true"]{background:var(--deep);border-color:var(--deep);color:#f4f8f9;font-weight:600}
+:root[data-theme="dark"] .en[aria-pressed="true"],:root:not([data-theme="light"]) .en[aria-pressed="true"]{color:#12161a}
+.kg{flex-basis:100%;padding:2px 5px;font-family:var(--mono);font-size:.7rem;text-align:center}
+.kg::placeholder{color:var(--ink-faint)}
+.boodschap{font-family:var(--mono);font-size:.78rem;line-height:1.55;white-space:pre-wrap;background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:12px;max-height:52vh;overflow:auto;margin:0}
+
+
+
+
+.rooster{background:var(--panel);border:1px solid var(--line);border-radius:5px;overflow-x:auto;max-width:100%}
+.grid{display:grid;grid-template-columns:76px repeat(7,minmax(144px,1fr) minmax(96px,.7fr));min-width:1760px}
+.gh{background:var(--panel-2);border-bottom:1px solid var(--line-hard);padding:7px 8px}
+.gh.hoek{border-right:1px solid var(--line)}
+.gh .dg{font-family:var(--mono);font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+.gh .dd{font-weight:700;font-size:.95rem;letter-spacing:-.01em}
+.ghrij{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}
+.werkknop{font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:2px;border:1px solid var(--line-hard);background:var(--panel);color:var(--ink-faint);flex:none;line-height:1.4}
+.werkknop.aan{border-color:var(--deep);color:var(--deep);background:var(--deep-wash);font-weight:600}
+.toevoeg{border:1px dashed var(--line-hard);background:none;color:var(--ink-faint);font-size:.72rem;padding:3px 5px;border-radius:3px;text-align:left;width:100%;font-family:var(--ui)}
+.toevoeg:hover{border-color:var(--paars);color:var(--paars);border-style:solid}
+.cel.vrijdag{background:repeating-linear-gradient(135deg,transparent,transparent 7px,var(--panel-2) 7px,var(--panel-2) 8px)}
+.wdrij{display:flex;gap:5px;flex-wrap:wrap}
+.wd{flex:1;min-width:40px;border:1px solid var(--line-hard);border-radius:3px;padding:5px 0;font-family:var(--mono);font-size:.7rem;text-align:center;background:var(--panel)}
+.wd[aria-pressed="true"]{background:var(--deep-wash);border-color:var(--deep);color:var(--deep);font-weight:600}
+.gh.gh-doen{border-left:1px dashed var(--line-hard);display:flex;align-items:flex-start;justify-content:flex-end}
+.cel.actcel{border-left:1px dashed var(--line-hard);background:var(--panel-2);gap:2px}
+.cel.actcel.vrijdag{background:repeating-linear-gradient(135deg,var(--panel-2),var(--panel-2) 7px,var(--panel-3) 7px,var(--panel-3) 8px)}
+.actkop{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin-bottom:1px}
+.chip.compact{flex-wrap:wrap;padding:3px 4px;font-size:.72rem;gap:1px 4px;line-height:1.2}
+.chip.compact .tijd{flex-basis:100%;font-family:var(--mono);font-size:.63rem;font-weight:600}
+.chip.compact .cn{flex:1 1 auto;-webkit-line-clamp:2}
+.chip.compact .ck{font-size:.61rem}
+.chip.werk{background:var(--panel-3);border-color:var(--line-hard)}
+.chip.werk .tijd{color:var(--ink-soft)}
+.chip.reis{background:var(--panel);border-color:var(--line-hard);border-style:dashed;color:var(--ink-soft)}
+.chip.reis .tijd{color:var(--ink-faint)}
+.chip.afspraak{background:var(--waarschuw-wash);border-color:var(--waarschuw)}
+.chip.afspraak .tijd{color:var(--waarschuw)}
+.chip.agenda{background:var(--panel-3);border-color:var(--line-hard)}
+.chip.agenda .tijd{font-family:var(--mono);font-size:.66rem;color:var(--ink-soft);font-weight:600;flex:none}
+.cel.tijdcel{cursor:default;padding:6px 6px 5px;justify-content:center}
+.cel.tijdcel:hover{background:none}
+.tijdlijn{position:relative;height:26px;background:var(--panel-2);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.tl-uur{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+.tl-blok{position:absolute;top:2px;height:9px;border-radius:2px;min-width:3px}
+.tl-blok.werk{background:var(--ink-faint)}
+.tl-blok.reis{background:repeating-linear-gradient(135deg,var(--line-hard),var(--line-hard) 3px,var(--panel-2) 3px,var(--panel-2) 6px)}
+.tl-blok.afspraak{background:var(--waarschuw)}
+.tl-blok.train{background:var(--paars);top:13px}
+.tl-baan{position:absolute;left:0;right:0;height:1px;top:12px;background:var(--line)}
+.tl-schaal{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.55rem;color:var(--ink-faint);margin-top:2px;letter-spacing:-.02em}
+.tl-legenda{display:flex;gap:12px;flex-wrap:wrap;font-size:.72rem;color:var(--ink-soft);align-items:center}
+.tl-legenda span{display:inline-flex;align-items:center;gap:5px}
+.tl-legenda i{width:14px;height:9px;border-radius:2px;display:block}
+.gh.vandaag{background:var(--deep-wash)} .gh.vandaag .dd{color:var(--deep)}
+.slotlab{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px;font-family:var(--mono);font-size:.63rem;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;background:var(--panel-2)}
+.slotlab.trainlab{color:var(--paars);background:var(--paars-wash)}
+.cel{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:5px;min-height:46px;display:flex;flex-direction:column;gap:3px;cursor:pointer;background:none}
+.cel:hover{background:var(--panel-2)}
+.cel.actief{background:var(--deep-wash);box-shadow:inset 0 0 0 2px var(--deep)}
+.cel.traincel{border-top:1px solid var(--line-hard)}
+.cel.traincel.actief{background:var(--paars-wash);box-shadow:inset 0 0 0 2px var(--paars)}
+.chip{display:flex;align-items:baseline;gap:4px;background:var(--panel-3);border:1px solid var(--line);border-radius:3px;padding:3px 5px;font-size:.76rem;line-height:1.25;text-align:left}
+.chip .cn{flex:1;min-width:0;overflow-wrap:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.chip .ck{font-family:var(--mono);font-size:.66rem;color:var(--ink-faint);flex:none}
+.chip .x{flex:none;border:none;background:none;padding:0 1px;color:var(--ink-faint);font-size:.85rem;line-height:1;border-radius:2px}
+.chip .x:hover{color:var(--signal)}
+.chip.extra{background:var(--signal-wash);border-color:var(--signal)}
+.chip.niet{opacity:.45;text-decoration:line-through}
+.chip.onge{background:var(--waarschuw-wash);border-color:var(--waarschuw)}
+.chip.train{background:var(--paars-wash);border-color:var(--paars)}
+.chip.train .tijd{font-family:var(--mono);font-size:.66rem;color:var(--paars);font-weight:600;flex:none}
+.leeg{color:var(--ink-faint);font-size:.72rem;font-style:italic;padding:2px 3px}
+
+.tot{border-right:1px solid var(--line);border-top:1px solid var(--line-hard);padding:7px 8px;background:var(--panel-2)}
+.tot .kcal{font-family:var(--mono);font-weight:600;font-size:.92rem;display:block}
+.tot .eiw{font-family:var(--mono);font-size:.68rem;color:var(--ink-faint);display:block;margin-top:1px}
+.tot.in .kcal{color:var(--goed)} .tot.over .kcal{color:var(--signal)}
+.tot.onder .kcal{color:var(--waarschuw)} .tot.leegdag .kcal{color:var(--ink-faint)}
+.markrij{border-right:1px solid var(--line);border-top:1px solid var(--line);padding:5px 6px;background:var(--panel-2);display:flex;gap:3px}
+.mk{flex:1;border:1px solid var(--line-hard);border-radius:3px;padding:3px 0;font-size:.68rem;font-family:var(--mono);text-align:center;background:var(--panel)}
+.mk[aria-pressed="true"]{font-weight:600}
+.mk.ok[aria-pressed="true"]{background:var(--goed-wash);border-color:var(--goed);color:var(--goed)}
+.mk.nee[aria-pressed="true"]{background:var(--signal-wash);border-color:var(--signal);color:var(--signal)}
+.mk.vrij[aria-pressed="true"]{background:var(--waarschuw-wash);border-color:var(--waarschuw);color:var(--waarschuw)}
+
+.weekvat{display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding:11px 14px;background:var(--panel);border:1px solid var(--line);border-radius:5px;margin-bottom:14px}
+.kpi{display:flex;flex-direction:column;gap:1px;min-width:92px}
+.kpi .lab{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+.kpi .val{font-family:var(--mono);font-size:1.12rem;font-weight:600}
+.kpi .val.goed{color:var(--goed)} .kpi .val.sig{color:var(--signal)}
+.kpi .val.waar{color:var(--waarschuw)} .kpi .val.pa{color:var(--paars)}
+.weekvat .acties{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap}
+.uitleg{font-size:.79rem;color:var(--ink-soft);margin:0;flex-basis:100%;padding-top:3px;border-top:1px solid var(--line)}
+.uitleg b{color:var(--ink)}
+
+dialog{border:1px solid var(--line-hard);border-radius:6px;background:var(--panel);color:var(--ink);padding:0;max-width:460px;width:calc(100% - 32px)}
+dialog::backdrop{background:rgba(10,14,17,.45)}
+.dlg{padding:20px}
+.dlg h3{margin:0 0 4px;font-size:1.02rem}
+.dlg p.sub{margin:0 0 15px;font-size:.82rem;color:var(--ink-soft)}
+.dlg p.sub code{font-family:var(--mono);font-size:.94em;background:var(--panel-2);padding:1px 4px;border-radius:2px}
+.veldrij{display:flex;gap:9px;margin-bottom:10px;flex-wrap:wrap}
+.veld{flex:1;min-width:110px;display:flex;flex-direction:column;gap:3px}
+.veld.breed{flex-basis:100%}
+.veld label{font-family:var(--mono);font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+.dlg-acties{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.melding{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--ground);padding:9px 17px;border-radius:5px;font-size:.85rem;z-index:80;box-shadow:0 3px 14px rgba(0,0,0,.22);max-width:90vw;text-align:center}
+.voet{max-width:1420px;margin:0 auto;padding:0 20px 26px;font-size:.75rem;color:var(--ink-faint);display:flex;gap:14px;flex-wrap:wrap}
+
+@media print{
+  .balk,.bib,.weekvat .acties,.tl-legenda,.voet,dialog,#printkop{display:none}
+  #printkop{display:block!important;margin:0 0 8px;font-family:var(--ui)}
+  #printkop b{font-size:13px} #printkop span{font-size:9px;color:#555;margin-left:8px}
+  body{background:#fff;color:#000}
+  .romp{display:block;padding:0;max-width:none;gap:0}
+  .weekvat{border:none;padding:0 0 6px;margin:0 0 6px;background:none;border-bottom:1px solid #999;border-radius:0}
+  .kpi .val{font-size:12px} .uitleg{font-size:8px;border:none;padding:0}
+  .rooster{border:1px solid #999;overflow:visible;border-radius:0}
+  .grid{min-width:0;font-size:8px;grid-template-columns:52px repeat(7,1fr .6fr);width:100%}
+  .chip .x,.toevoeg,.mk,.werkknop,.leeg,.actkop{display:none!important}
+  .chip{padding:1px 3px;font-size:8px;background:#f4f4f4!important;border-color:#bbb!important}
+  .chip.compact .tijd{font-size:7px}
+  .cel{min-height:0;padding:2px}
+  .gh .dd{font-size:10px} .slotlab{font-size:7px;padding:3px}
+  .tot .kcal{font-size:9px} .tot .eiw{font-size:7px}
+  .metrij,.markrij,.printweg,.melding{display:none!important}
+  .tijdlijn{height:14px}
+  @page{size:A4 landscape;margin:8mm}
+}
+</style>
+
+<div class="balk"><div class="balk-in">
+  <span class="merk">Basiskamp <span>Weekplanner</span></span>
+  <div class="weekkies">
+    <button id="vorig" title="Vorige week">‹</button>
+    <span class="wknaam mono" id="wknaam">—</span>
+    <button id="volgend" title="Volgende week">›</button>
+    <button id="nu">nu</button>
+  </div>
+  <div class="modus" role="group" aria-label="Modus">
+    <button id="m-plan" aria-pressed="true">Plannen</button>
+    <button id="m-corr" aria-pressed="false">Corrigeren</button>
+  </div>
+  <div class="rechts">
+    <span class="syncdot" id="syncdot" title="Google Sheet"><i></i><span id="syncnaam">geen sheet</span></span>
+    <button id="btn-kopie">Vorige week kopiëren</button>
+    <button id="btn-csv">CSV</button>
+    <button id="btn-json">Back-up</button>
+    <button id="btn-laad">Laden</button>
+    <button id="btn-sheet">Sheet…</button>
+  </div>
+</div></div>
+</head>
+<body>
+<div id="printkop" style="display:none"></div>
+<div class="romp">
+  <aside class="bib">
+    <div class="bibkop"><h2>Bibliotheek</h2><span id="bibaantal"></span></div>
+    <p class="bib-hint" id="bibhint">Klik een vak in het rooster, klik dan hier om er iets in te zetten.</p>
+    <input type="search" id="zoek" placeholder="Zoeken…" aria-label="Zoek in bibliotheek">
+    <div class="bib-lijst" id="biblijst"></div>
+    <button id="btn-nieuw">+ Nieuw item</button>
+  </aside>
+
+  <main>
+    <div class="weekvat">
+      <div class="kpi"><span class="lab">Gem. per dag</span><span class="val mono" id="k-kcal">—</span></div>
+      <div class="kpi"><span class="lab">Eiwit gem.</span><span class="val mono" id="k-eiw">—</span></div>
+      <div class="kpi"><span class="lab">Dagen gepland</span><span class="val mono" id="k-dagen">—</span></div>
+      <div class="kpi"><span class="lab">Sessies</span><span class="val mono" id="k-sessies">—</span></div>
+      <div class="kpi"><span class="lab">Dagen gelukt</span><span class="val mono" id="k-gelukt">—</span></div>
+      <div class="kpi"><span class="lab">Energie</span><span class="val mono" id="k-energie">—</span></div>
+      <div class="kpi"><span class="lab">Week</span><span class="val mono" id="k-week">—</span></div>
+      <div class="acties">
+        <button id="btn-doel">Instellingen…</button>
+        <button id="btn-werkdag">Werkdag-sjabloon</button>
+        <button id="btn-trainweek">Trainingsweek</button>
+        <button id="btn-werktijden">Werktijden</button>
+        <button id="btn-bood">Boodschappen</button>
+        <button id="btn-print">Print</button>
+      </div>
+      <p class="uitleg" id="uitleg"></p>
+      <div class="tl-legenda" style="flex-basis:100%;padding-top:2px">
+        <span><i style="background:var(--ink-faint)"></i>werk</span>
+        <span><i style="background:repeating-linear-gradient(135deg,var(--line-hard),var(--line-hard) 3px,var(--panel-2) 3px,var(--panel-2) 6px)"></i>reizen</span>
+        <span><i style="background:var(--paars)"></i>training</span>
+        <span><i style="background:var(--waarschuw)"></i>afspraak</span>
+      </div>
+    </div>
+    <div class="rooster"><div class="grid" id="grid"></div></div>
+  </main>
+</div>
+
+<div class="voet">
+  <span>Werkkopie staat in deze browser. Koppel een Google Sheet of maak elke zondag een back-up.</span>
+  <span id="opgeslagen"></span>
+</div>
+
+<dialog id="dlg-nieuw"><form method="dialog" class="dlg">
+  <h3 id="n-titel">Nieuw item</h3>
+  <p class="sub">Waarden zijn richtwaarden. Klopt iets niet met jouw verpakking, pas het hier aan.</p>
+  <div class="veld breed" style="margin-bottom:10px"><label for="n-naam">Naam</label><input id="n-naam" required maxlength="60"></div>
+  <div class="veldrij">
+    <div class="veld"><label for="n-kcal">Kcal</label><input id="n-kcal" type="number" min="0" max="5000" required></div>
+    <div class="veld"><label for="n-eiw">Eiwit (g)</label><input id="n-eiw" type="number" min="0" max="300" value="0"></div>
+    <div class="veld"><label for="n-cat">Groep</label><select id="n-cat"></select></div>
+  </div>
+  <div class="dlg-acties"><button type="button" id="n-weg" style="margin-right:auto">Verwijderen</button><button value="annuleer">Annuleren</button><button class="pri" value="ok" id="n-ok">Opslaan</button></div>
+</form></dialog>
+
+<dialog id="dlg-doel"><form method="dialog" class="dlg">
+  <h3>Instellingen</h3>
+  <p class="sub">De band waarbinnen een dag groen kleurt, en welke dagen standaard werkdagen zijn. Losse dagen zet je om via het knopje in de kop van het rooster.</p>
+  <div class="veldrij">
+    <div class="veld"><label for="d-min">Kcal van</label><input id="d-min" type="number" min="1000" max="4000"></div>
+    <div class="veld"><label for="d-max">tot</label><input id="d-max" type="number" min="1000" max="5000"></div>
+    <div class="veld"><label for="d-eiw">Eiwit (g)</label><input id="d-eiw" type="number" min="30" max="300"></div>
+  </div>
+  <div class="veldrij">
+    <div class="veld"><label for="d-wstart">Werk van</label><input id="d-wstart" type="time" step="900"></div>
+    <div class="veld"><label for="d-weind">tot</label><input id="d-weind" type="time" step="900"></div>
+    <div class="veld"><label for="d-reis">Reis (min)</label><input id="d-reis" type="number" min="0" max="180" step="5"></div>
+  </div>
+  <div class="veld breed" style="margin-top:4px"><label>Standaard werkdagen</label>
+    <div class="wdrij" id="d-werk"></div></div>
+  <div class="dlg-acties"><button value="annuleer">Annuleren</button><button class="pri" value="ok" id="d-ok">Opslaan</button></div>
+</form></dialog>
+
+<dialog id="dlg-train"><form method="dialog" class="dlg">
+  <h3 id="t-titel">Training inplannen</h3>
+  <p class="sub">Tijd en duur zijn voor je eigen overzicht. De weektelling kijkt naar het soort.</p>
+  <div class="veldrij">
+    <div class="veld breed"><label for="t-soort">Soort</label><select id="t-soort"></select></div>
+  </div>
+  <div class="veldrij">
+    <div class="veld"><label for="t-tijd">Begintijd</label><select id="t-tijd"></select></div>
+    <div class="veld"><label for="t-duur">Duur</label><select id="t-duur"></select></div>
+  </div>
+  <div class="veld breed"><label for="t-notitie">Notitie (optioneel)</label><input id="t-notitie" maxlength="40" placeholder="bijv. squat 55 kg"></div>
+  <div class="dlg-acties"><button value="annuleer">Annuleren</button><button class="pri" value="ok" id="t-ok">Inplannen</button></div>
+</form></dialog>
+
+<dialog id="dlg-sheet"><form method="dialog" class="dlg">
+  <h3>Google Sheet</h3>
+  <p class="sub">Plak de <code>/exec</code>-URL van je Apps Script Web App. De code staat in <code>Basiskamp - Apps Script.gs</code>. Werkt vanaf GitHub Pages of het lokale bestand; in de gepubliceerde artifact blokkeert de beveiliging het verkeer.</p>
+  <p class="sub" id="s-vast" style="display:none;color:var(--deep);border-left:2px solid var(--deep);padding-left:9px">Vast ingesteld bovenin het HTML-bestand, bij <code>SHEET_URL</code>. Wijzigen doe je daar, niet hier.</p>
+  <div class="veld breed" style="margin-bottom:10px"><label for="s-url">Exec-URL</label><input id="s-url" type="url" placeholder="https://script.google.com/macros/s/…/exec"></div>
+  <div class="veldrij">
+    <div class="veld"><label for="s-token">Token (optioneel)</label><input id="s-token" maxlength="60" placeholder="leeg laten mag"></div>
+    <div class="veld"><label for="s-auto">Automatisch</label><select id="s-auto"><option value="1">Ja, na elke wijziging</option><option value="0">Nee, alleen handmatig</option></select></div>
+  </div>
+  <div class="dlg-acties">
+    <button type="button" id="s-pull">Ophalen uit sheet</button>
+    <button type="button" id="s-push">Nu versturen</button>
+    <button value="annuleer">Sluiten</button>
+    <button class="pri" value="ok" id="s-ok">Opslaan</button>
+  </div>
+</form></dialog>
+
+<dialog id="dlg-bood"><form method="dialog" class="dlg">
+  <h3>Boodschappen</h3>
+  <p class="sub" id="b-sub"></p>
+  <pre class="boodschap" id="b-lijst"></pre>
+  <div class="dlg-acties">
+    <button type="button" id="b-kopie" style="margin-right:auto">Kopieer</button>
+    <button type="button" id="b-bewaar">Opslaan</button>
+    <button class="pri" value="ok">Sluiten</button>
+  </div>
+</form></dialog>
+
+<input type="file" id="bestand" accept="application/json,.json" hidden>
+
+<script>
+"use strict";
+
+/* ═══════════════════════════════════════════════════════════════════
+   GOOGLE SHEET — hier instellen, dan hoef je niks meer in te vullen
+
+   Plak hieronder de /exec-URL van je Apps Script web-app.
+   Laat leeg ("") als je hem liever per browser via de knop Sheet… zet.
+
+   Let op: werkt niet vanuit de gepubliceerde artifact (beveiliging
+   blokkeert script.google.com). Wel vanaf GitHub Pages en lokaal.
+   ═══════════════════════════════════════════════════════════════════ */
+const SHEET_URL   = "https://script.google.com/macros/s/AKfycbxyJutx9WXzla8voLu9smBRtjzeOv7JbReLXd2XoUIL0Nijh25f5ulprg4pzY9i6Wq2/exec";      // bv. "https://script.google.com/macros/s/AKfyc.../exec"
+const SHEET_TOKEN = "";      // moet gelijk zijn aan TOKEN in de Apps Script
+const SHEET_AUTO  = true;    // true = automatisch versturen na elke wijziging
+/* ═══════════════════════════════════════════════════════════════════ */
+
+const CATS=["Ontbijt & granen","Brood & beleg","Fruit","Groente","Peulvruchten & eiwit","Noten & zaden","Zuivelvervangers","Warme maaltijd","Uit eten","Lekkers","Drinken","Sauzen","Supplementen"];
+const LIBVERSIE=2;
+const LIB0=[
+ ["Havermout 60 g",230,8,"Ontbijt & granen"],
+ ["Havermout 40 g",150,6,"Ontbijt & granen"],
+ ["Havermoutpap sojamelk",320,14,"Ontbijt & granen"],
+ ["Overnight oats",300,14,"Ontbijt & granen"],
+ ["Muesli 60 g",220,6,"Ontbijt & granen"],
+ ["Granola 50 g",225,5,"Ontbijt & granen"],
+ ["Granola 30 g",135,3,"Ontbijt & granen"],
+ ["Cruesli 50 g",220,4,"Ontbijt & granen"],
+ ["Brinta 40 g",145,5,"Ontbijt & granen"],
+ ["Cornflakes 30 g",115,2,"Ontbijt & granen"],
+ ["Smoothie L",980,45,"Ontbijt & granen"],
+ ["Smoothie S",500,33,"Ontbijt & granen"],
+ ["Eiwitshake",265,36,"Ontbijt & granen"],
+ ["Eiwitshake + banaan",365,37,"Ontbijt & granen"],
+ ["Yoghurtbak 15:00",430,17,"Ontbijt & granen"],
+ ["Yoghurtbak klein",230,10,"Ontbijt & granen"],
+ ["Snee volkoren",90,4,"Brood & beleg"],
+ ["Snee wit",85,3,"Brood & beleg"],
+ ["Boterham hummus",145,5,"Brood & beleg"],
+ ["Boterham pindakaas",200,7,"Brood & beleg"],
+ ["Boterham jam",130,4,"Brood & beleg"],
+ ["Boterham chocopasta",155,4,"Brood & beleg"],
+ ["Boterham avocado",155,4,"Brood & beleg"],
+ ["Boterham tapenade",150,4,"Brood & beleg"],
+ ["Volkoren wrap",195,6,"Brood & beleg"],
+ ["Wrap hummus",300,9,"Brood & beleg"],
+ ["Wrap falafel",390,13,"Brood & beleg"],
+ ["Bagel",250,9,"Brood & beleg"],
+ ["Pistolet",180,6,"Brood & beleg"],
+ ["Beschuit",35,1,"Brood & beleg"],
+ ["Knackebrod",35,1,"Brood & beleg"],
+ ["Rijstwafel",35,1,"Brood & beleg"],
+ ["Croissant vegan",230,4,"Brood & beleg"],
+ ["Hummus 30 g",65,2,"Brood & beleg"],
+ ["Hummus 80 g",175,5,"Brood & beleg"],
+ ["Pindakaas 15 g",90,4,"Brood & beleg"],
+ ["Pindakaas 20 g",120,5,"Brood & beleg"],
+ ["Chocopasta 15 g",80,1,"Brood & beleg"],
+ ["Jam 15 g",40,0,"Brood & beleg"],
+ ["Avocado half",130,2,"Brood & beleg"],
+ ["Tapenade 20 g",60,1,"Brood & beleg"],
+ ["Vegan smeerkaas 20 g",55,1,"Brood & beleg"],
+ ["Banaan",100,1,"Fruit"],
+ ["Appel",80,0,"Fruit"],
+ ["Peer",100,1,"Fruit"],
+ ["Sinaasappel",80,2,"Fruit"],
+ ["Mandarijn",40,1,"Fruit"],
+ ["Kiwi",45,1,"Fruit"],
+ ["Druiven 100 g",70,1,"Fruit"],
+ ["Aardbeien 150 g",50,1,"Fruit"],
+ ["Blauwe bessen 100 g",57,1,"Fruit"],
+ ["Frambozen 100 g",52,1,"Fruit"],
+ ["Mango 150 g",90,1,"Fruit"],
+ ["Ananas 150 g",75,1,"Fruit"],
+ ["Meloen 200 g",70,1,"Fruit"],
+ ["Fruit 100 g",55,1,"Fruit"],
+ ["Fruit 250 g",135,2,"Fruit"],
+ ["Fruitsalade 200 g",110,2,"Fruit"],
+ ["Dadel",65,0,"Fruit"],
+ ["Dadels (3)",200,2,"Fruit"],
+ ["Rozijnen 30 g",90,1,"Fruit"],
+ ["Abrikozen gedroogd 30 g",70,1,"Fruit"],
+ ["Paprika",30,1,"Groente"],
+ ["Komkommer half",15,1,"Groente"],
+ ["Wortel",25,1,"Groente"],
+ ["Cherrytomaat 100 g",20,1,"Groente"],
+ ["Rauwkost 150 g",40,2,"Groente"],
+ ["Salade groot",90,4,"Groente"],
+ ["Spinazie 100 g",25,3,"Groente"],
+ ["Broccoli 150 g",50,4,"Groente"],
+ ["Sperziebonen 150 g",45,3,"Groente"],
+ ["Bloemkool 150 g",40,3,"Groente"],
+ ["Courgette 150 g",25,2,"Groente"],
+ ["Champignons 100 g",22,3,"Groente"],
+ ["Groente mix 200 g",60,3,"Groente"],
+ ["Aardappels 200 g",175,4,"Groente"],
+ ["Zoete aardappel 200 g",180,3,"Groente"],
+ ["Tofu 150 g",180,24,"Peulvruchten & eiwit"],
+ ["Tofu gemarineerd 150 g",210,22,"Peulvruchten & eiwit"],
+ ["Tempeh 100 g",190,19,"Peulvruchten & eiwit"],
+ ["Seitan 100 g",145,25,"Peulvruchten & eiwit"],
+ ["Kikkererwten 150 g",175,9,"Peulvruchten & eiwit"],
+ ["Zwarte bonen 150 g",165,10,"Peulvruchten & eiwit"],
+ ["Kidneybonen 150 g",160,10,"Peulvruchten & eiwit"],
+ ["Linzen 150 g",175,13,"Peulvruchten & eiwit"],
+ ["Edamame 200 g",240,22,"Peulvruchten & eiwit"],
+ ["Doperwten 100 g",80,6,"Peulvruchten & eiwit"],
+ ["Vegan burger",220,17,"Peulvruchten & eiwit"],
+ ["Vegan gehakt 100 g",175,17,"Peulvruchten & eiwit"],
+ ["Vegan schnitzel",250,16,"Peulvruchten & eiwit"],
+ ["Vegan kipstukjes 100 g",165,20,"Peulvruchten & eiwit"],
+ ["Vegan worst",190,14,"Peulvruchten & eiwit"],
+ ["Falafel (4)",230,8,"Peulvruchten & eiwit"],
+ ["Sojabrokken 30 g",105,15,"Peulvruchten & eiwit"],
+ ["Cashewnoten 30 g",175,5,"Noten & zaden"],
+ ["Amandelen 30 g",180,6,"Noten & zaden"],
+ ["Walnoten 30 g",200,5,"Noten & zaden"],
+ ["Pindas 30 g",170,8,"Noten & zaden"],
+ ["Gemengde noten 30 g",185,6,"Noten & zaden"],
+ ["Noten 15 g",95,3,"Noten & zaden"],
+ ["Pompoenpitten 20 g",110,6,"Noten & zaden"],
+ ["Zonnebloempitten 20 g",115,4,"Noten & zaden"],
+ ["Chiazaad 15 g",70,3,"Noten & zaden"],
+ ["Lijnzaad 15 g",80,3,"Noten & zaden"],
+ ["Sesamzaad 15 g",90,3,"Noten & zaden"],
+ ["Amandelpasta 20 g",125,5,"Noten & zaden"],
+ ["Kokosschaafsel 15 g",90,1,"Noten & zaden"],
+ ["Sojadrink 250 ml",85,8,"Zuivelvervangers"],
+ ["Sojadrink 500 ml",165,16,"Zuivelvervangers"],
+ ["Havermelk 250 ml",115,2,"Zuivelvervangers"],
+ ["Amandelmelk 250 ml",35,1,"Zuivelvervangers"],
+ ["Sojayoghurt 250 g",105,9,"Zuivelvervangers"],
+ ["Sojayoghurt 150 g",65,6,"Zuivelvervangers"],
+ ["Sojayoghurt Grieks 150 g",145,9,"Zuivelvervangers"],
+ ["Vegan kwark 150 g",105,15,"Zuivelvervangers"],
+ ["Vegan kaas 30 g",90,1,"Zuivelvervangers"],
+ ["Vegan slagroom 30 ml",90,0,"Zuivelvervangers"],
+ ["Avondeten Mieke",800,25,"Warme maaltijd"],
+ ["Avondeten licht",600,22,"Warme maaltijd"],
+ ["Avondeten zwaar",1000,30,"Warme maaltijd"],
+ ["Pasta met saus",650,22,"Warme maaltijd"],
+ ["Curry met rijst",700,22,"Warme maaltijd"],
+ ["Roerbak tofu + rijst",650,32,"Warme maaltijd"],
+ ["Chili sin carne",480,22,"Warme maaltijd"],
+ ["Stamppot 400 g",520,16,"Warme maaltijd"],
+ ["Ovenschotel 400 g",620,24,"Warme maaltijd"],
+ ["Noedels roerbak",600,20,"Warme maaltijd"],
+ ["Couscous + groente",480,14,"Warme maaltijd"],
+ ["Wraps avondeten (2)",700,25,"Warme maaltijd"],
+ ["Pizza vegan heel",900,30,"Warme maaltijd"],
+ ["Soep 500 ml",190,9,"Warme maaltijd"],
+ ["Soep met brood",350,12,"Warme maaltijd"],
+ ["Pasta 100 g droog",350,12,"Warme maaltijd"],
+ ["Rijst 75 g droog",265,6,"Warme maaltijd"],
+ ["Rijst 200 g gekookt",260,5,"Warme maaltijd"],
+ ["Uit eten lunch",900,25,"Uit eten"],
+ ["Uit eten diner",1100,30,"Uit eten"],
+ ["Falafelbowl",565,23,"Uit eten"],
+ ["Poke bowl vegan",550,20,"Uit eten"],
+ ["Broodje uit eten",390,12,"Uit eten"],
+ ["Vegan burger + friet",950,28,"Uit eten"],
+ ["Sushi vegan (8)",400,10,"Uit eten"],
+ ["Pizza uit eten",1000,32,"Uit eten"],
+ ["Friet klein",350,5,"Uit eten"],
+ ["Salade uit eten",400,12,"Uit eten"],
+ ["Bowl uit eten",600,22,"Uit eten"],
+ ["Koek KoekvanNoek",420,5,"Lekkers"],
+ ["Suikerwafel",130,1,"Lekkers"],
+ ["Stroopwafel",130,1,"Lekkers"],
+ ["Chocoladereep",250,3,"Lekkers"],
+ ["Pure chocolade 20 g",110,2,"Lekkers"],
+ ["Chips 30 g",160,2,"Lekkers"],
+ ["Chips 75 g",400,5,"Lekkers"],
+ ["Wokkels 30 g",135,2,"Lekkers"],
+ ["Nootjes gezouten 30 g",180,6,"Lekkers"],
+ ["Popcorn 30 g",120,3,"Lekkers"],
+ ["Mini magnum vegan",135,2,"Lekkers"],
+ ["IJs 100 ml vegan",200,2,"Lekkers"],
+ ["Yoghurt toetje",450,9,"Lekkers"],
+ ["Stuk taart",350,4,"Lekkers"],
+ ["Vegan koek",150,2,"Lekkers"],
+ ["Speculaas (2)",100,1,"Lekkers"],
+ ["Energieballetje",90,2,"Lekkers"],
+ ["Rijstwafel + pindakaas",125,5,"Lekkers"],
+ ["Vegan donut",280,4,"Lekkers"],
+ ["Energy drink 0",10,0,"Drinken"],
+ ["Energy drink suiker",145,0,"Drinken"],
+ ["Cola zero",1,0,"Drinken"],
+ ["Cola 330 ml",139,0,"Drinken"],
+ ["Dr Pepper 330 ml",92,0,"Drinken"],
+ ["Bruiswater",0,0,"Drinken"],
+ ["Thee",0,0,"Drinken"],
+ ["Koffie zwart",2,0,"Drinken"],
+ ["Chai latte",150,3,"Drinken"],
+ ["Sinaasappelsap 200 ml",90,1,"Drinken"],
+ ["Chocolademelk 250 ml",150,6,"Drinken"],
+ ["Smoothie kant-en-klaar",130,2,"Drinken"],
+ ["Sportdrank 500 ml",130,0,"Drinken"],
+ ["Bier 330 ml",140,1,"Drinken"],
+ ["Wijn 150 ml",125,0,"Drinken"],
+ ["Vegan mayo 20 g",130,0,"Sauzen"],
+ ["Ketchup 20 g",20,0,"Sauzen"],
+ ["Sojasaus 15 ml",8,1,"Sauzen"],
+ ["Olijfolie 10 ml",90,0,"Sauzen"],
+ ["Pesto 20 g",90,1,"Sauzen"],
+ ["Tahini 15 g",90,3,"Sauzen"],
+ ["Sriracha 10 g",10,0,"Sauzen"],
+ ["Currysaus 50 g",90,1,"Sauzen"],
+ ["Satesaus 30 g",130,5,"Sauzen"],
+ ["Dressing 20 ml",90,0,"Sauzen"],
+ ["Eiwitpoeder 25 g",100,20,"Supplementen"],
+ ["Eiwitpoeder 30 g",120,24,"Supplementen"],
+ ["Creatine 5 g",0,0,"Supplementen"],
+ ["Spirulina 5 g",20,3,"Supplementen"],
+ ["Chlorella 5 g",20,3,"Supplementen"],
+ ["Omega-3 algen",10,0,"Supplementen"],
+ ["B12 / D / multi",0,0,"Supplementen"]
+].map((r,i)=>({id:"b"+i,naam:r[0],kcal:r[1],eiw:r[2],cat:r[3]}));
+
+/* soort: box telt als sessie, cardio telt als sessie én als cardio, mob telt niet mee */
+const TRAINSOORT=[
+ {id:"wod",   naam:"CrossFit WOD",   soort:"box",    tijd:"09:00", duur:60},
+ {id:"kracht",naam:"Krachttraining", soort:"box",    tijd:"08:30", duur:30},
+ {id:"volley",naam:"Volleybal",      soort:"box",    tijd:"20:00", duur:90},
+ {id:"loop",  naam:"Hardlopen",      soort:"cardio", tijd:"10:00", duur:30},
+ {id:"wandel",naam:"Wandelen",       soort:"cardio", tijd:"10:00", duur:30},
+ {id:"romwod",naam:"ROMWOD / yoga",  soort:"mob",    tijd:"19:00", duur:30},
+ {id:"anders",naam:"Anders",         soort:"mob",    tijd:"18:00", duur:30}
+];
+const AGENDASOORT=[
+ {id:"werk",    naam:"Werk",           soort:"werk",     tijd:"08:00", duur:570},
+ {id:"reisheen",naam:"Reis naar werk", soort:"reis",     tijd:"07:30", duur:30},
+ {id:"reisterug",naam:"Reis naar huis",soort:"reis",     tijd:"17:30", duur:30},
+ {id:"afspraak",naam:"Afspraak",       soort:"afspraak", tijd:"19:00", duur:60},
+ {id:"overig",  naam:"Overig",         soort:"afspraak", tijd:"12:00", duur:60}
+];
+const DAGVAN=6*60, DAGTOT=23*60;
+function tMin(t){if(!t)return null;const p=String(t).split(":");return Number(p[0])*60+Number(p[1]||0)}
+function tStr(m){return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")}
+const SLOTS=[{id:"ontbijt",lab:"Ontbijt"},{id:"lunch",lab:"Lunch"},{id:"drie",lab:"15:00"},
+ {id:"avondeten",lab:"Avondeten"},{id:"avond",lab:"Avond"},{id:"extra",lab:"Gepland lekkers"}];
+const DAGNM=["Maandag","Dinsdag","Woensdag","Donderdag","Vrijdag","Zaterdag","Zondag"];
+const DAGKORT=["ma","di","wo","do","vr","za","zo"];
+const MND=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
+const SLEUTEL="basiskamp_planner_v1";
+const START=new Date(2026,7,31);
+const CFG0={kcalMin:1800,kcalMax:2200,eiw:120,sheetUrl:"",token:"",auto:true,
+  werkdagen:[true,true,true,false,true,false,false],
+  werkStart:"08:00",werkEind:"17:30",reisMin:30};
+
+let S={dagen:{},lib:LIB0.slice(),cfg:Object.assign({},CFG0)};
+let weekMa=(new Date()<START)?new Date(START):maandagVan(new Date());
+let modus="plan", actief=null, blokDoel=null;
+
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function maandagVan(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
+function plus(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function weekNr(ma){return Math.floor((ma-START)/604800000)+1}
+function duurTxt(m){const u=Math.floor(m/60),r=m%60;return u?(u+"u"+(r?String(r):"")):(r+"m")}
+function dag(datum){
+  if(!S.dagen[datum])S.dagen[datum]={plan:{},ongepland:[],training:[],mark:null};
+  const d=S.dagen[datum];
+  SLOTS.forEach(s=>{if(!Array.isArray(d.plan[s.id]))d.plan[s.id]=[]});
+  if(!Array.isArray(d.ongepland))d.ongepland=[];
+  if(!Array.isArray(d.training))d.training=[];
+  if(!Array.isArray(d.agenda))d.agenda=[];
+  if(!("energie" in d))d.energie=null;
+  if(!("gewicht" in d))d.gewicht=null;
+  return d;
+}
+function leegDag(d){return SLOTS.every(s=>d.plan[s.id].length===0)&&!d.ongepland.length&&!d.training.length&&!(d.agenda||[]).length&&d.energie==null&&d.gewicht==null}
+function isWerk(datum,i){const d=S.dagen[datum];
+  return (d&&typeof d.werk==="boolean")?d.werk:!!S.cfg.werkdagen[i];}
+
+/* ---------- opslag ---------- */
+let tmr=null;
+function schoonState(){
+  const c={dagen:{},lib:S.lib,cfg:S.cfg,libVersie:LIBVERSIE};
+  Object.keys(S.dagen).forEach(k=>{const d=S.dagen[k];if(!leegDag(d)||d.mark)c.dagen[k]=d});
+  return c;
+}
+function bewaar(){
+  clearTimeout(tmr);
+  tmr=setTimeout(()=>{
+    try{
+      localStorage.setItem(SLEUTEL,JSON.stringify(schoonState()));
+      const t=new Date();
+      document.getElementById("opgeslagen").textContent="bewaard "+String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0");
+    }catch(e){document.getElementById("opgeslagen").textContent="opslaan lukt niet in deze browser"}
+    if(S.cfg.sheetUrl&&S.cfg.auto)planPush();
+  },350);
+}
+function herstel(){
+  try{
+    const r=localStorage.getItem(SLEUTEL);if(!r)return;
+    const p=JSON.parse(r);
+    if(p&&typeof p==="object")neemOver(p);
+  }catch(e){}
+}
+function neemOver(p){
+  S.dagen=p.dagen&&typeof p.dagen==="object"?p.dagen:{};
+  const eigen=Array.isArray(p.lib)?p.lib.filter(x=>String(x.id).startsWith("u")):[];
+  S.lib=(p.libVersie===LIBVERSIE&&Array.isArray(p.lib)&&p.lib.length)?p.lib:LIB0.concat(eigen);
+  S.cfg=Object.assign({},CFG0,p.cfg||{});
+  if(typeof S.cfg.kcalMin!=="number"){S.cfg.kcalMin=1800;S.cfg.kcalMax=2200}
+  if(!Array.isArray(S.cfg.werkdagen)||S.cfg.werkdagen.length!==7)S.cfg.werkdagen=CFG0.werkdagen.slice();
+  if(!S.cfg.werkStart)S.cfg.werkStart=CFG0.werkStart;
+  if(!S.cfg.werkEind)S.cfg.werkEind=CFG0.werkEind;
+  if(typeof S.cfg.reisMin!=="number")S.cfg.reisMin=CFG0.reisMin;
+}
+
+/* ---------- rekenen ---------- */
+function planTotaal(d){let k=0,e=0;SLOTS.forEach(s=>d.plan[s.id].forEach(i=>{k+=i.kcal;e+=i.eiw}));return{kcal:k,eiw:e}}
+function echtTotaal(d){
+  let k=0,e=0;
+  SLOTS.forEach(s=>d.plan[s.id].forEach(i=>{if(i.gegeten!==false){k+=i.kcal;e+=i.eiw}}));
+  d.ongepland.forEach(i=>{k+=i.kcal;e+=i.eiw});
+  return{kcal:k,eiw:e};
+}
+function staat(kcal,leeg){
+  if(leeg)return "leegdag";
+  if(kcal>S.cfg.kcalMax)return "over";
+  if(kcal<S.cfg.kcalMin)return "onder";
+  return "in";
+}
+function weekTraining(){
+  let sessies=0,cardio=0,min=0,mob=0;
+  for(let i=0;i<7;i++){
+    dag(iso(plus(weekMa,i))).training.forEach(t=>{
+      if(modus==="corr"&&t.gedaan===false)return;
+      min+=t.duur;
+      if(t.soort==="box"){sessies++}
+      else if(t.soort==="cardio"){sessies++;cardio++}
+      else{mob++}
+    });
+  }
+  return{sessies,cardio,min,mob};
+}
+
+/* ---------- render ---------- */
+const grid=document.getElementById("grid");
+function el(t,c,txt){const n=document.createElement(t);if(c)n.className=c;if(txt!=null)n.textContent=txt;return n}
+
+function teken(){
+  const vandaag=iso(new Date());
+  document.getElementById("wknaam").textContent="week "+weekNr(weekMa)+" · "+weekMa.getDate()+" "+MND[weekMa.getMonth()]+" – "+plus(weekMa,6).getDate()+" "+MND[plus(weekMa,6).getMonth()];
+  grid.textContent="";
+
+  const nSlot=SLOTS.length, extra=(modus==="corr")?1:0;
+  const rKop=1, rSlot0=2, rOnge=rSlot0+nSlot, rTijd=rOnge+extra, rTot=rTijd+1, rMark=rTot+1, rMet=rMark+1;
+  const cEten=i=>2+i*2, cDoen=i=>3+i*2;
+  const zet=(n,c,r,cs,rs)=>{
+    n.style.gridColumn=(cs&&cs>1)?(c+" / span "+cs):String(c);
+    n.style.gridRow=(rs&&rs>1)?(r+" / span "+rs):String(r);
+    grid.appendChild(n);
+  };
+
+  zet(el("div","gh hoek"),1,rKop);
+  for(let i=0;i<7;i++){
+    const d=plus(weekMa,i),datum=iso(d),nu=datum===vandaag;
+    const h=el("div","gh"+(nu?" vandaag":""));
+    h.appendChild(el("div","dg",DAGKORT[i]));
+    h.appendChild(el("div","dd",d.getDate()+" "+MND[d.getMonth()]));
+    zet(h,cEten(i),rKop);
+    const h2=el("div","gh gh-doen"+(nu?" vandaag":""));
+    const w=isWerk(datum,i);
+    const wb=el("button","werkknop"+(w?" aan":""),w?"werk":"vrij");
+    wb.type="button";wb.title="Werkdag aan of uit";
+    wb.addEventListener("click",()=>{dag(datum).werk=!w;bewaar();teken()});
+    h2.appendChild(wb);
+    zet(h2,cDoen(i),rKop);
+  }
+
+  SLOTS.forEach((s,si)=>{
+    zet(el("div","slotlab",s.lab),1,rSlot0+si);
+    for(let i=0;i<7;i++){
+      const datum=iso(plus(weekMa,i)),d=dag(datum),lijst=d.plan[s.id];
+      const cel=el("div","cel"+(actief&&actief.datum===datum&&actief.slot===s.id?" actief":""));
+      cel.tabIndex=0;cel.setAttribute("role","button");cel.setAttribute("aria-label",s.lab+" "+DAGNM[i]);
+      const kies=()=>{actief={datum,slot:s.id};teken();document.getElementById("zoek").focus()};
+      cel.addEventListener("click",e=>{if(!e.target.closest(".chip"))kies()});
+      cel.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();kies()}});
+      lijst.forEach((it,ix)=>{
+        const chip=el("div","chip"+(s.id==="extra"?" extra":"")+(modus==="corr"&&it.gegeten===false?" niet":""));
+        chip.title=it.naam+" · "+it.kcal+" kcal · "+it.eiw+" g eiwit";
+        chip.appendChild(el("span","cn",it.naam));
+        chip.appendChild(el("span","ck",it.kcal));
+        const x=el("button","x",modus==="corr"?(it.gegeten===false?"○":"●"):"×");x.type="button";
+        x.title=modus==="corr"?"Gegeten of niet":"Verwijderen";
+        x.addEventListener("click",ev=>{ev.stopPropagation();
+          if(modus==="corr"){it.gegeten=it.gegeten===false}else{lijst.splice(ix,1)}
+          bewaar();teken();});
+        chip.appendChild(x);
+        chip.addEventListener("click",ev=>{if(!ev.target.closest(".x")){ev.stopPropagation();kies()}});
+        cel.appendChild(chip);
+      });
+      if(!lijst.length&&modus==="plan")cel.appendChild(el("div","leeg","+"));
+      zet(cel,cEten(i),rSlot0+si);
+    }
+  });
+
+  if(modus==="corr"){
+    zet(el("div","slotlab","Ongepland"),1,rOnge);
+    for(let i=0;i<7;i++){
+      const datum=iso(plus(weekMa,i)),d=dag(datum);
+      const cel=el("div","cel"+(actief&&actief.datum===datum&&actief.slot==="ongepland"?" actief":""));
+      cel.tabIndex=0;
+      cel.addEventListener("click",e=>{if(!e.target.closest(".chip")){actief={datum,slot:"ongepland"};teken();document.getElementById("zoek").focus()}});
+      d.ongepland.forEach((it,ix)=>{
+        const chip=el("div","chip onge");
+        chip.appendChild(el("span","cn",it.naam));chip.appendChild(el("span","ck",it.kcal));
+        const x=el("button","x","×");x.type="button";
+        x.addEventListener("click",ev=>{ev.stopPropagation();d.ongepland.splice(ix,1);bewaar();teken()});
+        chip.appendChild(x);cel.appendChild(chip);
+      });
+      if(!d.ongepland.length)cel.appendChild(el("div","leeg","+ wat je extra at"));
+      zet(cel,cEten(i),rOnge);
+    }
+  }
+
+  /* --- activiteitenkolom naast het eten, spant alle eetrijen --- */
+  for(let i=0;i<7;i++){
+    const datum=iso(plus(weekMa,i)),d=dag(datum);
+    const cel=el("div","cel actcel"+(isWerk(datum,i)?"":" vrijdag"));
+    cel.tabIndex=0;cel.setAttribute("role","button");cel.setAttribute("aria-label","Doen "+DAGNM[i]);
+    const nieuw=()=>{blokDoel={datum,veld:null,ix:null};openBlok()};
+    cel.addEventListener("click",e=>{if(!e.target.closest(".chip")&&!e.target.closest("button"))nieuw()});
+    cel.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();nieuw()}});
+    cel.appendChild(el("div","actkop","doen"));
+
+    const items=[];
+    d.training.forEach((t,ix)=>items.push({t,ix,veld:"training"}));
+    d.agenda.forEach((t,ix)=>items.push({t,ix,veld:"agenda"}));
+    items.sort((a,b)=>String(a.t.tijd||"99:99").localeCompare(String(b.t.tijd||"99:99")));
+
+    items.forEach(({t,ix,veld})=>{
+      const kanAf=veld==="training";
+      const kl=kanAf?"train":(t.soort||"werk");
+      const chip=el("div","chip compact "+kl+(modus==="corr"&&kanAf&&t.gedaan===false?" niet":""));
+      chip.title=t.naam+(t.tijd?" "+t.tijd+"–"+tStr(tMin(t.tijd)+t.duur):"")+(t.notitie?" · "+t.notitie:"");
+      if(t.tijd)chip.appendChild(el("span","tijd",t.tijd+" · "+duurTxt(t.duur)));
+      chip.appendChild(el("span","cn",t.naam+(t.notitie?" · "+t.notitie:"")));
+      const merk=(modus==="corr"&&kanAf)?(t.gedaan===false?"○":"●"):"×";
+      const x=el("button","x",merk);x.type="button";
+      x.title=(modus==="corr"&&kanAf)?"Gedaan of niet":"Verwijderen";
+      x.addEventListener("click",ev=>{ev.stopPropagation();
+        if(modus==="corr"&&kanAf){t.gedaan=t.gedaan===false}else{d[veld].splice(ix,1)}
+        bewaar();teken();});
+      chip.appendChild(x);
+      chip.addEventListener("click",ev=>{if(modus==="plan"&&!ev.target.closest(".x")){
+        ev.stopPropagation();blokDoel={datum,veld,ix};openBlok()}});
+      cel.appendChild(chip);
+    });
+
+    if(modus==="plan"){
+      const pk=el("button","toevoeg",items.length?"+ nog een":"+ activiteit");
+      pk.type="button";
+      pk.addEventListener("click",ev=>{ev.stopPropagation();blokDoel={datum,veld:null,ix:null};openBlok()});
+      cel.appendChild(pk);
+    }
+    zet(cel,cDoen(i),rSlot0,1,nSlot+extra);
+  }
+
+  /* --- tijdlijn --- */
+  zet(el("div","slotlab","Dag 6–23"),1,rTijd);
+  for(let i=0;i<7;i++){
+    const d=dag(iso(plus(weekMa,i)));
+    const cel=el("div","cel tijdcel");
+    const lijn=el("div","tijdlijn");
+    [9,12,15,18,21].forEach(u=>{
+      const t=el("div","tl-uur");t.style.left=((u*60-DAGVAN)/(DAGTOT-DAGVAN)*100)+"%";lijn.appendChild(t);
+    });
+    lijn.appendChild(el("div","tl-baan"));
+    const plaats=(arr,klas)=>arr.forEach(b=>{
+      const m=tMin(b.tijd);if(m==null)return;
+      const a=Math.max(m,DAGVAN),z=Math.min(m+b.duur,DAGTOT);
+      if(z<=a)return;
+      const n=el("div","tl-blok "+(klas||b.soort));
+      n.style.left=((a-DAGVAN)/(DAGTOT-DAGVAN)*100)+"%";
+      n.style.width=((z-a)/(DAGTOT-DAGVAN)*100)+"%";
+      n.title=b.naam+" "+tStr(m)+"–"+tStr(m+b.duur);
+      lijn.appendChild(n);
+    });
+    plaats(d.agenda,null);
+    plaats(d.training,"train");
+    cel.appendChild(lijn);
+    const sch=el("div","tl-schaal");
+    ["6","12","18","23"].forEach(u=>sch.appendChild(el("span","",u)));
+    cel.appendChild(sch);
+    zet(cel,cEten(i),rTijd,2);
+  }
+
+  zet(el("div","tot"),1,rTot);
+  for(let i=0;i<7;i++){
+    const d=dag(iso(plus(weekMa,i)));
+    const t=modus==="corr"?echtTotaal(d):planTotaal(d);
+    const geenEten=SLOTS.every(s=>!d.plan[s.id].length)&&!d.ongepland.length;
+    const c=el("div","tot "+staat(t.kcal,geenEten));
+    c.appendChild(el("span","kcal",geenEten?"—":t.kcal+" kcal"));
+    c.appendChild(el("span","eiw",geenEten?"":t.eiw+" g eiwit"));
+    zet(c,cEten(i),rTot,2);
+  }
+
+  zet(el("div","slotlab printweg","Dag"),1,rMark);
+  for(let i=0;i<7;i++){
+    const d=dag(iso(plus(weekMa,i)));
+    const rij=el("div","markrij");
+    [["ok","gelukt"],["nee","niet"],["vrij","vrij"]].forEach(([k,lab])=>{
+      const b=el("button","mk "+k,lab);b.type="button";
+      b.setAttribute("aria-pressed",d.mark===k?"true":"false");b.title="Dag "+lab;
+      b.addEventListener("click",()=>{d.mark=d.mark===k?null:k;bewaar();teken()});
+      rij.appendChild(b);
+    });
+    zet(rij,cEten(i),rMark,2);
+  }
+
+  zet(el("div","slotlab printweg","Meting"),1,rMet);
+  for(let i=0;i<7;i++){
+    const datum=iso(plus(weekMa,i)),d=dag(datum);
+    const rij=el("div","metrij");
+    for(let n=1;n<=5;n++){
+      const b=el("button","en",String(n));b.type="button";
+      b.setAttribute("aria-pressed",d.energie===n?"true":"false");
+      b.title="Energie "+n+" van 5";
+      b.addEventListener("click",()=>{d.energie=d.energie===n?null:n;bewaar();teken()});
+      rij.appendChild(b);
+    }
+    const kg=document.createElement("input");
+    kg.type="number";kg.step="0.1";kg.min="40";kg.max="250";kg.className="kg";
+    kg.placeholder="kg";kg.value=d.gewicht==null?"":d.gewicht;
+    kg.title="Gewicht (alleen de eerste zaterdag van de maand nodig)";
+    kg.addEventListener("change",()=>{
+      const v=Number(kg.value);
+      d.gewicht=(kg.value.trim()===""||!Number.isFinite(v))?null:v;
+      bewaar();kop();
+    });
+    rij.appendChild(kg);
+    zet(rij,cEten(i),rMet,2);
+  }
+
+  kop();
+  document.getElementById("bibhint").textContent=actief
+    ?(actief.slot==="ongepland"?"Ongepland":SLOTS.find(s=>s.id===actief.slot).lab)+" — "+
+      DAGNM[(new Date(actief.datum+"T12:00:00").getDay()+6)%7].toLowerCase()+". Klik hieronder om toe te voegen."
+    :"Klik een vak in het rooster, klik dan hier om er iets in te zetten.";
+}
+
+function kop(){
+  let kt=0,et=0,n=0,gel=0;
+  for(let i=0;i<7;i++){
+    const d=dag(iso(plus(weekMa,i)));
+    const geenEten=SLOTS.every(s=>!d.plan[s.id].length)&&!d.ongepland.length;
+    if(!geenEten){const t=modus==="corr"?echtTotaal(d):planTotaal(d);kt+=t.kcal;et+=t.eiw;n++}
+    if(d.mark==="ok")gel++;
+  }
+  const gk=n?Math.round(kt/n):0,ge=n?Math.round(et/n):0;
+  const kk=document.getElementById("k-kcal"),ke=document.getElementById("k-eiw");
+  kk.textContent=n?gk+" kcal":"—";
+  kk.className="val mono "+(!n?"":gk>S.cfg.kcalMax?"sig":gk<S.cfg.kcalMin?"waar":"goed");
+  ke.textContent=n?ge+" g":"—";
+  ke.className="val mono "+(!n?"":ge>=S.cfg.eiw?"goed":"waar");
+  document.getElementById("k-dagen").textContent=n+" / 7";
+
+  let en=0,enN=0;
+  for(let i=0;i<7;i++){const dd=dag(iso(plus(weekMa,i)));if(dd.energie){en+=dd.energie;enN++}}
+  const kg2=document.getElementById("k-gelukt");
+  kg2.textContent=gel+" / 4";
+  kg2.className="val mono "+(gel>=4?"goed":gel?"waar":"");
+  const ken=document.getElementById("k-energie");
+  ken.textContent=enN?(Math.round(en/enN*10)/10)+" / 5":"—";
+  ken.className="val mono "+(!enN?"":en/enN>=3.5?"goed":en/enN>=2.5?"waar":"sig");
+
+  const w=weekTraining();
+  const ks=document.getElementById("k-sessies");
+  ks.textContent=w.sessies+(w.cardio?" ·"+w.cardio+"c":"")+(w.min?" ·"+duurTxt(w.min):"");
+  ks.className="val mono "+(w.sessies>=3&&w.cardio>=1?"goed":w.sessies>=2?"waar":"");
+  const kw=document.getElementById("k-week");
+  const gehaald=w.sessies>=3&&w.cardio>=1&&gel>=4;
+  const marge=w.sessies>=2&&gel>=4;
+  kw.textContent=gehaald?"gehaald":marge?"marge":(w.sessies||gel)?"nog niet":"—";
+  kw.className="val mono "+(gehaald?"goed":marge?"waar":(w.sessies||gel)?"sig":"");
+
+  document.getElementById("uitleg").innerHTML=modus==="plan"
+    ? "Band <b>"+S.cfg.kcalMin+"–"+S.cfg.kcalMax+" kcal</b> en <b>"+S.cfg.eiw+" g eiwit</b> per dag. Week gehaald = <b>3 sessies waarvan 1 cardio</b> én <b>4 dagen gelukt</b>. Wat bij <b>Gepland lekkers</b> staat is geen plafond maar een afspraak: dat eet je."
+    : "Zet per item ● of ○ voor wel of niet gegeten of gedaan, vul aan bij <b>Ongepland</b>, en neem onderaan je papieren streepje over.";
+}
+
+/* ---------- bibliotheek ---------- */
+function tekenBib(){
+  const q=document.getElementById("zoek").value.trim().toLowerCase();
+  const lijst=document.getElementById("biblijst");lijst.textContent="";
+  CATS.forEach(c=>{
+    const items=S.lib.filter(i=>i.cat===c&&(!q||i.naam.toLowerCase().includes(q)));
+    if(!items.length)return;
+    lijst.appendChild(el("div","cat",c));
+    items.forEach(i=>{
+      const rij=el("div","etenrij");
+      const b=el("button","eten");b.type="button";
+      b.appendChild(el("span","nm",i.naam));b.appendChild(el("span","kc",i.kcal));
+      b.title=i.naam+" · "+i.kcal+" kcal · "+i.eiw+" g eiwit";
+      b.addEventListener("click",()=>voegToe(i));
+      rij.appendChild(b);
+      const e=el("button","bewerk","\u22ef");e.type="button";
+      e.title="Aanpassen of verwijderen";e.setAttribute("aria-label","Bewerk "+i.naam);
+      e.addEventListener("click",ev=>{ev.stopPropagation();openItem(i)});
+      rij.appendChild(e);
+      lijst.appendChild(rij);
+    });
+  });
+  if(!lijst.children.length)lijst.appendChild(el("div","leeg","Niets gevonden."));
+  document.getElementById("bibaantal").textContent=S.lib.length+" items";
+}
+function voegToe(item){
+  if(!actief){melding("Kies eerst een vak in het rooster.");return}
+  const d=dag(actief.datum),nw={ref:item.id,naam:item.naam,kcal:item.kcal,eiw:item.eiw};
+  if(actief.slot==="ongepland")d.ongepland.push(nw);else d.plan[actief.slot].push(nw);
+  bewaar();teken();
+}
+
+/* ---------- trainingsdialoog ---------- */
+const dlgT=document.getElementById("dlg-train");
+(function vulTrainVelden(){
+  const st=document.getElementById("t-tijd");
+  const o0=document.createElement("option");o0.value="";o0.textContent="geen tijd";st.appendChild(o0);
+  for(let m=6*60;m<=22*60;m+=30){
+    const v=String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+    const o=document.createElement("option");o.value=v;o.textContent=v;st.appendChild(o);
+  }
+})();
+function alleSoorten(){return TRAINSOORT.concat(AGENDASOORT)}
+function vindSoort(id){return alleSoorten().find(x=>x.id===id)}
+function veldVan(id){return TRAINSOORT.some(x=>x.id===id)?"training":"agenda"}
+function vulSoort(huidig){
+  const ss=document.getElementById("t-soort");ss.textContent="";
+  const maak=(label,lijst)=>{
+    const g=document.createElement("optgroup");g.label=label;
+    lijst.forEach(t=>{const o=document.createElement("option");o.value=t.id;o.textContent=t.naam;g.appendChild(o)});
+    ss.appendChild(g);
+  };
+  maak("Training",TRAINSOORT);
+  maak("Werk & reizen",AGENDASOORT);
+  if(huidig)ss.value=huidig;
+}
+function vulDuur(veld,huidig){
+  const sd=document.getElementById("t-duur");sd.textContent="";
+  const reeks=veld==="agenda"
+    ?[30,60,90,120,180,240,300,360,420,480,510,540,570,600,660,720]
+    :[30,60,90,120,150,180];
+  reeks.forEach(m=>{const o=document.createElement("option");o.value=m;o.textContent=duurTxt(m);sd.appendChild(o)});
+  if(huidig!=null){
+    if(!reeks.includes(huidig)){const o=document.createElement("option");o.value=huidig;o.textContent=duurTxt(huidig);sd.appendChild(o)}
+    sd.value=huidig;
+  }
+}
+document.getElementById("t-soort").addEventListener("change",e=>{
+  const t=vindSoort(e.target.value);if(!t)return;
+  document.getElementById("t-tijd").value=t.tijd;
+  vulDuur(veldVan(t.id),t.duur);
+});
+function openBlok(){
+  const d=dag(blokDoel.datum);
+  const best=(blokDoel.veld&&blokDoel.ix!=null)?d[blokDoel.veld][blokDoel.ix]:null;
+  document.getElementById("t-titel").textContent=best?"Activiteit aanpassen":"Activiteit inplannen";
+  const soort=best?best.ref:"wod";
+  vulSoort(soort);
+  const def=vindSoort(soort)||TRAINSOORT[0];
+  document.getElementById("t-tijd").value=best?(best.tijd||""):def.tijd;
+  vulDuur(veldVan(def.id),best?best.duur:def.duur);
+  document.getElementById("t-notitie").value=best?(best.notitie||""):"";
+  dlgT.showModal();
+}
+dlgT.addEventListener("close",()=>{
+  if(dlgT.returnValue!=="ok"||!blokDoel){blokDoel=null;return}
+  const def=vindSoort(document.getElementById("t-soort").value);
+  if(!def){blokDoel=null;return}
+  const nieuwVeld=veldVan(def.id);
+  const rec={ref:def.id,naam:def.naam,soort:def.soort,
+    tijd:document.getElementById("t-tijd").value,
+    duur:Number(document.getElementById("t-duur").value)||30,
+    notitie:document.getElementById("t-notitie").value.trim()};
+  const d=dag(blokDoel.datum);
+  if(blokDoel.veld&&blokDoel.ix!=null){
+    const oud=d[blokDoel.veld][blokDoel.ix];
+    if(blokDoel.veld===nieuwVeld){rec.gedaan=oud.gedaan;d[nieuwVeld][blokDoel.ix]=rec}
+    else{d[blokDoel.veld].splice(blokDoel.ix,1);d[nieuwVeld].push(rec)}
+  }else d[nieuwVeld].push(rec);
+  blokDoel=null;bewaar();teken();
+});
+function werktijden(){
+  const st=tMin(S.cfg.werkStart),ei=tMin(S.cfg.werkEind),reis=S.cfg.reisMin;
+  if(st==null||ei==null||ei<=st){melding("Werktijden in Instellingen kloppen niet.");return}
+  let n=0;
+  for(let i=0;i<7;i++){
+    const datum=iso(plus(weekMa,i));
+    if(!isWerk(datum,i))continue;
+    const d=dag(datum);
+    if(d.agenda.some(a=>a.soort==="werk"))continue;
+    if(reis>0)d.agenda.push({ref:"reisheen",naam:"Reis naar werk",soort:"reis",tijd:tStr(Math.max(0,st-reis)),duur:reis,notitie:""});
+    d.agenda.push({ref:"werk",naam:"Werk",soort:"werk",tijd:S.cfg.werkStart,duur:ei-st,notitie:""});
+    if(reis>0)d.agenda.push({ref:"reisterug",naam:"Reis naar huis",soort:"reis",tijd:S.cfg.werkEind,duur:reis,notitie:""});
+    n++;
+  }
+  bewaar();teken();
+  melding(n?n+" werkdag(en) gevuld met werk- en reistijd.":"Werktijden staan er al in.");
+}
+
+/* ---------- acties ---------- */
+function melding(t){
+  document.querySelectorAll(".melding").forEach(n=>n.remove());
+  const m=el("div","melding",t);document.body.appendChild(m);setTimeout(()=>m.remove(),3000);
+}
+function kopieerVorige(){
+  let n=0;
+  for(let i=0;i<7;i++){
+    const bron=dag(iso(plus(weekMa,i-7))),doel=dag(iso(plus(weekMa,i)));
+    if(!leegDag(doel)||leegDag(bron))continue;
+    SLOTS.forEach(s=>{doel.plan[s.id]=bron.plan[s.id].map(x=>({ref:x.ref,naam:x.naam,kcal:x.kcal,eiw:x.eiw}))});
+    doel.training=bron.training.map(t=>({ref:t.ref,naam:t.naam,soort:t.soort,tijd:t.tijd,duur:t.duur,notitie:t.notitie}));
+    doel.agenda=bron.agenda.map(t=>({ref:t.ref,naam:t.naam,soort:t.soort,tijd:t.tijd,duur:t.duur,notitie:t.notitie}));
+    n++;
+  }
+  bewaar();teken();
+  melding(n?n+" dag(en) overgenomen uit vorige week.":"Vorige week is leeg, of deze week is al gevuld.");
+}
+function werkdagSjabloon(){
+  const sj={ontbijt:["Smoothie S"],
+    lunch:["Boterham hummus","Banaan"],
+    drie:["Yoghurtbak 15:00"],
+    avondeten:["Avondeten Mieke"],avond:["Sinaasappel"],extra:[]};
+  let n=0;
+  for(let i=0;i<7;i++){
+    const datum=iso(plus(weekMa,i));
+    if(!isWerk(datum,i))continue;
+    const d=dag(datum);
+    if(SLOTS.some(s=>d.plan[s.id].length))continue;
+    SLOTS.forEach(s=>{d.plan[s.id]=(sj[s.id]||[]).map(nm=>{
+      const b=S.lib.find(x=>x.naam===nm);return b?{ref:b.id,naam:b.naam,kcal:b.kcal,eiw:b.eiw}:null;
+    }).filter(Boolean)});
+    n++;
+  }
+  bewaar();teken();
+  melding(n?n+" lege werkdag(en) gevuld. Pas aan wat niet klopt.":"Geen lege werkdagen deze week.");
+}
+function trainingsweek(){
+  const wk=[[1,"wod","18:00",60],[3,"kracht","08:30",30],[3,"wod","09:00",60],
+            [5,"wod","09:00",60],[6,"loop","10:00",30]];
+  let n=0;
+  wk.forEach(([i,ref,tijd,duur])=>{
+    const d=dag(iso(plus(weekMa,i))),def=TRAINSOORT.find(x=>x.id===ref);
+    if(d.training.some(t=>t.ref===ref))return;
+    d.training.push({ref:def.id,naam:def.naam,soort:def.soort,tijd,duur,notitie:""});n++;
+  });
+  bewaar();teken();
+  melding(n?n+" training(en) ingepland volgens je vaste week.":"Staat er al in.");
+}
+
+function rijen(){
+  const r=[];
+  Object.keys(S.dagen).sort().forEach(dt=>{
+    const d=dag(dt);
+    if(leegDag(d)&&!d.mark)return;
+    const p=planTotaal(d),e=echtTotaal(d),dd=new Date(dt+"T12:00:00");
+    let sess=0,card=0,min=0,gedaan=0;
+    d.training.forEach(t=>{
+      if(t.soort!=="mob")sess++;
+      if(t.soort==="cardio")card++;
+      if(t.gedaan!==false){min+=t.duur;if(t.soort!=="mob")gedaan++}
+    });
+    r.push([dt,DAGKORT[(dd.getDay()+6)%7],isWerk(dt,(dd.getDay()+6)%7)?1:0,weekNr(maandagVan(dd)),p.kcal,p.eiw,e.kcal,e.eiw,
+      d.plan.extra.length,d.ongepland.length,sess,card,gedaan,min,
+      d.agenda.filter(a=>a.soort==="werk").reduce((x,a)=>x+a.duur,0),
+      d.agenda.filter(a=>a.soort==="reis").reduce((x,a)=>x+a.duur,0),
+      d.energie==null?"":d.energie, d.gewicht==null?"":d.gewicht,
+      d.training.map(t=>t.naam).join(" | "),d.mark||""]);
+  });
+  return r;
+}
+const KOPPEN=["datum","dag","werkdag","weeknr","gepland_kcal","gepland_eiwit","werkelijk_kcal","werkelijk_eiwit",
+  "gepland_lekkers","ongepland_items","sessies_gepland","cardio_gepland","sessies_gedaan",
+  "minuten_gedaan","werk_min","reis_min","energie","gewicht","trainingen","dagmark"];
+function csvVanAlles(){
+  return [KOPPEN].concat(rijen()).map(x=>x.map(v=>/[,"]/.test(String(v))?'"'+String(v).replace(/"/g,'""')+'"':v).join(",")).join("\n");
+}
+async function geef(filename,data,ok){
+  try{
+    const dl=await window.claude?.use?.("downloads");
+    if(dl){await dl.save({filename,data});melding(ok);return}
+  }catch(err){if(err&&err.code==="declined")return}
+  try{await navigator.clipboard.writeText(data);melding("Naar klembord gekopieerd — plak het in een bestand.")}
+  catch(e){melding("Opslaan lukt hier niet. Gebruik de lokale kopie.")}
+}
+
+/* ---------- google sheet ---------- */
+function syncStatus(kl,txt){
+  const n=document.getElementById("syncdot");
+  n.className="syncdot"+(kl?" "+kl:"");
+  document.getElementById("syncnaam").textContent=txt;
+}
+let pushTmr=null;
+function planPush(){clearTimeout(pushTmr);pushTmr=setTimeout(()=>push(true),4000)}
+async function push(stil){
+  const url=S.cfg.sheetUrl;
+  if(!url){if(!stil)melding("Nog geen sheet gekoppeld.");return}
+  syncStatus("bezig","versturen…");
+  const body=JSON.stringify({token:S.cfg.token||"",state:schoonState(),koppen:KOPPEN,rows:rijen()});
+  try{
+    const r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body,redirect:"follow"});
+    const j=await r.json();
+    if(j&&j.ok){syncStatus("aan","sheet bij");if(!stil)melding("Verstuurd: "+j.dagen+" dagen in de sheet.")}
+    else{syncStatus("fout","sheet: "+((j&&j.error)||"fout"));if(!stil)melding("De sheet gaf een fout: "+((j&&j.error)||"onbekend"))}
+  }catch(e){
+    try{
+      await fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body});
+      syncStatus("aan","verstuurd");if(!stil)melding("Verstuurd, maar het antwoord is niet leesbaar. Controleer je sheet.");
+    }catch(e2){
+      syncStatus("fout","niet verstuurd");
+      if(!stil)melding("Versturen lukte niet. In de gepubliceerde artifact is dit geblokkeerd — gebruik GitHub Pages of het lokale bestand.");
+    }
+  }
+}
+async function pull(){
+  const url=S.cfg.sheetUrl;
+  if(!url){melding("Nog geen sheet gekoppeld.");return}
+  syncStatus("bezig","ophalen…");
+  try{
+    const r=await fetch(url+(url.includes("?")?"&":"?")+"actie=state&token="+encodeURIComponent(S.cfg.token||""),{redirect:"follow"});
+    const j=await r.json();
+    if(!j||!j.ok||!j.state)throw new Error((j&&j.error)||"leeg antwoord");
+    neemOver(typeof j.state==="string"?JSON.parse(j.state):j.state);
+    bewaar();tekenBib();teken();syncStatus("aan","sheet bij");
+    melding("Opgehaald uit de sheet: "+Object.keys(S.dagen).length+" dagen.");
+  }catch(e){syncStatus("fout","ophalen mislukt");melding("Ophalen mislukte: "+e.message)}
+}
+
+/* ---------- knoppen ---------- */
+document.getElementById("vorig").onclick=()=>{weekMa=plus(weekMa,-7);actief=null;teken()};
+document.getElementById("volgend").onclick=()=>{weekMa=plus(weekMa,7);actief=null;teken()};
+document.getElementById("nu").onclick=()=>{weekMa=(new Date()<START)?new Date(START):maandagVan(new Date());actief=null;teken()};
+function zetModus(){
+  document.getElementById("m-plan").setAttribute("aria-pressed",modus==="plan");
+  document.getElementById("m-corr").setAttribute("aria-pressed",modus==="corr");
+  actief=null;teken();
+}
+document.getElementById("m-plan").onclick=()=>{modus="plan";zetModus()};
+document.getElementById("m-corr").onclick=()=>{modus="corr";zetModus()};
+document.getElementById("btn-kopie").onclick=kopieerVorige;
+document.getElementById("btn-werkdag").onclick=werkdagSjabloon;
+document.getElementById("btn-trainweek").onclick=trainingsweek;
+document.getElementById("btn-werktijden").onclick=werktijden;
+document.getElementById("zoek").addEventListener("input",tekenBib);
+function boodschappen(){
+  const telling={};
+  for(let i=0;i<7;i++){
+    const d=dag(iso(plus(weekMa,i)));
+    SLOTS.forEach(s=>d.plan[s.id].forEach(it=>{
+      const b=S.lib.find(x=>x.id===it.ref)||S.lib.find(x=>x.naam===it.naam);
+      const cat=b?b.cat:"Overig";
+      const sl=cat+"\u0000"+it.naam;
+      if(!telling[sl])telling[sl]={cat,naam:it.naam,n:0,kcal:0};
+      telling[sl].n++;telling[sl].kcal+=it.kcal;
+    }));
+  }
+  const rijen=Object.values(telling);
+  const perCat={};
+  rijen.forEach(r=>{(perCat[r.cat]=perCat[r.cat]||[]).push(r)});
+  const zo=plus(weekMa,6);
+  let uit="BOODSCHAPPEN — week "+weekNr(weekMa)+"  ("+weekMa.getDate()+" "+MND[weekMa.getMonth()]+" – "+zo.getDate()+" "+MND[zo.getMonth()]+")\n";
+  uit+="".padEnd(46,"=")+"\n";
+  CATS.concat(["Overig"]).forEach(c=>{
+    const lijst=perCat[c];if(!lijst||!lijst.length)return;
+    uit+="\n"+c.toUpperCase()+"\n";
+    lijst.sort((a,b)=>b.n-a.n||a.naam.localeCompare(b.naam))
+         .forEach(r=>{uit+="  "+String(r.n+"x").padEnd(5)+r.naam+"\n"});
+  });
+  if(!rijen.length)uit+="\nDeze week staat nog niets gepland.\n";
+  else uit+="\n"+rijen.reduce((x,r)=>x+r.n,0)+" porties in totaal.\n";
+  return uit;
+}
+document.getElementById("btn-bood").onclick=()=>{
+  const t=boodschappen();
+  document.getElementById("b-lijst").textContent=t;
+  document.getElementById("b-sub").textContent="Alles wat je deze week gepland hebt, opgeteld per product. Neem dit mee naar de winkel of zet het op de AH-lijst.";
+  document.getElementById("dlg-bood").showModal();
+};
+document.getElementById("b-kopie").onclick=async()=>{
+  try{await navigator.clipboard.writeText(document.getElementById("b-lijst").textContent);melding("Boodschappenlijst gekopieerd.")}
+  catch(e){melding("Kopiëren lukte niet — selecteer de tekst zelf.")}
+};
+document.getElementById("b-bewaar").onclick=()=>geef("boodschappen-week"+weekNr(weekMa)+".txt",boodschappen(),"Boodschappenlijst opgeslagen.");
+document.getElementById("btn-print").onclick=()=>{
+  const zo=plus(weekMa,6);
+  document.getElementById("printkop").innerHTML=
+    "<b>Basiskamp — week "+weekNr(weekMa)+"</b><span>"+weekMa.getDate()+" "+MND[weekMa.getMonth()]+
+    " – "+zo.getDate()+" "+MND[zo.getMonth()]+"  ·  band "+S.cfg.kcalMin+"–"+S.cfg.kcalMax+" kcal</span>";
+  window.print();
+};
+document.getElementById("btn-csv").onclick=()=>geef("basiskamp-eten.csv",csvVanAlles(),"CSV opgeslagen — klaar voor je sheet.");
+document.getElementById("btn-json").onclick=()=>geef("basiskamp-planner-backup.json",JSON.stringify(schoonState(),null,1),"Back-up opgeslagen.");
+document.getElementById("btn-laad").onclick=()=>document.getElementById("bestand").click();
+document.getElementById("bestand").addEventListener("change",ev=>{
+  const f=ev.target.files&&ev.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{
+      const p=JSON.parse(r.result);
+      if(!p||typeof p!=="object"||!p.dagen)throw new Error("vorm");
+      neemOver(p);bewaar();tekenBib();teken();melding("Back-up geladen.");
+    }catch(e){melding("Dat bestand kon ik niet lezen.")}};
+  r.readAsText(f);ev.target.value="";
+});
+
+const dlgN=document.getElementById("dlg-nieuw"),dlgD=document.getElementById("dlg-doel"),dlgS=document.getElementById("dlg-sheet");
+const selCat=document.getElementById("n-cat");
+CATS.forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;selCat.appendChild(o)});
+let itemBewerk=null;
+function openItem(item){
+  itemBewerk=item||null;
+  document.getElementById("n-titel").textContent=item?"Item aanpassen":"Nieuw item";
+  document.getElementById("n-naam").value=item?item.naam:"";
+  document.getElementById("n-kcal").value=item?item.kcal:"";
+  document.getElementById("n-eiw").value=item?item.eiw:"0";
+  selCat.value=item?item.cat:(actief&&actief.slot==="extra"?"Lekkers":"Warme maaltijd");
+  document.getElementById("n-weg").style.display=item?"":"none";
+  dlgN.showModal();
+}
+document.getElementById("btn-nieuw").onclick=()=>openItem(null);
+document.getElementById("n-weg").onclick=()=>{
+  if(!itemBewerk)return;
+  const ix=S.lib.indexOf(itemBewerk);
+  if(ix>=0)S.lib.splice(ix,1);
+  itemBewerk=null;dlgN.close("weg");bewaar();tekenBib();
+  melding("Item verwijderd uit je bibliotheek.");
+};
+dlgN.addEventListener("close",()=>{
+  if(dlgN.returnValue!=="ok"){itemBewerk=null;return}
+  const naam=document.getElementById("n-naam").value.trim();
+  const kcal=Math.round(Number(document.getElementById("n-kcal").value));
+  const eiw=Math.round(Number(document.getElementById("n-eiw").value))||0;
+  if(!naam||!Number.isFinite(kcal)){melding("Naam en kcal zijn nodig.");itemBewerk=null;return}
+  if(itemBewerk){
+    Object.assign(itemBewerk,{naam,kcal,eiw,cat:selCat.value});
+    itemBewerk=null;bewaar();tekenBib();teken();melding("Item bijgewerkt.");
+    return;
+  }
+  const item={id:"u"+Date.now().toString(36),naam,kcal,eiw,cat:selCat.value};
+  S.lib.push(item);bewaar();tekenBib();
+  if(actief)voegToe(item);else melding("\u201c"+naam+"\u201d staat in je bibliotheek.");
+});
+document.getElementById("btn-doel").onclick=()=>{
+  document.getElementById("d-min").value=S.cfg.kcalMin;
+  document.getElementById("d-max").value=S.cfg.kcalMax;
+  document.getElementById("d-eiw").value=S.cfg.eiw;
+  document.getElementById("d-wstart").value=S.cfg.werkStart;
+  document.getElementById("d-weind").value=S.cfg.werkEind;
+  document.getElementById("d-reis").value=S.cfg.reisMin;
+  werkTijdelijk=S.cfg.werkdagen.slice();tekenWerkKeuze();
+  dlgD.showModal();
+};
+dlgD.addEventListener("close",()=>{
+  if(dlgD.returnValue!=="ok")return;
+  const a=Math.round(Number(document.getElementById("d-min").value));
+  const b=Math.round(Number(document.getElementById("d-max").value));
+  const e=Math.round(Number(document.getElementById("d-eiw").value));
+  if(Number.isFinite(a)&&Number.isFinite(b)&&a>=1000&&b>a){S.cfg.kcalMin=a;S.cfg.kcalMax=b}
+  if(Number.isFinite(e)&&e>=30)S.cfg.eiw=e;
+  if(werkTijdelijk.length===7)S.cfg.werkdagen=werkTijdelijk.slice();
+  const ws=document.getElementById("d-wstart").value,we=document.getElementById("d-weind").value;
+  if(ws)S.cfg.werkStart=ws;
+  if(we)S.cfg.werkEind=we;
+  const rm=Math.round(Number(document.getElementById("d-reis").value));
+  if(Number.isFinite(rm)&&rm>=0)S.cfg.reisMin=rm;
+  bewaar();teken();
+});
+document.getElementById("btn-sheet").onclick=()=>{
+  document.getElementById("s-url").value=S.cfg.sheetUrl||"";
+  document.getElementById("s-token").value=S.cfg.token||"";
+  document.getElementById("s-auto").value=S.cfg.auto?"1":"0";
+  const vast=!!SHEET_URL;
+  ["s-url","s-token","s-auto"].forEach(id=>{document.getElementById(id).disabled=vast});
+  document.getElementById("s-ok").style.display=vast?"none":"";
+  document.getElementById("s-vast").style.display=vast?"":"none";
+  dlgS.showModal();
+};
+function leesSheetVelden(){
+  if(SHEET_URL)return;
+  S.cfg.sheetUrl=document.getElementById("s-url").value.trim();
+  S.cfg.token=document.getElementById("s-token").value.trim();
+  S.cfg.auto=document.getElementById("s-auto").value==="1";
+}
+document.getElementById("s-push").onclick=()=>{leesSheetVelden();bewaar();push(false)};
+document.getElementById("s-pull").onclick=()=>{leesSheetVelden();bewaar();pull()};
+dlgS.addEventListener("close",()=>{
+  if(dlgS.returnValue!=="ok")return;
+  leesSheetVelden();bewaar();
+  syncStatus(S.cfg.sheetUrl?"aan":"", S.cfg.sheetUrl?"sheet gekoppeld":"geen sheet");
+  melding(S.cfg.sheetUrl?"Sheet gekoppeld.":"Sheetkoppeling verwijderd.");
+});
+
+herstel();
+if(SHEET_URL){S.cfg.sheetUrl=SHEET_URL;S.cfg.token=SHEET_TOKEN;S.cfg.auto=SHEET_AUTO}
+tekenBib();
+teken();
+syncStatus(S.cfg.sheetUrl?"aan":"", S.cfg.sheetUrl?"sheet gekoppeld":"geen sheet");
+</script>
+
+</body>
+</html>
