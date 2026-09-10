@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tesla 2035 SOTP — 20 Lines of Business</title>
+<style>
+  :root{
+    --bg:#080b14; --panel:#0e1420; --panel2:#131a29; --line:#1e2636;
+    --line2:#2a3446; --txt:#e8edf6; --mut:#8b96ab; --mut2:#5e6b82;
+    --veh:#f0563a; --ai:#8b5cf6; --en:#22c55e; --svc:#6366f1; --mfg:#f59e0b; --cmp:#3b82f6;
+    --good:#34d399;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 600px at 50% -10%,#101a2e 0%,var(--bg) 55%);
+    color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Helvetica,Arial,sans-serif;
+    padding:22px 22px 60px;-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.4;
+  }
+  .wrap{max-width:1180px;margin:0 auto}
+  .top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+  h1{font-size:20px;font-weight:700;letter-spacing:-.02em}
+  h1 span{color:var(--mut)}
+  .sub{color:var(--mut);font-size:12.5px;margin-top:4px;max-width:640px}
+  .disc{color:var(--mut2);font-size:11.5px;margin-top:6px}
+
+  /* preset bar */
+  .presets{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .pbtn{
+    background:var(--panel2);border:1px solid var(--line2);color:var(--txt);
+    padding:9px 14px;border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;
+    transition:.15s;display:flex;flex-direction:column;gap:1px;min-width:96px;text-align:left;
+  }
+  .pbtn small{font-weight:500;font-size:11px;color:var(--mut)}
+  .pbtn:hover{border-color:var(--line2);background:#182236}
+  .pbtn.on{border-color:currentColor;background:#141d30}
+  .pbtn.bear.on{color:#f87171} .pbtn.base.on{color:#60a5fa}
+  .pbtn.bull.on{color:#34d399} .pbtn.hyper.on{color:#c084fc}
+  .pbtn.custom{min-width:auto;background:transparent;border-style:dashed;color:var(--mut);cursor:default}
+
+  /* summary cards */
+  .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0}
+  .card{background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);border:1px solid var(--line);border-radius:14px;padding:14px 15px}
+  .card .lbl{color:var(--mut);font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+  .card .big{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .card .note{font-size:11px;color:var(--mut);margin-top:6px}
+  .card .note b{color:var(--good)}
+  .shares-in{width:52px;background:#0a0f1a;border:1px solid var(--line2);color:var(--txt);border-radius:6px;padding:2px 5px;font-size:12px;text-align:center}
+
+  /* breakdown bars */
+  .bkrow{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:14px 0 20px}
+  .bk h4{font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+  .bar{height:20px;border-radius:10px;overflow:hidden;display:flex;background:#0a0f1a;border:1px solid var(--line)}
+  .bar span{height:100%;transition:width .25s}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+  .legend div{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--mut)}
+  .dot{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+  /* category groups */
+  .cat{margin-top:22px}
+  .cat-h{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+  .cat-h .bar-i{width:3px;height:15px;border-radius:2px}
+  .cat-h h3{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+  .cat-h .cnt{font-size:11px;color:var(--mut2);font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+
+  .seg{background:linear-gradient(180deg,var(--panel) 0%,#0c1220 100%);border:1px solid var(--line);border-top-width:2px;border-radius:14px;padding:14px 15px 12px;display:flex;flex-direction:column}
+  .seg .name{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+  .seg .desc{font-size:11px;color:var(--mut);margin-top:2px;margin-bottom:11px;min-height:26px}
+  .val-box{background:#0a0f1a;border:1px solid var(--line);border-radius:10px;padding:9px;text-align:center;margin-bottom:12px}
+  .val-box .vl{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+  .val-box .vv{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+
+  .sld{margin-bottom:9px}
+  .sld .r{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+  .sld .r .k{color:var(--mut)}
+  .sld .r .v{font-weight:700}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:4px;background:#233049;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#c084fc;cursor:pointer;border:2px solid #0a0f1a;box-shadow:0 0 0 1px #3b2a54}
+  input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#c084fc;cursor:pointer;border:2px solid #0a0f1a}
+  input[type=range].rev::-webkit-slider-thumb{background:#3b82f6;box-shadow:0 0 0 1px #16345e}
+  input[type=range].rev::-moz-range-thumb{background:#3b82f6}
+  input[type=range].mgn::-webkit-slider-thumb{background:#34d399;box-shadow:0 0 0 1px #14503a}
+  input[type=range].mgn::-moz-range-thumb{background:#34d399}
+  .yield{font-size:10.5px;color:var(--mut2);text-align:center;margin-top:5px;border-top:1px solid var(--line);padding-top:8px}
+  .yield b{color:var(--mut)}
+
+  .assume{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:16px 0}
+  .ai-item{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--mut)}
+  .ai-item b{color:var(--txt);font-weight:700}
+  .ai-slider{flex:1;min-width:200px}
+  .ai-slider input[type=range]{flex:1;max-width:240px}
+  .ai-sub{color:var(--mut2);font-size:11px}
+  .ai-note{margin-left:auto;color:var(--mfg);font-size:11px;font-style:italic;text-align:right}
+  .num{width:56px;background:#0a0f1a;border:1px solid var(--line2);color:var(--txt);border-radius:6px;padding:3px 6px;font-size:12px;text-align:center}
+  .foot{margin-top:30px;padding:16px;border:1px solid var(--line);border-radius:12px;background:#0b1120;font-size:11.5px;color:var(--mut);line-height:1.6}
+  .foot b{color:var(--txt)}
+  @media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.bkrow{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div>
+      <h1>Tesla 2035 SOTP <span>· 20 lines of business</span></h1>
+      <div class="sub">Reverse-engineered sum-of-the-parts model. Each segment value = Revenue × Net Margin × P/E. Drag any slider; totals recompute live. Presets fix each scenario's total market cap; stock price falls out of cap ÷ projected 2035 shares, set by the dilution rate below.</div>
+      <div class="disc">Hypothetical math only — enormous execution, regulatory and competition risk. Not a forecast or investment advice.</div>
+    </div>
+    <div class="presets" id="presets">
+      <button class="pbtn bear" data-p="bear">Bear<small>$9.4T cap</small></button>
+      <button class="pbtn base" data-p="base">Base<small>$18.4T cap</small></button>
+      <button class="pbtn bull" data-p="bull">Bull<small>$28.9T cap</small></button>
+      <button class="pbtn hyper" data-p="hyper">Hyper<small>$29.9T cap</small></button>
+      <span class="pbtn custom" id="customTag" style="display:none">Custom</span>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="lbl">Market Cap</div>
+      <div class="big" id="mcap">–</div>
+      <div class="note">vs <b>$1.48T</b> today · <span id="mcapx">–</span></div>
+    </div>
+    <div class="card">
+      <div class="lbl">Stock Price</div>
+      <div class="big" id="price">–</div>
+      <div class="note">= cap ÷ <span id="shOut">–</span>B sh · <span id="pricex">–</span> vs $394 today</div>
+    </div>
+    <div class="card">
+      <div class="lbl">Total Revenue</div>
+      <div class="big" id="rev">–</div>
+      <div class="note" id="revnote">2035E across 20 lines</div>
+    </div>
+    <div class="card">
+      <div class="lbl">Net Income</div>
+      <div class="big" id="ni">–</div>
+      <div class="note">Blended across segments</div>
+    </div>
+    <div class="card">
+      <div class="lbl">Blended Margin</div>
+      <div class="big" id="mgn">–</div>
+      <div class="note" id="mgnnote">Net income ÷ revenue</div>
+    </div>
+  </div>
+
+  <div class="assume">
+    <div class="ai-item"><span class="ai-l">Shares today</span><input class="num" id="curSh" value="3.76" type="number" step="0.01" min="1">B</div>
+    <div class="ai-item ai-slider"><span class="ai-l">Dilution <b id="dilv">1.0%</b>/yr</span><input type="range" id="dil" min="-1.5" max="4" step="0.1" value="1"></div>
+    <div class="ai-item"><span class="ai-l">→ 2035E shares</span><b id="shOut2">–</b>B <span class="ai-sub">· 9 yrs</span></div>
+    <div class="ai-item ai-note" id="dilNote">–</div>
+  </div>
+
+  <div class="bkrow">
+    <div class="bk">
+      <h4>Revenue breakdown by category</h4>
+      <div class="bar" id="revbar"></div>
+      <div class="legend" id="revlegend"></div>
+    </div>
+    <div class="bk">
+      <h4>Valuation breakdown by category</h4>
+      <div class="bar" id="valbar"></div>
+      <div class="legend" id="vallegend"></div>
+    </div>
+  </div>
+
+  <div id="cats"></div>
+
+  <div class="foot">
+    <b>Presets fix total SOTP value, not price.</b> Each preset sets the segment assumptions that sum to a market cap (~$9.4T bear / $18.4T base / $28.9T bull / $29.9T hyper). Price is then cap ÷ projected shares, where shares grow from today's ~3.76B by the dilution slider over 9 years to 2035. <b>James's headline targets ($2,681 / $5,181 / $8,188) only hold at ~3.5B shares</b> — which is <i>below</i> today's count, i.e. they quietly bake in ~0.8%/yr of net buybacks. Flip the slider to a realistic +1%/yr and you reach ~4.1B shares and every price falls ~15%; Musk's pending comp package pushes dilution higher still, not lower. <b>Even the bear case is ~6× today's price</b> and prices in a working robotaxi + Optimus business — a true bear (autonomy stalls, EV margins compress) sits below today, and no preset here represents that. Treat the sliders as the real output; presets are only starting points.
+  </div>
+</div>
+
+<script>
+const CUR_MCAP=1.48, CUR_PRICE=394, CUR_REV=0.097; // $T today (TTM rev ~$97B)
+const CATS=[
+ {id:"veh",name:"Vehicles",color:"var(--veh)",hex:"#f0563a"},
+ {id:"ai", name:"AI & Autonomy",color:"var(--ai)",hex:"#8b5cf6"},
+ {id:"en", name:"Energy",color:"var(--en)",hex:"#22c55e"},
+ {id:"svc",name:"Services & Ecosystem",color:"var(--svc)",hex:"#6366f1"},
+ {id:"mfg",name:"Manufacturing & Core Tech",color:"var(--mfg)",hex:"#f59e0b"},
+ {id:"cmp",name:"Compute & Silicon",color:"var(--cmp)",hex:"#3b82f6"},
+];
+// presets: [rev $B, net margin %, P/E x]  order bear/base/bull/hyper
+const SEG=[
+ {c:"veh",n:"Electric Vehicles (EVs)",d:"Model 3/Y/S/X, Cybertruck lineup",p:{bear:[300,12,12],base:[360,16,13],bull:[440,21,15],hyper:[460,22,15]}},
+ {c:"veh",n:"Tesla Semi",d:"Heavy-duty commercial trucks at scale",p:{bear:[20,20,18],base:[32,24,22],bull:[43,29,29],hyper:[46,30,30]}},
+ {c:"ai", n:"Autonomous Driving (FSD)",d:"Self-driving software platform & licensing",p:{bear:[14,72,40],base:[19,76,50],bull:[22,80,63],hyper:[23.7,80,65]}},
+ {c:"ai", n:"Robotaxis (Cybercab)",d:"Autonomous ride-hailing network economics",p:{bear:[140,72,42],base:[220,78,46],bull:[290,80,53],hyper:[300,80,50]}},
+ {c:"ai", n:"Humanoid Robots (Optimus)",d:"General-purpose robotics — factory + consumer",p:{bear:[45,55,42],base:[75,60,52],bull:[95,64,60],hyper:[100,65,60]}},
+ {c:"en", n:"Energy Storage (Megapack)",d:"Utility-scale grid storage & stabilization",p:{bear:[180,22,25],base:[260,26,32],bull:[320,29,40],hyper:[340,29,40]}},
+ {c:"en", n:"Residential Storage (Powerwall)",d:"Home batteries & behind-the-meter",p:{bear:[40,18,22],base:[58,22,28],bull:[72,24,34],hyper:[75,25,35]}},
+ {c:"en", n:"Solar (Roofs & Panels)",d:"Distributed solar generation",p:{bear:[30,14,18],base:[45,17,24],bull:[57,19,29],hyper:[60,20,30]}},
+ {c:"en", n:"Charging (Supercharger)",d:"Global charging + destination/home",p:{bear:[60,33,25],base:[85,37,30],bull:[105,40,34],hyper:[110,39,35]}},
+ {c:"en", n:"Autobidder",d:"Energy trading & portfolio optimization",p:{bear:[20,60,30],base:[30,65,38],bull:[38,69,43],hyper:[40,70,45]}},
+ {c:"svc",n:"Insurance",d:"Telemetry-priced Tesla Insurance",p:{bear:[15,20,18],base:[21,23,19],bull:[24,24,20],hyper:[25,25,20]}},
+ {c:"svc",n:"Software & Services",d:"OTA, subscriptions, app ecosystem",p:{bear:[18,58,32],base:[25,62,40],bull:[29,64,46],hyper:[30,65,45]}},
+ {c:"mfg",n:"Battery Production (4680)",d:"In-house cell manufacturing & chemistry",p:{bear:[14,20,18],base:[18,23,22],bull:[19,24,24],hyper:[20,25,25]}},
+ {c:"mfg",n:"Manufacturing Tech",d:"Gigafactory production systems & automation",p:{bear:[6,25,16],base:[7,28,21],bull:[8,29,24],hyper:[8,30,25]}},
+ {c:"mfg",n:"Advanced Thermal Systems",d:"Heat-pump architecture for vehicles/HVAC",p:{bear:[4,20,14],base:[5,23,17],bull:[6,24,19],hyper:[6,25,20]}},
+ {c:"mfg",n:"Lithium Refinery (Corpus Christi)",d:"Battery-grade lithium hydroxide",p:{bear:[7,25,10],base:[9,28,13],bull:[10,29,14],hyper:[10,30,15]}},
+ {c:"cmp",n:"AI in-Car Inference",d:"Onboard real-time AI processing",p:{bear:[5,62,35],base:[8,66,44],bull:[10,68,49],hyper:[10,70,50]}},
+ {c:"cmp",n:"Custom Silicon (AI5 / Dojo)",d:"Tesla-designed AI chips & accelerators",p:{bear:[9,48,35],base:[12,52,44],bull:[15,54,50],hyper:[15,55,50]}},
+ {c:"cmp",n:"Megapod (AI DC hardware)",d:"Modular AI data-center hardware, inference/edge",p:{bear:[10,48,38],base:[15,52,48],bull:[19,54,54],hyper:[20,55,55]}},
+ {c:"cmp",n:"AI Compute Infrastructure",d:"Dojo supercomputers + inference stack",p:{bear:[8,52,38],base:[12,56,48],bull:[15,58,54],hyper:[15,60,55]}},
+];
+
+function niceMax(v){const s=[15,30,50,75,100,150,200,300,500,600,750,1000];for(const x of s)if(x>=v*1.12)return x;return Math.ceil(v*1.15/100)*100;}
+SEG.forEach(s=>{s.revMax=niceMax(s.p.hyper[0]);s.live=[...s.p.base];});
+
+let curShares=3.76, dilution=1.0, activePreset="base";
+const YEARS=9; // 2026 -> 2035
+const projShares=()=>curShares*Math.pow(1+dilution/100,YEARS);
+// dilution/yr that reproduces the ~3.5B share count James's price targets assume
+const jamesDil=()=> (Math.pow(3.5/curShares,1/YEARS)-1)*100;
+const $=id=>document.getElementById(id);
+const fmtT=v=> (v>=1000? "$"+(v/1000).toFixed(2)+"T" : "$"+v.toFixed(0)+"B");
+const catHex=id=>CATS.find(c=>c.id===id).hex;
+
+// build cards
+const catsEl=$("cats");
+CATS.forEach(cat=>{
+  const segs=SEG.map((s,i)=>({s,i})).filter(o=>o.s.c===cat.id);
+  const div=document.createElement("div");div.className="cat";
+  div.innerHTML=`<div class="cat-h"><span class="bar-i" style="background:${cat.color}"></span><h3 style="color:${cat.color}">${cat.name}</h3><span class="cnt">${segs.length}</span></div><div class="grid"></div>`;
+  const grid=div.querySelector(".grid");
+  segs.forEach(({s,i})=>{
+    const el=document.createElement("div");el.className="seg";el.style.borderTopColor=cat.color;
+    el.innerHTML=`
+      <div class="name">${s.n}</div><div class="desc">${s.d}</div>
+      <div class="val-box"><div class="vl">Implied segment value</div><div class="vv" id="vv${i}" style="color:${cat.color}">–</div></div>
+      <div class="sld"><div class="r"><span class="k">Revenue</span><span class="v" id="rl${i}"></span></div>
+        <input type="range" class="rev" id="r${i}" min="0" max="${s.revMax}" step="${s.revMax<=50?0.5:1}"></div>
+      <div class="sld"><div class="r"><span class="k">Net Margin</span><span class="v" id="ml${i}"></span></div>
+        <input type="range" class="mgn" id="m${i}" min="0" max="90" step="1"></div>
+      <div class="sld"><div class="r"><span class="k">P/E Multiple</span><span class="v" id="pl${i}"></span></div>
+        <input type="range" id="p${i}" min="0" max="80" step="1"></div>
+      <div class="yield" id="y${i}"></div>`;
+    grid.appendChild(el);
+  });
+  catsEl.appendChild(div);
+});
+
+// wire sliders
+SEG.forEach((s,i)=>{
+  const r=$("r"+i),m=$("m"+i),p=$("p"+i);
+  const on=()=>{s.live=[+r.value,+m.value,+p.value];markCustom();recalc();};
+  r.addEventListener("input",on);m.addEventListener("input",on);p.addEventListener("input",on);
+});
+$("curSh").addEventListener("input",e=>{curShares=+e.target.value||3.76;recalc();});
+$("dil").addEventListener("input",e=>{dilution=+e.target.value;$("dilv").textContent=dilution.toFixed(1)+"%";recalc();});
+$("presets").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>applyPreset(b.dataset.p)));
+
+function syncSliders(){
+  SEG.forEach((s,i)=>{$("r"+i).value=s.live[0];$("m"+i).value=s.live[1];$("p"+i).value=s.live[2];});
+}
+function applyPreset(name){
+  activePreset=name;
+  SEG.forEach(s=>s.live=[...s.p[name]]);
+  syncSliders();
+  $("customTag").style.display="none";
+  $("presets").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.p===name));
+  recalc();
+}
+function markCustom(){
+  activePreset=null;
+  $("customTag").style.display="inline-flex";
+  $("presets").querySelectorAll("button").forEach(b=>b.classList.remove("on"));
+}
+
+function recalc(){
+  let tRev=0,tNi=0,tVal=0; const byCat={};
+  CATS.forEach(c=>byCat[c.id]={rev:0,val:0});
+  SEG.forEach((s,i)=>{
+    const [rev,mg,pe]=s.live;
+    const ni=rev*mg/100, val=ni*pe;
+    tRev+=rev;tNi+=ni;tVal+=val;
+    byCat[s.c].rev+=rev;byCat[s.c].val+=val;
+    $("vv"+i).textContent=fmtT(val);
+    $("rl"+i).textContent="$"+ (rev%1?rev.toFixed(1):rev) +"B";
+    $("ml"+i).textContent=mg+"%";
+    $("pl"+i).textContent=pe+"x";
+    $("y"+i).innerHTML="yields <b>$"+ni.toFixed(1)+"B</b> net income";
+  });
+  const sh=projShares();
+  const price=tVal/sh;
+  $("mcap").textContent="$"+(tVal/1000).toFixed(2)+"T";
+  $("mcapx").textContent=(tVal/1000/CUR_MCAP).toFixed(1)+"x";
+  $("price").textContent="$"+price.toLocaleString(undefined,{maximumFractionDigits:0});
+  $("shOut").textContent=sh.toFixed(2);
+  $("shOut2").textContent=sh.toFixed(2);
+  $("pricex").textContent=(price/CUR_PRICE).toFixed(1)+"x";
+  $("rev").textContent="$"+(tRev/1000).toFixed(2)+"T";
+  $("ni").textContent= tNi>=1000? "$"+(tNi/1000).toFixed(2)+"T" : "$"+tNi.toFixed(1)+"B";
+  $("mgn").textContent=(tNi/tRev*100).toFixed(1)+"%";
+  $("revnote").textContent=(tRev/CUR_REV).toFixed(0)+"x ~$0.1T rev today";
+  const jd=jamesDil();
+  $("dilNote").textContent="James's price targets need "+jd.toFixed(1)+"%/yr → 3.50B sh";
+  // bars
+  const rb=$("revbar"),vb=$("valbar"),rl=$("revlegend"),vl=$("vallegend");
+  rb.innerHTML="";vb.innerHTML="";rl.innerHTML="";vl.innerHTML="";
+  CATS.forEach(c=>{
+    const rw=byCat[c.id].rev/tRev*100, vw=byCat[c.id].val/tVal*100;
+    rb.innerHTML+=`<span style="width:${rw}%;background:${c.hex}"></span>`;
+    vb.innerHTML+=`<span style="width:${vw}%;background:${c.hex}"></span>`;
+    rl.innerHTML+=`<div><span class="dot" style="background:${c.hex}"></span>${c.name} ${rw.toFixed(0)}%</div>`;
+    vl.innerHTML+=`<div><span class="dot" style="background:${c.hex}"></span>${c.name} ${vw.toFixed(0)}%</div>`;
+  });
+}
+applyPreset("base");
+</script>
+</body>
+</html>

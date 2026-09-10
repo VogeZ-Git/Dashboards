@@ -1,0 +1,2077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10Δ Strategy Decision Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #F5C842;
+    --gold-dim: #b89020;
+    --green: #3DFF8F;
+    --red: #FF4D4D;
+    --orange: #FF8C42;
+    --bg: #080808;
+    --bg2: #111111;
+    --bg3: #181818;
+    --bg4: #222222;
+    --border: #2a2a2a;
+    --text: #e8e8e8;
+    --text-dim: #888;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Space Grotesk', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  /* HEADER */
+  .header {
+    max-width: 1080px;
+    margin: 0 auto 36px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .logo {
+    width: 52px;
+    height: 52px;
+    border: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .logo svg { width: 28px; height: 28px; }
+  .header-text h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .header-text h1 span { color: var(--gold); }
+  .header-text p {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    margin-top: 4px;
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+  }
+
+  /* MAIN CARD */
+  .card {
+    max-width: 1080px;
+    margin: 0 auto 16px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 24px;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* TOGGLE GROUP */
+  .toggle-group {
+    display: flex;
+    gap: 0;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+  }
+  .toggle-btn {
+    flex: 1;
+    padding: 11px 8px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .toggle-btn + .toggle-btn { border-left: 1px solid var(--border); }
+  .toggle-btn.active {
+    background: var(--gold);
+    color: #000;
+    font-weight: 600;
+  }
+  .toggle-btn:not(.active):hover { background: var(--bg3); color: var(--text); }
+
+  /* INPUTS */
+  .inputs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .input-block label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .input-block label span {
+    color: var(--gold);
+    margin-left: 4px;
+  }
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .input-wrapper input[type="number"] {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 1.4rem;
+    font-weight: 500;
+    padding: 12px 48px 12px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+  .input-wrapper input[type="number"]::-webkit-inner-spin-button,
+  .input-wrapper input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .input-wrapper input:focus { border-color: var(--gold); }
+  .input-unit {
+    position: absolute;
+    right: 14px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    pointer-events: none;
+  }
+
+  /* SLIDER */
+  .profit-block { margin-bottom: 24px; }
+  .profit-block label {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .profit-block label span { color: var(--gold); font-size: 0.8rem; }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--gold);
+    cursor: pointer;
+  }
+
+  /* ANALYZE BTN */
+  .analyze-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--gold);
+    color: #000;
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+  .analyze-btn:hover { background: #ffd84a; }
+  .analyze-btn:active { transform: scale(0.99); }
+
+  /* RESULT */
+  .result {
+    max-width: 720px;
+    margin: 0 auto;
+    display: none;
+  }
+  .result.visible { display: block; }
+
+  .action-header {
+    padding: 20px 24px;
+    border-left: 4px solid var(--gold);
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .action-header.action-roll { border-left-color: var(--gold); }
+  .action-header.action-hold { border-left-color: var(--green); }
+  .action-header.action-open { border-left-color: #4DAAFF; }
+  .action-header.action-warn { border-left-color: var(--orange); }
+  .action-header.action-profit { border-left-color: var(--green); }
+
+  .action-tag {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .action-roll .action-tag { color: var(--gold); }
+  .action-hold .action-tag { color: var(--green); }
+  .action-open .action-tag { color: #4DAAFF; }
+  .action-warn .action-tag { color: var(--orange); }
+  .action-profit .action-tag { color: var(--green); }
+
+  .action-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .action-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+
+  /* STEPS */
+  .steps {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    margin-bottom: 12px;
+  }
+  .step {
+    display: flex;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+  .step:last-child { border-bottom: none; padding-bottom: 0; }
+  .step:first-child { padding-top: 0; }
+  .step-num {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--gold);
+    background: rgba(245, 200, 66, 0.1);
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .step-text strong { color: var(--gold); font-weight: 600; }
+  .step-text code {
+    background: var(--bg4);
+    padding: 1px 6px;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--green);
+  }
+
+  /* WARNING BOX */
+  .warn-box {
+    background: rgba(255, 140, 66, 0.08);
+    border: 1px solid rgba(255, 140, 66, 0.3);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .warn-box .icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+  .warn-box p { font-size: 0.82rem; color: #ffb86c; line-height: 1.5; }
+
+  /* METRICS STRIP */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    margin-bottom: 12px;
+  }
+  .metric {
+    background: var(--bg2);
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .metric-label {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .metric-value {
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  .metric-value.good { color: var(--green); }
+  .metric-value.warn { color: var(--orange); }
+  .metric-value.bad { color: var(--red); }
+  .metric-value.neutral { color: var(--gold); }
+
+  /* RESET */
+  .reset-btn {
+    max-width: 720px;
+    margin: 0 auto;
+    display: none;
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+  .reset-btn.visible { display: block; }
+  .reset-btn:hover { border-color: var(--text-dim); color: var(--text); }
+
+  /* DISCLAIMER */
+  .disclaimer {
+    max-width: 720px;
+    margin: 24px auto 0;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: #444;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  @media (max-width: 480px) {
+    .inputs-grid { grid-template-columns: 1fr; }
+    .metrics { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <svg viewBox="0 0 28 28" fill="none">
+      <polygon points="14,2 26,24 2,24" stroke="#F5C842" stroke-width="2" fill="none"/>
+      <text x="10" y="17" font-family="monospace" font-size="8" fill="#F5C842" font-weight="bold">10</text>
+    </svg>
+  </div>
+  <div class="header-text">
+    <h1>10<span>Δ</span> Strategy Decision Framework</h1>
+    <p>@HermesLux · MSTR Covered Call Rolling Guide · aligned to 10Δ deck v3</p>
+  </div>
+</div>
+
+<!-- INPUT CARD -->
+<div class="card" id="inputCard">
+
+  <div class="section-label">Position Status</div>
+  <div class="toggle-group" id="positionToggle">
+    <button class="toggle-btn active" data-val="open" onclick="setToggle('positionToggle', this)">I have an open CC position</button>
+    <button class="toggle-btn" data-val="none" onclick="setToggle('positionToggle', this)">No open position</button>
+  </div>
+
+  <div id="openPositionInputs">
+    <div class="inputs-grid">
+      <div class="input-block">
+        <label>Current Delta<span>Δ</span></label>
+        <div class="input-wrapper">
+          <input type="number" id="currentDelta" min="1" max="70" value="10" />
+          <span class="input-unit">Δ</span>
+        </div>
+      </div>
+      <div class="input-block">
+        <label>Current DTE<span>days</span></label>
+        <div class="input-wrapper">
+          <input type="number" id="currentDTE" min="0" max="120" value="35" />
+          <span class="input-unit">DTE</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Stock Direction Since Entry</div>
+    <div class="toggle-group" id="directionToggle" style="margin-bottom: 24px;">
+      <button class="toggle-btn" data-val="surging" onclick="setToggle('directionToggle', this)">📈 Surging</button>
+      <button class="toggle-btn active" data-val="flat" onclick="setToggle('directionToggle', this)">➡ Flat</button>
+      <button class="toggle-btn" data-val="falling" onclick="setToggle('directionToggle', this)">📉 Falling</button>
+    </div>
+
+    <div class="profit-block" id="profitBlock">
+      <label>
+        <span>Current P/L on Short Call</span>
+        <span id="profitLabel">+0%</span>
+      </label>
+      <input type="range" id="profitSlider" min="-150" max="100" value="0" oninput="updateProfit(this.value)"/>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;">
+        <span style="font-family:var(--mono);font-size:0.6rem;color:#444">-150% (loss)</span>
+        <span style="font-family:var(--mono);font-size:0.6rem;color:#444">+100% (max profit)</span>
+      </div>
+    </div>
+
+    <div class="section-label">Your Profit-Taking Threshold</div>
+    <div class="toggle-group" id="profitTargetToggle" style="margin-bottom:10px;">
+      <button class="toggle-btn active" data-val="50" onclick="setToggle('profitTargetToggle', this)">50%</button>
+      <button class="toggle-btn" data-val="60" onclick="setToggle('profitTargetToggle', this)">60%</button>
+      <button class="toggle-btn" data-val="70" onclick="setToggle('profitTargetToggle', this)">70%</button>
+      <button class="toggle-btn" data-val="80" onclick="setToggle('profitTargetToggle', this)">80%</button>
+    </div>
+    <p style="font-family:var(--mono);font-size:0.6rem;color:#555;line-height:1.6;margin-bottom:24px;">
+      There is no single "best" level — the deck lists 50/60/70/80% as equally valid, so pick the one that fits your risk tolerance. This sets when the tool tells you to close early and re-open.
+    </p>
+  </div>
+
+  <button class="analyze-btn" onclick="analyze()">Analyze Position →</button>
+</div>
+
+<!-- RESULT -->
+<div class="result" id="result"></div>
+<button class="reset-btn" id="resetBtn" onclick="reset()">← Analyze Another Position</button>
+
+<p class="disclaimer">For educational purposes only. Not financial advice. Always manage your own risk. Past performance does not guarantee future results.</p>
+
+<!-- MANUAL -->
+<div class="manual">
+  <div class="manual-header">
+    <span class="manual-tag">// MANUAL</span>
+    <span class="manual-title">How to use this tool</span>
+  </div>
+
+  <div class="manual-grid">
+
+    <div class="manual-block">
+      <div class="manual-block-title">What this tool does</div>
+      <p>This is a decision engine for managing MSTR covered calls using the 10Δ strategy. Each week when you check your position, you enter three things — your current delta, your DTE, and a rough P/L — and it tells you exactly what action to take and how to execute it step by step.</p>
+    </div>
+
+    <div class="manual-block">
+      <div class="manual-block-title">The 5 inputs explained</div>
+      <div class="manual-row">
+        <span class="manual-key">Position Status</span>
+        <span class="manual-val">Whether you currently have an open short call or not. If you don't, the tool skips straight to opening instructions.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key">Current Delta (Δ)</span>
+        <span class="manual-val">The delta your short call is showing <em>right now</em>, not when you opened it. Check your broker's options chain. It updates live during market hours.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key">Current DTE</span>
+        <span class="manual-val">Days to expiration remaining on your short call today. Below 30 DTE is a red flag — the tool will tell you to roll regardless of delta.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key">Stock Direction</span>
+        <span class="manual-val">A rough read on whether MSTR has been going up, sideways, or down since you opened the position. Used for context in the recommendation.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key">P/L Slider</span>
+        <span class="manual-val">How much of the premium you've captured so far, as a percentage. Once it reaches your chosen profit threshold, the tool suggests closing early and re-opening rather than waiting for the last few cents.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key">Profit Threshold</span>
+        <span class="manual-val">The deck names 50%, 60%, 70% and 80% as equally valid profit-taking levels and declines to pick one. This selector lets you set your own; it drives the early-close recommendation.</span>
+      </div>
+    </div>
+
+    <div class="manual-block">
+      <div class="manual-block-title">4 Ways to Close or Manage a Position</div>
+      <div class="manual-row">
+        <span class="manual-key manual-key--green">Example A — Hold to Expiration</span>
+        <span class="manual-val">No adjustment. If OTM at expiry → keep shares + start new 10Δ next week. If ITM → assigned (shares sold at strike + keep all premium). Assignments occur after market close.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key">Example B — Close Early & Keep Shares</span>
+        <span class="manual-val">Buy-to-Close (BTC) the short call. If the contract appreciated → small loss; if depreciated → net profit. You keep your 100 shares.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key">Example C — Close Early & Sell Shares</span>
+        <span class="manual-val">BTC the short call + sell shares (can be done as one transaction). You receive the net cash difference.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key manual-key--gold">Example D — Roll Short Calls (Preferred)</span>
+        <span class="manual-val">In one transaction: BTC current call + STO new 40 DTE 10Δ call. You keep shares and ideally receive a credit. Roll weekly for average IV capture.</span>
+      </div>
+
+      <div class="highlight-box" style="margin-top:20px;">
+        <strong>What if the stock runs?</strong><br>
+        You probably won’t roll straight back to a new 10Δ. Instead, roll up/out to the <strong>highest strike that still gives a credit (or net zero)</strong>. Match deltas closely. You will almost always receive a credit if you roll weekly at 40 DTE. Each roll pushes the “goal posts” further out. Once the stock levels off or declines, roll deltas back down (30Δ → 20Δ → 10Δ). Rolling 40 DTE weekly keeps your delta low and reduces surge risk.
+      </div>
+      <div class="highlight-box" style="margin-top:12px;">
+        <strong>What if the stock falls?</strong><br>
+        Either close the short calls early for a profit, or roll out to a new 10Δ. If the stock drops far enough that your original 10Δ has decayed to a <strong>7Δ or 5Δ</strong>, you can roll out <em>and down</em> to the new 10Δ at a lower strike and collect an additional credit.
+      </div>
+    </div>
+
+    <div class="manual-block">
+      <div class="manual-block-title">The Full Cycle</div>
+      <p class="manual-val">A full cycle is complete when you <strong>start with a 10Δ</strong>, roll for more than one week, and <strong>end by selling another 10Δ</strong>. In between, the delta is allowed to wander up and back down with the stock — that drift is the strategy working, not a failure of it.</p>
+      <p class="manual-val" style="margin-top:12px;">If you roll roughly weekly while targeting ~40 DTE, the specific day of the week — and whether MSTR is up or down that day — makes little difference. Over many rolls you are capturing an <strong>average implied volatility</strong> and an average share price, much like dollar-cost averaging.</p>
+    </div>
+
+    <div class="manual-block">
+      <div class="manual-block-title">The 6 outcomes & what triggers them</div>
+      <div class="manual-row">
+        <span class="manual-key manual-key--green">Hold / On Target</span>
+        <span class="manual-val">Delta is 9–13Δ and DTE is 30+. You're in the sweet spot. Check back next week.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key manual-key--green">Roll Down</span>
+        <span class="manual-val">Delta dropped below 8Δ because the stock fell. Roll down to the new 10Δ strike and collect extra credit.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key manual-key--gold">Roll Up & Out</span>
+        <span class="manual-val">Delta is 14–22Δ. Stock is creeping up. Roll up to match delta at 40 DTE, pushing the strike further away.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key manual-key--orange">Aggressive Roll</span>
+        <span class="manual-val">Delta is 23–35Δ. Stock is running hard. Roll immediately, accept a smaller credit, and keep extending the DTE.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key manual-key--red">Emergency / Assignment</span>
+        <span class="manual-val">Delta above 35Δ. Choose: fight to keep shares with an aggressive roll, or accept assignment and execute a buy-write the next morning.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key manual-key--green">Early Profit</span>
+        <span class="manual-val">P/L slider at or above your chosen threshold (50–80%). Enough theta has decayed — close and re-open at 40 DTE to restart the clock.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key manual-key--orange">DTE Below 30</span>
+        <span class="manual-val">Checked before delta. Below 30 DTE the tool tells you to roll out regardless of where delta sits, because gammafication makes a credit roll progressively harder from there.</span>
+      </div>
+    </div>
+
+    <div class="manual-block">
+      <div class="manual-block-title">The golden rules baked into this tool</div>
+      <div class="manual-rule"><span class="rule-num">1</span><span>Always target <strong>40 DTE</strong> when opening or rolling. Never let DTE drop below 30.</span></div>
+      <div class="manual-rule"><span class="rule-num">2</span><span>Always use <strong>delta to find the strike</strong> — never a fixed dollar amount OTM. The 10Δ strike changes every day.</span></div>
+      <div class="manual-rule"><span class="rule-num">3</span><span>When rolling, <strong>match the current delta</strong> at the new expiry. This almost always generates a credit.</span></div>
+      <div class="manual-rule"><span class="rule-num">4</span><span>If a roll generates a loss, <strong>carry it forward</strong> into the new position. Time will work it out.</span></div>
+      <div class="manual-rule"><span class="rule-num">5</span><span>Do not sell weeklies. Weeklies pay the most per week, but <strong>gammafication</strong> makes them exponentially harder to manage when the stock runs unexpectedly.</span></div>
+      <div class="manual-rule"><span class="rule-num">6</span><span><strong>Delta is not the probability of expiring ITM.</strong> That is a separate metric. Delta is the price change per $1 move in MSTR — nothing more.</span></div>
+      <div class="manual-rule"><span class="rule-num">7</span><span>Strike prices for 10Δ calls are <strong>not fixed</strong>. They move continuously with IV and share price, and only update during primary market hours. Re-check the chain every time.</span></div>
+    </div>
+
+    <!-- Gammafication (PDF p23, p26) -->
+    <div class="manual-block">
+      <div class="manual-block-title">Gammafication — why 40 DTE, not weeklies</div>
+      <p class="manual-val"><strong>Gammafication</strong> is not a standard options term; it is the deck author's own word for the specific risk being avoided here: <em>the accelerating influence of gamma on an option's delta as expiration approaches.</em> Near expiry, even small moves in MSTR swing delta rapidly and dramatically.</p>
+      <p class="manual-val" style="margin-top:12px;">Gamma is the "delta of delta." What matters in practice is the combined effect of rising gamma, ongoing theta decay, and the natural increase in gamma as DTE falls. The consequence: <strong>the closer to expiration, the harder it becomes to roll a short call out for a credit</strong> — especially once the strike goes in-the-money.</p>
+      <div class="highlight-box" style="margin-top:14px;">
+        <strong>The resolution:</strong> open at 40 days out, then roll roughly weekly for a net credit, adjusting the strike as the market moves. You still collect weekly income, but you keep a built-in safety net and plenty of time to manage the trade if MSTR moves against you.
+      </div>
+    </div>
+
+    <!-- Delta vs Prob ITM (PDF p8, p24) -->
+    <div class="manual-block">
+      <div class="manual-block-title">Delta ≠ Probability ITM</div>
+      <p class="manual-val">"Delta is roughly the chance of finishing ITM" is a common shortcut, and the deck calls it out as oversimplified and incorrect. The two numbers are related but distinct, and at low deltas the gap is material.</p>
+      <div class="manual-row" style="margin-top:14px;">
+        <span class="manual-key">Delta</span>
+        <span class="manual-val">Approximate change in the option's price per $1 move in the underlying. N(d1) in Black-Scholes.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key">Probability ITM</span>
+        <span class="manual-val">Likelihood the option finishes above the strike at expiration. N(d2). For a 40 DTE 10Δ MSTR call this lands under 6% — noticeably below the 10 the delta suggests.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key">Prob. of Touch</span>
+        <span class="manual-val">Likelihood the stock reaches the strike at <em>any point</em> during the option's life. Roughly double probability ITM. Relevant because you manage the position before expiry, not only at it.</span>
+      </div>
+      <div class="highlight-box" style="margin-top:14px;">
+        Given MSTR's typical 80–100% IV, a 10Δ call sits roughly <strong>1.4–1.5 standard deviations</strong> out. Held to expiration with no adjustments, the chance of finishing ITM is <strong>under 6%</strong>. Because the strategy rolls weekly — and rolls up when the stock rises — the real assignment probability from the start of a cycle is meaningfully lower still.
+      </div>
+    </div>
+
+    <!-- IV / HV / IV Percentile (PDF p3-p4) -->
+    <div class="manual-block">
+      <div class="manual-block-title">Reading Volatility</div>
+      <div class="manual-row">
+        <span class="manual-key">Implied Volatility</span>
+        <span class="manual-val">Unique to <em>every individual option</em>. The IV on a $500 strike this Friday differs from the same strike two Fridays out; calls and puts at the same strike and expiry usually differ too. A single IV figure on a website is typically an average across options expiring 30/45/60 days out.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key">Historical Vol</span>
+        <span class="manual-val">Actual past movement of the underlying (30/60/90-day or trailing 12 months). Higher HV means a riskier security — but risk cuts both ways and is not inherently bad.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key">IV Percentile</span>
+        <span class="manual-val">Where current average IV sits against the prior 12 months. Near 100 = higher than anything in the past year; near 1 = lower. Favour buying long options when it's low, selling short options when it's high.</span>
+      </div>
+      <div class="highlight-box" style="margin-top:14px;">
+        Ideal conditions are rare. The practical way to capture a favourable <em>average</em> IV is to keep rolling short contracts on a weekly basis — the volatility equivalent of dollar-cost averaging. Two strikes only $5–$10 apart on the same expiry can still differ meaningfully in IV; all else equal, higher IV gives the seller more premium.
+      </div>
+    </div>
+
+    <!-- 15Δ / 20Δ tradeoff (PDF p21) -->
+    <div class="manual-block">
+      <div class="manual-block-title">What if you sell the 15Δ or 20Δ instead?</div>
+      <p class="manual-val">More premium, but ITM probability rises faster than the premium does. Sampled on live MSTR data (6 Aug 2025):</p>
+      <div class="manual-row" style="margin-top:14px;">
+        <span class="manual-key">30 DTE</span>
+        <span class="manual-val">15Δ vs 10Δ: <strong>+50%</strong> premium, <strong>+54%</strong> ITM probability · 20Δ vs 10Δ: +123% premium, +127% ITM probability · 20Δ vs 15Δ: +48% premium, +47% ITM probability</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key">37 DTE</span>
+        <span class="manual-val">15Δ vs 10Δ: <strong>+70%</strong> premium, <strong>+68%</strong> ITM probability · 20Δ vs 10Δ: +120% premium, +126% ITM probability · 20Δ vs 15Δ: +29% premium, +34% ITM probability</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key">44 DTE</span>
+        <span class="manual-val">25Δ vs 10Δ: <strong>+53%</strong> premium, <strong>+63%</strong> ITM probability · 20Δ vs 10Δ: +112% premium, +131% ITM probability · 20Δ vs 15Δ: +38% premium, +41% ITM probability</span>
+      </div>
+      <div class="highlight-box" style="margin-top:14px;">
+        Read the pairs: in most of these samples the added ITM risk grows <strong>as fast as or faster than</strong> the added premium. That's the case for starting at 10Δ — you aren't leaving free money on the table, you're declining a roughly fair trade in exchange for a far quieter position to manage.
+      </div>
+    </div>
+
+    <!-- NEW BLOCK 5: Key Terminology (from Fireside Chat) -->
+    <div class="manual-block">
+      <div class="manual-block-title">Key Options Terminology</div>
+      <div class="manual-row">
+        <span class="manual-key">Intrinsic Value</span>
+        <span class="manual-val">Real profit if exercised now. Call = stock price – strike. Example: Stock $55, strike $50 = $5 intrinsic.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key">Extrinsic Value</span>
+        <span class="manual-val">Time value + volatility premium. This is what decays (theta). Key insight: extrinsic value decays as expiration approaches.</span>
+      </div>
+    </div>
+
+    <!-- NEW BLOCK 6: Buyer's vs Seller's Perspective -->
+    <div class="manual-block">
+      <div class="manual-block-title">Call Options – Two Sides of the Trade</div>
+      <div class="manual-row">
+        <span class="manual-key manual-key--new">Buyer (Long Call)</span>
+        <span class="manual-val">Right (not obligation) to buy 100 shares at strike. Pays premium. Max risk = premium paid. Needs big move up.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key">Seller (Short Call / Covered Call)</span>
+        <span class="manual-val">Collects premium upfront. Profits if stock stays flat or drops. You are the income generator.</span>
+      </div>
+      <div class="highlight-box">
+        <strong>Zero-Sum Reminder:</strong> Before every trade ask: “Why would someone take the opposite side?”
+      </div>
+    </div>
+
+    <!-- ── EXTERNAL OVERLAY: not from the v3 deck ─────────────── -->
+    <div class="manual-block block-external">
+      <div class="manual-block-title">Mean Reversion <span class="ext-tag">outside the deck</span></div>
+      <p class="manual-val">Standard Deviation (SD) measures volatility. +2 or –2 SD signals = price is overextended → higher probability of mean reversion. Applied to 10Δ rolls: when delta spikes hard, the stock is likely overextended — prepare to roll or close.</p>
+      <p class="ext-note">Source note: this comes from a fireside chat, not the 10Δ v3 deck. Retitled — the deck names the <strong>40 DTE 10Δ covered call</strong> as its North Star, so mean reversion is a supporting read here, not the guiding principle.</p>
+    </div>
+
+    <div class="manual-block block-external">
+      <div class="manual-block-title">TA Exit Rules <span class="ext-tag">outside the deck · conflicts</span></div>
+      <div class="highlight-box">
+        <strong>Practical TA Rules (apply to MSTR):</strong><br>
+        • Mark prior swing highs after every pullback.<br>
+        • If price breaks and closes above that high → strong continuation signal.<br>
+        • Close the short call (BTC) immediately — even at a small loss.<br>
+        • Do NOT let it run or roll in “rolling prison” during parabolic moves.<br>
+        • 50% profit rule is also excellent: take it and re-open at 40 DTE 10Δ.
+      </div>
+      <p class="manual-val">Example: You sold a 10Δ call for $15 premium. If the call price climbs back to $25 on a breakout → close it. A $10 loss is acceptable because you can immediately sell the next 10Δ and recover faster than holding to a $60–$120 loss.</p>
+      <p class="ext-note"><strong>⚠ This contradicts the v3 deck and is left here for you to decide on.</strong> The deck's answer to a stock that runs is the opposite: keep rolling up and out for a credit, because each roll moves the goalposts and statistically improves your odds once the stock levels off. On negative rolls it says to roll for a credit anyway and <em>carry the losses forward</em> into the new covered calls — the documented 6/23–8/15 run did exactly that and still finished +$11,292 (+11.7%) over 53 days. The one point both agree on is the 50% profit rule. The decision engine above follows the deck.</p>
+    </div>
+
+    <!-- Alternative structures (PDF p9, p22, p27) -->
+    <div class="manual-block">
+      <div class="manual-block-title">The Two Ways to Run This Strategy</div>
+      <div class="manual-row">
+        <span class="manual-key manual-key--green">1. Covered Calls</span>
+        <span class="manual-val">Sell short calls against <strong>shares you own</strong>. This is the standard route and what the decision framework above assumes. 100 shares per contract.</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key manual-key--gold">2. PMCC</span>
+        <span class="manual-val">Sell short calls against <strong>deep in-the-money long calls with more than 365 days to expiration</strong> (LEAPS). Formally a diagonal bull call spread, commonly called a Poor Man's Covered Call. Same 10Δ / 40 DTE discipline applies to the short leg.</span>
+      </div>
+      <div class="warn-box" style="margin-top:16px;margin-bottom:0;">
+        <div class="icon">⚠</div>
+        <p><strong>PMCCs carry meaningfully higher risk</strong> and are not recommended for new options traders or anyone sensitive to large drawdowns. If an 80%+ paper loss would keep you up at night, do not trade option spreads.</p>
+      </div>
+    </div>
+
+    <!-- The Collar (PDF p22) -->
+    <div class="manual-block">
+      <div class="manual-block-title">The Collar — capping downside on a large position</div>
+      <p class="manual-val">If you hold a large MSTR position and your priority shifts to <strong>capturing upside while limiting downside</strong>, the collar is the structure. Most often used after a significant run-up, to limit large potential losses without selling the shares — which can also preserve long-term holding status rather than triggering short-term gains.</p>
+      <div class="manual-row" style="margin-top:14px;">
+        <span class="manual-key manual-key--green">Buy</span>
+        <span class="manual-val">100 shares of MSTR</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key manual-key--red">Sell-to-Open</span>
+        <span class="manual-val">1× <strong>12Δ</strong> covered call</span>
+      </div>
+      <div class="manual-row">
+        <span class="manual-key manual-key--green">Buy-to-Open</span>
+        <span class="manual-val">1× <strong>10Δ</strong> put</span>
+      </div>
+      <div class="highlight-box" style="margin-top:14px;">
+        <strong>Why 12Δ on the call but 10Δ on the put?</strong> Because of natural downside skew, puts cost more than calls at equivalent deltas. Selling the call at a modestly higher delta usually generates enough premium to <strong>fully offset the cost of the protective put</strong>. Both strikes are out-of-the-money, just at different levels. Can be executed as one combined transaction or two separate trades.
+      </div>
+      <p class="manual-val" style="margin-top:12px;">If the primary goal is instead to <em>lock in</em> gains, sell higher-delta options on both sides — for example 50Δ calls and 50Δ puts straddling the current share price.</p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .manual {
+    max-width: 720px;
+    margin: 32px auto 0;
+    border-top: 1px solid var(--border);
+    padding-top: 32px;
+  }
+  .manual-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .manual-tag {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+  }
+  .manual-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .manual-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .manual-block {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 20px;
+  }
+  .manual-block-title {
+    font-family: var(--mono);
+    font-size: 0.63rem;
+    letter-spacing: 0.13em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .manual-block p {
+    font-size: 0.85rem;
+    line-height: 1.65;
+    color: var(--text-dim);
+  }
+  .manual-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+  .manual-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .manual-row:first-child { padding-top: 0; }
+  .manual-key {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text);
+    font-weight: 500;
+    padding-top: 1px;
+  }
+  .manual-key--green { color: var(--green); }
+  .manual-key--gold  { color: var(--gold); }
+  .manual-key--orange{ color: var(--orange); }
+  .manual-key--red   { color: var(--red); }
+  .manual-key--new   { color: #4DAAFF; }
+
+  /* highlight box — was referenced but never defined */
+  .highlight-box {
+    background: rgba(245, 200, 66, 0.07);
+    border: 1px solid rgba(245, 200, 66, 0.22);
+    border-left: 3px solid var(--gold);
+    padding: 13px 15px;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--text-dim);
+  }
+  .highlight-box strong { color: var(--text); font-weight: 600; }
+
+  /* external / non-deck source marking */
+  .block-external { border-left: 3px solid #4a4a4a; }
+  .ext-tag {
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    margin-left: 8px;
+    text-transform: uppercase;
+  }
+  .ext-note {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    line-height: 1.65;
+    color: #6a6a6a;
+  }
+  .ext-note strong { color: #8a8a8a; }
+  .manual-val {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.55;
+  }
+  .manual-rule {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.83rem;
+    color: var(--text-dim);
+    line-height: 1.55;
+  }
+  .manual-rule:last-child { border-bottom: none; padding-bottom: 0; }
+  .manual-rule:first-child { padding-top: 0; }
+  .manual-rule strong { color: var(--text); font-weight: 600; }
+  .rule-num {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--gold);
+    background: rgba(245,200,66,0.1);
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+</style>
+
+<script>
+  function setToggle(groupId, btn) {
+    const group = document.getElementById(groupId);
+    group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    if (groupId === 'positionToggle') {
+      const hasPosition = btn.dataset.val === 'open';
+      document.getElementById('openPositionInputs').style.display = hasPosition ? 'block' : 'none';
+    }
+  }
+
+  function updateProfit(val) {
+    const v = parseInt(val);
+    const label = document.getElementById('profitLabel');
+    label.textContent = (v >= 0 ? '+' : '') + v + '%';
+    label.style.color = v >= 0 ? 'var(--green)' : 'var(--red)';
+  }
+
+  function getToggleVal(groupId) {
+    const group = document.getElementById(groupId);
+    const active = group.querySelector('.toggle-btn.active');
+    return active ? active.dataset.val : null;
+  }
+
+  function analyze() {
+    const positionStatus = getToggleVal('positionToggle');
+
+    if (positionStatus === 'none') {
+      showResult(buildOpenPositionResult());
+    } else {
+      const delta = parseInt(document.getElementById('currentDelta').value) || 10;
+      const dte = parseInt(document.getElementById('currentDTE').value) || 35;
+      const direction = getToggleVal('directionToggle');
+      const profit = parseInt(document.getElementById('profitSlider').value);
+      showResult(buildRollResult(delta, dte, direction, profit));
+    }
+
+    document.getElementById('inputCard').style.display = 'none';
+    document.getElementById('resetBtn').classList.add('visible');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function showResult(html) {
+    const r = document.getElementById('result');
+    r.innerHTML = html;
+    r.classList.add('visible');
+  }
+
+  function reset() {
+    document.getElementById('inputCard').style.display = 'block';
+    const r = document.getElementById('result');
+    r.innerHTML = '';
+    r.classList.remove('visible');
+    document.getElementById('resetBtn').classList.remove('visible');
+  }
+
+  function metricColor(delta) {
+    if (delta <= 12) return 'good';
+    if (delta <= 20) return 'warn';
+    return 'bad';
+  }
+
+  function dteColor(dte) {
+    if (dte >= 30 && dte <= 45) return 'good';
+    if (dte >= 20) return 'warn';
+    return 'bad';
+  }
+
+  function buildOpenPositionResult() {
+    return `
+      <div class="action-header action-open">
+        <div class="action-tag">▶ Action Required</div>
+        <div class="action-title">Open a New Covered Call Position</div>
+        <div class="action-subtitle">No active position — initiate the 10Δ strategy now</div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">Buy <strong>100 shares</strong> of MSTR (or a multiple of 100 if you want more contracts)</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">Find the expiration date closest to <strong>40 DTE</strong> — aim for the weekly expiry that lands 38–42 days out</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">Scan the options chain for the strike with a delta of exactly <strong>0.10 (10Δ)</strong> — do NOT use a fixed dollar OTM amount</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text"><strong>Sell-to-Open (STO)</strong> <code>-1</code> covered call contract at that strike. The premium will be deposited as cash.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-text">Check the position <strong>roughly weekly</strong> and roll on that cadence — that is the whole cycle. A full cycle is complete when you start at 10Δ, roll for more than one week, and end by selling another 10Δ.</div>
+        </div>
+      </div>
+      <div class="warn-box">
+        <div class="icon">⚡</div>
+        <p>MSTR's persistently high IV is why this works — without elevated IV, selling 10Δ calls is rarely worth the risk of having shares called away. Held to expiration, 10Δ calls sold this way have a <strong>94–97% historical success rate</strong>. Starting at 10Δ is what puts the math on your side.</p>
+      </div>
+      <div class="warn-box" style="background:rgba(77,170,255,0.07);border-color:rgba(77,170,255,0.28);">
+        <div class="icon">📐</div>
+        <p style="color:#9fd0ff;"><strong>Delta is not probability ITM.</strong> Delta measures how much the option's price moves per $1 move in MSTR. The chance of finishing in-the-money is a separate metric — for a 40 DTE 10Δ MSTR call it works out under 6% unadjusted. Use the calculator below to see both side by side.</p>
+      </div>
+    `;
+  }
+
+  // ── PDF v3 THRESHOLDS (single source of truth) ──────────────
+  // p19: "I avoid letting the short calls drop below 30 DTE."
+  // p13: North Star = 40 DTE 10Δ.  p19: profit-taking 50/60/70/80%.
+  const CFG = {
+    TARGET_DTE:   40,
+    MIN_DTE:      30,   // hard floor from PDF p19
+    ON_TARGET_LO:  9,
+    ON_TARGET_HI: 13,
+    ROLL_DOWN_MAX: 8,
+    RUNNING_MAX:  22,
+    HARD_MAX:     35
+  };
+
+  function getProfitTarget() {
+    const el = document.querySelector('#profitTargetToggle .toggle-btn.active');
+    return el ? parseInt(el.dataset.val) : 50;
+  }
+
+  function buildRollResult(delta, dte, direction, profit) {
+    if (profit >= getProfitTarget()) {
+      return buildEarlyProfitResult(delta, dte, profit);
+    }
+    if (dte < CFG.MIN_DTE) {
+      return buildMustRollResult(delta, dte, direction);
+    }
+    if (delta <= 8) {
+      return buildStockFellResult(delta, dte, profit);
+    } else if (delta <= 13) {
+      return buildOnTargetResult(delta, dte, profit);
+    } else if (delta <= 22) {
+      return buildRunningResult(delta, dte, direction, profit);
+    } else if (delta <= 35) {
+      return buildRunningHardResult(delta, dte, direction, profit);
+    } else {
+      return buildDangerResult(delta, dte, direction, profit);
+    }
+  }
+
+  function buildEarlyProfitResult(delta, dte, profit) {
+    return `
+      <div class="action-header action-profit">
+        <div class="action-tag">✓ Profit Target Reached</div>
+        <div class="action-title">Consider Closing Early & Re-Opening</div>
+        <div class="action-subtitle">Your position has decayed significantly — lock in the gain</div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Current Δ</div><div class="metric-value ${metricColor(delta)}">${delta}Δ</div></div>
+        <div class="metric"><div class="metric-label">DTE Left</div><div class="metric-value ${dteColor(dte)}">${dte}d</div></div>
+        <div class="metric"><div class="metric-label">P/L</div><div class="metric-value good">+${profit}%</div></div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text"><strong>Buy-to-Close (BTC)</strong> your existing short call — you've captured ${profit}% of max profit. Don't be greedy waiting for the last few dollars.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">Immediately look for the <strong>next 40 DTE expiration</strong> and find the 10Δ strike on the options chain</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text"><strong>Sell-to-Open (STO)</strong> a new <code>-1</code> CC at the new 10Δ strike. You're recycling your theta decay clock at maximum efficiency.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text">Alternatively, execute this as a <strong>single roll transaction</strong>: BTC + STO simultaneously to save on commissions</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function buildMustRollResult(delta, dte, direction) {
+    return `
+      <div class="action-header action-warn">
+        <div class="action-tag">⚠ DTE Too Low — Roll Now</div>
+        <div class="action-title">Roll Out Immediately — DTE Below Threshold</div>
+        <div class="action-subtitle">Below 30 DTE gammafication accelerates. The deck's rule: never let DTE drop below 30.</div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Current Δ</div><div class="metric-value ${metricColor(delta)}">${delta}Δ</div></div>
+        <div class="metric"><div class="metric-label">DTE Left</div><div class="metric-value bad">${dte}d ⚠</div></div>
+        <div class="metric"><div class="metric-label">Target DTE</div><div class="metric-value neutral">40d</div></div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">In a <strong>single transaction</strong>, Buy-to-Close your current short call</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">Find the <strong>~40 DTE</strong> expiration. Locate the strike at the <strong>same delta</strong> as your current position (delta-matching) — this almost always generates a credit</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text"><strong>Sell-to-Open (STO)</strong> the new contract. Aim for a credit. Even a $0 roll (net zero) is acceptable to reset your time clock.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text">After rolling, work back toward the <strong>10Δ</strong> on subsequent weekly rolls once the stock stabilizes</div>
+        </div>
+      </div>
+      <div class="warn-box">
+        <div class="icon">⚡</div>
+        <p><strong>Gammafication.</strong> As expiration nears, gamma accelerates delta's response to every move in MSTR. The closer to expiry — and especially once the strike goes ITM — the harder it becomes to roll for a credit at all. Keep the position at 30–40 DTE so you always have room to manage it.</p>
+      </div>
+    `;
+  }
+
+  function buildStockFellResult(delta, dte, profit) {
+    return `
+      <div class="action-header action-profit">
+        <div class="action-tag">✓ Favorable Position</div>
+        <div class="action-title">Roll Down to New 10Δ — Collect Extra Credit</div>
+        <div class="action-subtitle">Stock has pulled back. Your delta dropped below target — capitalize on it.</div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Current Δ</div><div class="metric-value good">${delta}Δ</div></div>
+        <div class="metric"><div class="metric-label">DTE Left</div><div class="metric-value ${dteColor(dte)}">${dte}d</div></div>
+        <div class="metric"><div class="metric-label">Profit So Far</div><div class="metric-value good">${profit >= 0 ? '+' : ''}${profit}%</div></div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">Your position is at <strong>${delta}Δ</strong> — the stock pulled back in your favor. You have two good options:</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text"><strong>Option A — Roll down for extra credit:</strong> BTC current call, then STO a new call at <strong>40 DTE, 10Δ</strong> (which will be at a lower strike). You collect an additional premium.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text"><strong>Option B — Close early for the profit:</strong> If you've already captured 50–80% of the premium, simply BTC and take it. Then re-open at 40 DTE 10Δ. Holding out for the last few cents is rarely worth the gamma risk.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text">If you roll, target the <strong>new 10Δ strike</strong> at the 40 DTE expiry. The lower strike gives you more downside cushion.</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function buildOnTargetResult(delta, dte, profit) {
+    return `
+      <div class="action-header action-hold">
+        <div class="action-tag">✓ On Target</div>
+        <div class="action-title">${dte >= 30 ? 'Hold or Roll Weekly to Maintain 10Δ' : 'Roll to Reset DTE — You\'re In Range'}</div>
+        <div class="action-subtitle">Delta is within the 9–13Δ sweet spot. Continue normal management.</div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Current Δ</div><div class="metric-value good">${delta}Δ ✓</div></div>
+        <div class="metric"><div class="metric-label">DTE Left</div><div class="metric-value ${dteColor(dte)}">${dte}d</div></div>
+        <div class="metric"><div class="metric-label">P/L</div><div class="metric-value ${profit >= 0 ? 'good' : 'bad'}">${profit >= 0 ? '+' : ''}${profit}%</div></div>
+      </div>
+      <div class="steps">
+        ${dte >= 30 ? `
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">You're in the <strong>ideal zone</strong>. Delta is on target and DTE is healthy. No urgent action required this week.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">The baseline cadence is a <strong>roughly weekly roll</strong> back out to ~40 DTE at the 10Δ, each one for a credit. Rolling weekly is how you capture an average IV over time rather than betting on one snapshot.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">If you'd rather let this one decay a while longer, that's fine — but <strong>do not let DTE fall below 30</strong>. Past that point rolling for a credit gets progressively harder.</div>
+        </div>
+        ` : `
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">DTE is getting low — time to roll. In a single transaction: <strong>Buy-to-Close</strong> your current call</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">Find the <strong>40 DTE expiry</strong> and locate the <strong>10Δ strike</strong>. Sell-to-Open that new contract for a credit.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">You should almost always receive a net <strong>credit to roll</strong> when delta-matching at 40 DTE from a 10Δ position.</div>
+        </div>
+        `}
+      </div>
+    `;
+  }
+
+  function buildRunningResult(delta, dte, direction, profit) {
+    return `
+      <div class="action-header action-roll">
+        <div class="action-tag">↑ Roll Up & Out</div>
+        <div class="action-title">Roll Up to Match Delta — Stock is Running</div>
+        <div class="action-subtitle">Delta has drifted to ${delta}Δ. Roll up and out to stay ahead of the stock.</div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Current Δ</div><div class="metric-value warn">${delta}Δ ↑</div></div>
+        <div class="metric"><div class="metric-label">DTE Left</div><div class="metric-value ${dteColor(dte)}">${dte}d</div></div>
+        <div class="metric"><div class="metric-label">P/L</div><div class="metric-value ${profit >= 0 ? 'good' : 'bad'}">${profit >= 0 ? '+' : ''}${profit}%</div></div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">Your delta has risen to <strong>${delta}Δ</strong> as MSTR moved up. Roll to push the strike further out of reach.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text"><strong>Match deltas closely:</strong> find the strike nearest <strong>${delta}Δ</strong> at the expiry closest to <strong>40 days out</strong>. BTC your current call, STO the new one in one ticket.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">You should receive a <strong>credit to roll</strong>. If it doesn't, roll up and out to the <strong>highest strike that still yields a credit</strong> — or accept a net-zero roll. Never pay a debit just to hit an exact delta.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text">Don't panic — the stock can't run forever. Keep rolling roughly weekly, matching deltas each time. Once it levels off or turns down, walk the deltas back: <strong>30Δ → 20Δ → 10Δ</strong>.</div>
+        </div>
+      </div>
+      <div class="warn-box">
+        <div class="icon">💡</div>
+        <p>Think of this like a field goal kicker — each roll pushes the uprights back another 5 yards. The kicker (stock) eventually tires out. Your job is to keep rolling up for credits until it does.</p>
+      </div>
+    `;
+  }
+
+  function buildRunningHardResult(delta, dte, direction, profit) {
+    return `
+      <div class="action-header action-warn">
+        <div class="action-tag">⚠ Stock Running Hard</div>
+        <div class="action-title">Aggressive Roll — Match Delta, Prioritize Credit</div>
+        <div class="action-subtitle">Delta at ${delta}Δ — position under pressure. Active management needed.</div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Current Δ</div><div class="metric-value warn">${delta}Δ ⚠</div></div>
+        <div class="metric"><div class="metric-label">DTE Left</div><div class="metric-value ${dteColor(dte)}">${dte}d</div></div>
+        <div class="metric"><div class="metric-label">P/L</div><div class="metric-value ${profit >= 0 ? 'good' : 'bad'}">${profit >= 0 ? '+' : ''}${profit}%</div></div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text"><strong>Roll immediately.</strong> At ${delta}Δ the risk of assignment is meaningful. Don't wait for the weekly review.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">BTC your current call. Find the <strong>~40 DTE expiry</strong> and locate the strike that <strong>closely matches ${delta}Δ</strong> at a higher strike price.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">If the exact delta-match yields a debit, try <strong>going one strike lower</strong> (slightly lower delta) at the same expiry to find a credit or break-even roll.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text">If the roll generates a <strong>loss</strong>, accept it — roll for a credit and carry the loss forward into the new contract. Time works in your favor.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-text">Continue rolling weekly. As the stock levels off, gradually roll from ${delta}Δ → 25Δ → 20Δ → 15Δ → 10Δ over coming weeks.</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function buildDangerResult(delta, dte, direction, profit) {
+    return `
+      <div class="action-header action-warn" style="border-left-color: var(--red);">
+        <div class="action-tag" style="color: var(--red);">🚨 High Risk — Immediate Action</div>
+        <div class="action-title">Emergency Roll or Accept Assignment</div>
+        <div class="action-subtitle">Delta at ${delta}Δ — assignment risk is real. Choose your path now.</div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Current Δ</div><div class="metric-value bad">${delta}Δ 🚨</div></div>
+        <div class="metric"><div class="metric-label">DTE Left</div><div class="metric-value ${dteColor(dte)}">${dte}d</div></div>
+        <div class="metric"><div class="metric-label">P/L</div><div class="metric-value ${profit >= 0 ? 'good' : 'bad'}">${profit >= 0 ? '+' : ''}${profit}%</div></div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">A</div>
+          <div class="step-text"><strong>Path A — Fight to Keep Shares:</strong> Roll immediately at market open. BTC current call, then STO at the <strong>highest strike that still yields a credit</strong> at roughly 40 DTE — a net-zero roll is acceptable too. Raising the strike is what buys you room; a smaller credit at a higher strike beats a fat credit at the same strike.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">B</div>
+          <div class="step-text"><strong>Path B — Accept Assignment:</strong> Let the position ride. If assigned, your shares sell at the strike price. You keep all premium collected. The next trading day, execute a <strong>buy-write</strong>: buy shares + sell a higher-delta call to immediately lower your new cost basis.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">C</div>
+          <div class="step-text"><strong>After assignment recovery:</strong> Subtract total premium earned from your repurchase price to find your new break-even. Parabolic runs don't last — IV will be elevated, making new calls more lucrative.</div>
+        </div>
+      </div>
+      <div class="warn-box">
+        <div class="icon">⚡</div>
+        <p>Parabolic moves never last. Even if assigned, the spike in IV after a hard run means your next covered calls will pay significantly more premium. This is part of the strategy — assignment is not the end.</p>
+      </div>
+    `;
+  }
+</script>
+
+
+
+<!-- BLACK-SCHOLES CALCULATOR -->
+<div class="bs-section">
+  <div class="manual-header" style="margin-bottom:20px;">
+    <span class="manual-tag">// CALCULATOR</span>
+    <span class="manual-title">Black-Scholes Delta Calculator</span>
+  </div>
+  <p class="bs-desc">Calculate the theoretical delta of any MSTR strike manually — and, just as importantly, its <strong>probability of expiring ITM</strong>, which is a different number. Enter the current stock price, your target strike, DTE, the IV for that specific contract, and the risk-free rate. Useful for verifying your broker's delta, checking strikes not yet visible on the chain, and seeing for yourself why delta is not a probability.</p>
+
+  <div class="bs-grid">
+    <div class="bs-input-block">
+      <label>Stock Price (S)<span>current</span></label>
+      <div class="input-wrapper">
+        <input type="number" id="bs_S" value="370" step="0.01"/>
+        <span class="input-unit">$</span>
+      </div>
+    </div>
+    <div class="bs-input-block">
+      <label>Strike Price (K)<span>target</span></label>
+      <div class="input-wrapper">
+        <input type="number" id="bs_K" value="570" step="0.01"/>
+        <span class="input-unit">$</span>
+      </div>
+    </div>
+    <div class="bs-input-block">
+      <label>Days to Expiry<span>DTE</span></label>
+      <div class="input-wrapper">
+        <input type="number" id="bs_T" value="40" step="1"/>
+        <span class="input-unit">days</span>
+      </div>
+    </div>
+    <div class="bs-input-block">
+      <label>Implied Volatility<span>IV %</span></label>
+      <div class="input-wrapper">
+        <input type="number" id="bs_IV" value="90" step="0.1"/>
+        <span class="input-unit">%</span>
+      </div>
+    </div>
+    <div class="bs-input-block">
+      <label>Risk-Free Rate<span>r %</span></label>
+      <div class="input-wrapper">
+        <input type="number" id="bs_r" value="4.3" step="0.01"/>
+        <span class="input-unit">%</span>
+      </div>
+    </div>
+    <div class="bs-input-block">
+      <label>Option Type</label>
+      <div class="toggle-group" id="bs_type" style="margin-bottom:0;height:51px;">
+        <button class="toggle-btn active" data-val="call" onclick="setToggle('bs_type',this)" style="font-size:0.8rem;">Call</button>
+        <button class="toggle-btn" data-val="put" onclick="setToggle('bs_type',this)" style="font-size:0.8rem;">Put</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="analyze-btn" style="margin-top:4px;" onclick="calcBS()">Calculate Delta &rarr;</button>
+
+  <div class="bs-result" id="bs_result" style="display:none;">
+    <div class="bs-result-grid">
+      <div class="bs-metric">
+        <div class="metric-label">Delta (&Delta;) &middot; N(d1)</div>
+        <div class="metric-value" id="bs_out_delta">&mdash;</div>
+      </div>
+      <div class="bs-metric">
+        <div class="metric-label">Prob. ITM &middot; N(d2)</div>
+        <div class="metric-value" id="bs_out_pitm">&mdash;</div>
+      </div>
+      <div class="bs-metric">
+        <div class="metric-label">Prob. of Touch</div>
+        <div class="metric-value" id="bs_out_touch">&mdash;</div>
+      </div>
+      <div class="bs-metric">
+        <div class="metric-label">Sigma Distance</div>
+        <div class="metric-value neutral" id="bs_out_sigma" style="font-size:0.95rem;">&mdash;</div>
+      </div>
+    </div>
+    <div class="bs-gap" id="bs_gap"></div>
+    <div class="bs-formula" id="bs_formula"></div>
+    <div class="bs-verdict" id="bs_verdict"></div>
+  </div>
+</div>
+
+<style>
+  .bs-section {
+    max-width: 720px;
+    margin: 32px auto 60px;
+    border-top: 1px solid var(--border);
+    padding-top: 32px;
+  }
+  .bs-desc {
+    font-size: 0.83rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  .bs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .bs-input-block label {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 0.63rem;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .bs-input-block label span { color: var(--gold); }
+  .bs-input-block .input-wrapper input {
+    font-size: 1.1rem;
+    padding: 10px 44px 10px 12px;
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+  .bs-input-block .input-wrapper input::-webkit-inner-spin-button,
+  .bs-input-block .input-wrapper input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .bs-input-block .input-wrapper input:focus { border-color: var(--gold); }
+  .bs-result {
+    margin-top: 16px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .bs-result-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+  }
+  .bs-metric {
+    background: var(--bg2);
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .bs-formula {
+    padding: 10px 18px;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: #444;
+    border-top: 1px solid var(--border);
+    line-height: 1.7;
+    letter-spacing: 0.03em;
+  }
+  .bs-verdict {
+    padding: 14px 18px;
+    font-size: 0.83rem;
+    line-height: 1.6;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+  }
+  .bs-gap {
+    padding: 14px 18px;
+    font-size: 0.8rem;
+    line-height: 1.65;
+    color: #9fd0ff;
+    background: rgba(77, 170, 255, 0.07);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid rgba(77, 170, 255, 0.2);
+  }
+  .bs-gap strong { color: #cde6ff; font-weight: 600; }
+  .gap-label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.15em;
+    color: #4DAAFF;
+    margin-bottom: 6px;
+  }
+  .bs-verdict strong { font-weight: 600; color: var(--text); }
+  .bs-verdict .tag-10   { color: var(--green); }
+  .bs-verdict .tag-warn { color: var(--orange); }
+  .bs-verdict .tag-bad  { color: var(--red); }
+  @media (max-width: 560px) {
+    .bs-grid { grid-template-columns: 1fr 1fr; }
+    .bs-result-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+
+<script>
+  // Single delta banding used by BOTH the decision framework and this
+  // calculator, so the two can never disagree about what "on target" means.
+  function deltaBand(absDelta) {
+    if (absDelta <= 13) return 'good';
+    if (absDelta <= 22) return 'warn';
+    return 'bad';
+  }
+
+  function normalCDF(x) {
+    var a1= 0.254829592, a2=-0.284496736, a3= 1.421413741,
+        a4=-1.453152027, a5= 1.061405429, p = 0.3275911;
+    var sign = x < 0 ? -1 : 1;
+    x = Math.abs(x) / Math.sqrt(2);
+    var t = 1.0 / (1.0 + p * x);
+    var y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t * Math.exp(-x*x);
+    return 0.5 * (1.0 + sign * y);
+  }
+
+  function calcBS() {
+    var S  = parseFloat(document.getElementById('bs_S').value);
+    var K  = parseFloat(document.getElementById('bs_K').value);
+    var T  = parseFloat(document.getElementById('bs_T').value) / 365.0;
+    var IV = parseFloat(document.getElementById('bs_IV').value) / 100.0;
+    var r  = parseFloat(document.getElementById('bs_r').value)  / 100.0;
+    var type = getToggleVal('bs_type');
+
+    var resultDiv = document.getElementById('bs_result');
+    var verdictDiv = document.getElementById('bs_verdict');
+    resultDiv.style.display = 'block';
+
+    if ([S,K,T,IV,r].some(function(v){ return isNaN(v) || v <= 0; })) {
+      verdictDiv.innerHTML = '<span class="tag-bad">&#9888; All fields must be filled with positive numbers.</span>';
+      return;
+    }
+
+    var sqrtT = Math.sqrt(T);
+    var d1 = (Math.log(S / K) + (r + 0.5 * IV * IV) * T) / (IV * sqrtT);
+    var d2 = d1 - IV * sqrtT;
+    var Nd1 = normalCDF(d1);
+    var Nd2 = normalCDF(d2);
+
+    var delta    = type === 'call' ? Nd1 : Nd1 - 1;
+    var absDelta = Math.abs(delta) * 100;
+    var deltaExact = (delta * 100).toFixed(2);
+    var dInt = Math.round(absDelta);
+
+    // Probability of expiring ITM = N(d2) for a call, N(-d2) for a put.
+    // This is NOT delta — the whole point of PDF p8.
+    var probITM = (type === 'call' ? Nd2 : 1 - Nd2) * 100;
+    // Probability of touch ~= 2 x probability ITM (standard approximation).
+    var probTouch = Math.min(probITM * 2, 100);
+    // How many standard deviations out the strike sits, in log terms.
+    var sigmaDist = Math.abs(d2);
+
+    var ratio = S / K;
+    var moneyness, moneyColor;
+    if (Math.abs(ratio - 1) < 0.005) {
+      moneyness = 'At-the-Money';     moneyColor = 'var(--gold)';
+    } else if (type === 'call' ? ratio > 1 : ratio < 1) {
+      moneyness = 'In-the-Money';     moneyColor = 'var(--green)';
+    } else {
+      moneyness = 'Out-of-the-Money'; moneyColor = 'var(--text-dim)';
+    }
+
+    document.getElementById('bs_formula').innerHTML =
+      'd1 = [ ln(' + S + '/' + K + ') + (' + (r*100).toFixed(2) + '% + 0.5 &times; ' + (IV*100).toFixed(1) + '%&sup2;) &times; ' + (T*365).toFixed(0) + 'd/365 ] &divide; (' + (IV*100).toFixed(1) + '% &times; &radic;' + (T*365).toFixed(0) + '/365) = ' + d1.toFixed(4) +
+      '<br>d2 = d1 &minus; IV&radic;T = ' + d2.toFixed(4) +
+      '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N(d1) = ' + Nd1.toFixed(4) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N(d2) = ' + Nd2.toFixed(4) +
+      '<br>Delta = ' + (type === 'call' ? 'N(d1)' : 'N(d1) &minus; 1') + ' = ' + deltaExact + '&#916;' +
+      '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Prob ITM = ' + (type === 'call' ? 'N(d2)' : '1 &minus; N(d2)') + ' = ' + probITM.toFixed(2) + '%' +
+      '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Moneyness: ' + moneyness;
+
+    // The headline lesson: delta overstates the chance of finishing ITM.
+    var gapPts = absDelta - probITM;
+    document.getElementById('bs_gap').innerHTML =
+      '<span class="gap-label">DELTA vs PROBABILITY ITM</span>' +
+      'Delta reads <strong>' + dInt + '</strong>, but the actual chance of finishing in-the-money is <strong>' + probITM.toFixed(2) + '%</strong>' +
+      (gapPts > 0.5
+        ? ' &mdash; <strong>' + gapPts.toFixed(1) + ' points lower</strong>. Treating delta as a probability would overstate your assignment risk here.'
+        : '. At this strike the two happen to sit close together; at low deltas on high-IV names they usually do not.') +
+      ' Delta measures price sensitivity per $1 move, nothing more.';
+
+    var v = '';
+    if (absDelta <= 8) {
+      v = '<span class="tag-10">&#10003; ' + dInt + '&#916; &mdash; Below target.</span> Strike is well OTM. Good landing zone when rolling down for extra credit, or wait for the stock to drift it back to 10&#916;.';
+    } else if (absDelta <= 13) {
+      v = '<span class="tag-10">&#10003; ' + dInt + '&#916; &mdash; On target.</span> This strike sits in the ideal 9&ndash;13&#916; zone. <strong>Good strike to sell at 40 DTE.</strong>';
+    } else if (absDelta <= 22) {
+      v = '<span class="tag-warn">~ ' + dInt + '&#916; &mdash; Elevated (roll-up zone).</span> Acceptable when matching deltas on a running stock, but not where you open a fresh position. Walk it back toward 10&#916; as the stock levels off.';
+    } else if (absDelta <= 35) {
+      v = '<span class="tag-warn">&#9888; ' + dInt + '&#916; &mdash; Running hard.</span> Only use this level when rolling aggressively to match a delta that has already drifted this high. Prioritise the highest strike that still pays a credit.';
+    } else {
+      v = '<span class="tag-bad">&#128680; ' + dInt + '&#916; &mdash; Danger zone.</span> Assignment risk is real at this level. If your live position is showing this delta, roll immediately or use the decision framework above.';
+    }
+    verdictDiv.innerHTML = v;
+
+    var deltaEl = document.getElementById('bs_out_delta');
+    deltaEl.textContent = deltaExact + '\u0394';
+    deltaEl.className = 'metric-value ' + deltaBand(absDelta);
+
+    var pitmEl = document.getElementById('bs_out_pitm');
+    pitmEl.textContent = probITM.toFixed(2) + '%';
+    pitmEl.className = 'metric-value ' + (probITM <= 8 ? 'good' : probITM <= 20 ? 'warn' : 'bad');
+
+    var touchEl = document.getElementById('bs_out_touch');
+    touchEl.textContent = '~' + probTouch.toFixed(1) + '%';
+    touchEl.className = 'metric-value ' + (probTouch <= 16 ? 'good' : probTouch <= 40 ? 'warn' : 'bad');
+
+    document.getElementById('bs_out_sigma').textContent = sigmaDist.toFixed(2) + '\u03c3';
+  }
+</script>
+
+<!-- ═══════════════════════════════════════════════════════
+     LIQUIDATION CONTINGENCY PLAN
+     ═══════════════════════════════════════════════════════ -->
+
+<div class="contingency-section">
+
+  <div class="manual-header" style="margin-bottom: 20px;">
+    <span class="manual-tag">// CONTINGENCY</span>
+    <span class="manual-title">The MSTR 10Δ Liquidation Contingency Plan</span>
+  </div>
+
+  <!-- Framing block -->
+  <div class="contingency-intro">
+    <p>
+      Critics of the 10Δ strategy often fixate on one scenario: what happens if shares get called away? To the inexperienced, assignment feels catastrophic — as if the investment is permanently lost.
+      It isn't. This plan exists precisely for that moment. If you reach it, it means your portfolio just experienced a massive run-up. <strong>That is a good problem to have.</strong>
+    </p>
+    <p style="margin-top: 10px;">
+      The plan below covers the full recovery sequence — from assignment through buy-write re-entry and the gradual return to standard 10Δ management.
+    </p>
+  </div>
+
+  <!-- Stat bar -->
+  <div class="contingency-stat-bar">
+    <div class="cstat">
+      <div class="cstat-val">~3–5%</div>
+      <div class="cstat-label">Probability of assignment at 10Δ open</div>
+    </div>
+    <div class="cstat">
+      <div class="cstat-val">+IV</div>
+      <div class="cstat-label">Post-parabolic spike = higher premiums on re-entry</div>
+    </div>
+    <div class="cstat">
+      <div class="cstat-val">T+1</div>
+      <div class="cstat-label">Re-enter via buy-write next trading day</div>
+    </div>
+  </div>
+
+  <!-- Phase cards -->
+  <div class="phase-header">
+    <span class="manual-tag" style="margin-bottom:0;">Phase 1</span>
+    <span class="phase-title">Assignment Occurs</span>
+    <span class="phase-badge badge-red">Trigger Event</span>
+  </div>
+  <div class="contingency-card">
+    <div class="step">
+      <div class="step-num" style="background:rgba(255,77,77,0.1);color:var(--red);">!</div>
+      <div class="step-text">
+        For assignment to occur despite active rolling, MSTR would need a <strong>sustained parabolic surge</strong> — the kind where even 40 DTE rolls can no longer generate a credit at any strike. This is statistically rare, but it does happen (e.g. the Nov–Dec 2024 MSTR spike).
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        Your 100 shares are <strong>called away at the strike price</strong>. Your account converts to cash. You keep every dollar of premium you collected across all prior rolls — that accumulated income is yours regardless.
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        <strong>Calculate your net effective exit price:</strong> Strike price received + all premium collected throughout the life of the position. This figure is your true realized gain — it will almost certainly exceed your original cost basis by a significant margin.
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        Take the weekend. A parabolic MSTR run of the magnitude required to cause assignment is a <strong>wealth accumulation event</strong>. Treat it as one.
+      </div>
+    </div>
+  </div>
+
+  <!-- Info box: why assignment isn't the end -->
+  <div class="contingency-insight">
+    <div class="insight-icon">💡</div>
+    <div class="insight-body">
+      <div class="insight-title">Why parabolic runs work in your favor post-assignment</div>
+      <p>When MSTR spikes hard enough to cause assignment, implied volatility (IV) spikes with it — sometimes dramatically. Elevated IV means covered call premiums are at their richest. The very event that caused your assignment also sets up your best re-entry conditions. The strategy doesn't end at assignment; it resets at a higher level.</p>
+    </div>
+  </div>
+
+  <div class="phase-header">
+    <span class="manual-tag" style="margin-bottom:0;">Phase 2</span>
+    <span class="phase-title">Buy-Write Re-Entry</span>
+    <span class="phase-badge badge-gold">Next Trading Day</span>
+  </div>
+  <div class="contingency-card">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        At market open the next trading day, execute a <strong>buy-write</strong> — a single simultaneous transaction that buys 100 shares and sells a covered call in one order. Most brokers support this as a combo order.
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        Unlike your normal 10Δ open, <strong>sell a higher-delta call</strong> for this buy-write. Why? Parabolic surges rarely sustain a second consecutive month-long run. A higher delta call (20–30Δ) gives you a much larger premium, dramatically lowering your new cost basis from day one.
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        <strong>Target the strike carefully:</strong> Choose a 40 DTE call at a delta level such that the premium received brings your effective cost basis <em>below</em> the strike price you were just assigned at. This is your new break-even anchor.
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">
+        <strong>Calculate your new break-even:</strong> <code>New cost basis = Purchase price − Premium received on buy-write − All prior premiums collected</code>. This number will be lower than you expect.
+      </div>
+    </div>
+  </div>
+
+  <!-- Break-even formula card -->
+  <div class="formula-card">
+    <div class="formula-label">// NEW COST BASIS FORMULA</div>
+    <div class="formula-line">
+      <span class="formula-term">New cost basis</span>
+      <span class="formula-eq">=</span>
+      <span class="formula-val">Repurchase price</span>
+      <span class="formula-op">−</span>
+      <span class="formula-val green">Buy-write premium</span>
+      <span class="formula-op">−</span>
+      <span class="formula-val green">All prior premiums collected</span>
+    </div>
+    <div class="formula-note">
+      The accumulated premium from months of theta decay means your effective cost basis on the new position is significantly lower than the raw repurchase price suggests.
+    </div>
+  </div>
+
+  <div class="phase-header">
+    <span class="manual-tag" style="margin-bottom:0;">Phase 3</span>
+    <span class="phase-title">Normalize Back to 10Δ</span>
+    <span class="phase-badge badge-green">Weeks 2 – 6+</span>
+  </div>
+  <div class="contingency-card">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        After the buy-write, resume <strong>weekly position checks</strong> using the standard framework above. With a higher-delta starting position, the delta will naturally decay as the stock stabilizes.
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        MSTR historically consolidates after parabolic surges — exactly as it did from December 2024 through March 2025. Consolidation means <strong>theta works for you while delta drifts back down</strong> toward the 10Δ target zone.
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        Each week, use the decision framework to roll back down: <strong>30Δ → 25Δ → 20Δ → 15Δ → 10Δ</strong>. Each roll generates credit. Each roll lowers the effective strike. The normalization process itself is profitable.
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">
+        Once you're back to 10Δ at 40 DTE, <strong>you're fully restored</strong> to standard operating mode — but with a lower cost basis, more premium in the bank, and the experience of having executed the contingency plan successfully.
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline visual -->
+  <div class="timeline-block">
+    <div class="timeline-label">// RECOVERY TIMELINE (ILLUSTRATIVE)</div>
+    <div class="timeline-track">
+      <div class="timeline-node node-red">
+        <div class="tnode-dot"></div>
+        <div class="tnode-label">Assignment</div>
+        <div class="tnode-sub">Shares called away</div>
+      </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-node node-gold">
+        <div class="tnode-dot"></div>
+        <div class="tnode-label">T+1</div>
+        <div class="tnode-sub">Buy-write at 25–30Δ</div>
+      </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-node node-orange">
+        <div class="tnode-dot"></div>
+        <div class="tnode-label">Wk 2–3</div>
+        <div class="tnode-sub">Roll down 25→20Δ</div>
+      </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-node node-orange">
+        <div class="tnode-dot"></div>
+        <div class="tnode-label">Wk 4–5</div>
+        <div class="tnode-sub">Roll down 20→15Δ</div>
+      </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-node node-green">
+        <div class="tnode-dot"></div>
+        <div class="tnode-label">Wk 6+</div>
+        <div class="tnode-sub">Restored to 10Δ</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Closing mindset block -->
+  <div class="contingency-mindset">
+    <div class="mindset-bar"></div>
+    <div class="mindset-content">
+      <div class="mindset-title">The right mental model</div>
+      <p>
+        Without this plan, assignment feels like a disaster. With it, assignment is just a speed bump — a temporary detour that happens to come with a large cash deposit. The skeptics who dismiss covered call strategies rarely have a plan for what comes next. You do.
+        The math has always been on your side. The contingency plan simply makes that explicit.
+      </p>
+    </div>
+  </div>
+
+
+  </div><!-- end contingency-section -->
+
+  
+<style>
+  /* ── CONTINGENCY SECTION ────────────────────────────── */
+  .contingency-section {
+    max-width: 720px;
+    margin: 0 auto 60px;
+    border-top: 1px solid var(--border);
+    padding-top: 32px;
+  }
+
+  .contingency-intro {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--gold-dim);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    font-size: 0.87rem;
+    color: var(--text-dim);
+    line-height: 1.65;
+  }
+  .contingency-intro strong { color: var(--text); font-weight: 600; }
+
+  /* ── STAT BAR ── */
+  .contingency-stat-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    margin-bottom: 24px;
+  }
+  .cstat {
+    background: var(--bg2);
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .cstat-val {
+    font-family: var(--mono);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .cstat-label {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    line-height: 1.4;
+  }
+
+  /* ── PHASE HEADER ── */
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 24px 0 10px;
+  }
+  .phase-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+  .phase-badge {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid;
+  }
+  .badge-red    { color: var(--red);    border-color: rgba(255,77,77,0.3);    background: rgba(255,77,77,0.06); }
+  .badge-gold   { color: var(--gold);   border-color: rgba(245,200,66,0.3);   background: rgba(245,200,66,0.06); }
+  .badge-green  { color: var(--green);  border-color: rgba(61,255,143,0.3);   background: rgba(61,255,143,0.06); }
+
+  /* ── CONTINGENCY CARD (reuses .steps style) ── */
+  .contingency-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    margin-bottom: 12px;
+  }
+  .contingency-card .step { /* inherits global .step */ }
+
+  /* ── INSIGHT BOX ── */
+  .contingency-insight {
+    display: flex;
+    gap: 14px;
+    background: rgba(61,255,143,0.05);
+    border: 1px solid rgba(61,255,143,0.18);
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    align-items: flex-start;
+  }
+  .insight-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .insight-body { flex: 1; }
+  .insight-title {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--green);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .contingency-insight p {
+    font-size: 0.83rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* ── FORMULA CARD ── */
+  .formula-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+    margin-bottom: 12px;
+  }
+  .formula-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .formula-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .formula-term {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .formula-eq, .formula-op {
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    color: var(--text-dim);
+  }
+  .formula-val {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    background: var(--bg4);
+    padding: 3px 8px;
+  }
+  .formula-val.green { color: var(--green); }
+  .formula-note {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.55;
+    font-family: var(--mono);
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+  }
+
+  /* ── TIMELINE ── */
+  .timeline-block {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 18px 20px 20px;
+    margin-bottom: 16px;
+  }
+  .timeline-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    margin-bottom: 20px;
+  }
+  .timeline-track {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .timeline-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+    flex-shrink: 0;
+  }
+  .tnode-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 0;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .node-red    .tnode-dot { background: var(--red);    box-shadow: 0 0 6px rgba(255,77,77,0.5); }
+  .node-gold   .tnode-dot { background: var(--gold);   box-shadow: 0 0 6px rgba(245,200,66,0.5); }
+  .node-orange .tnode-dot { background: var(--orange); box-shadow: 0 0 6px rgba(255,140,66,0.4); }
+  .node-green  .tnode-dot { background: var(--green);  box-shadow: 0 0 8px rgba(61,255,143,0.5); }
+  .tnode-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 3px;
+    text-align: center;
+  }
+  .tnode-sub {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.3;
+    max-width: 72px;
+  }
+  .timeline-connector {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    margin-top: 5px;
+    min-width: 16px;
+    align-self: flex-start;
+    margin-top: 6px;
+  }
+
+  /* ── MINDSET CLOSER ── */
+  .contingency-mindset {
+    display: flex;
+    gap: 0;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .mindset-bar {
+    width: 4px;
+    background: var(--gold);
+    flex-shrink: 0;
+  }
+  .mindset-content {
+    padding: 18px 20px;
+    flex: 1;
+  }
+  .mindset-title {
+    font-family: var(--mono);
+    font-size: 0.63rem;
+    letter-spacing: 0.13em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .contingency-mindset p {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.65;
+  }
+
+  @media (max-width: 480px) {
+    .contingency-stat-bar { grid-template-columns: 1fr; }
+    .timeline-node { min-width: 64px; }
+    .tnode-sub { max-width: 60px; font-size: 0.54rem; }
+  }
+</style>
+
+</body>
+</html>

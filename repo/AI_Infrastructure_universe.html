@@ -1,0 +1,502 @@
+import { useState, useMemo } from "react";
+
+/* ─────── STAGE COLORS ─────── */
+const SM = {
+  Operational:   { color:"#00E5FF", bg:"#001F2D", label:"OPERATIONAL" },
+  Ramping:       { color:"#B2FF59", bg:"#192800", label:"RAMPING" },
+  "Pre-Revenue": { color:"#FFD740", bg:"#2A1F00", label:"PRE-REVENUE" },
+  Pipeline:      { color:"#FF9100", bg:"#2A1500", label:"PIPELINE" },
+  Early:         { color:"#CE93D8", bg:"#1D0A24", label:"EARLY-STAGE" },
+};
+
+/* ─────── ALL 12 COMPANIES ─────── */
+/* price / hi52 / lo52 / analystPT from Robinhood, MacroTrends, StockAnalysis Jun 19-21 2026 */
+const COS = [
+  {
+    ticker:"CRWV", name:"CoreWeave",     role:"Neocloud / GPU Cloud",       stage:"Operational",
+    marketCap:64,  price:118,  hi52:187,  lo52:64,   analystPT:132,  analystN:31, rating:"Buy",
+    color:"#00E5FF", accent:"#0097A7",
+    activeMW:1000, contractedMW:3500, pipelineMW:8000, backlog:99.4,
+    backlogPerMCap: 1.55, // backlog $B / mktcap $B
+    ev_contracted: 18.3,  // EV per contracted MW ($M/MW) — approx
+    keyDeals:"Meta $21B (Mar 2026), OpenAI $22.4B, Jane Street $6B + $1B equity, Anthropic, NVIDIA $2B equity, Hudson River Trading",
+    note:"$99.4B backlog (Q1 2026). >1 GW active. 3.5 GW contracted. 8 GW 2030 target. $31–35B 2026 CapEx. $12–13B FY2026 rev guidance. Nasdaq-100 effective Jun 22 2026. Trading at all-time high area.",
+    source:"Robinhood Jun 21 · Q1 2026 8-K",
+  },
+  {
+    ticker:"NBIS",  name:"Nebius",       role:"Full-Stack AI Cloud (EU/US)", stage:"Operational",
+    marketCap:72,  price:285,  hi52:299,  lo52:44,   analystPT:244,  analystN:16, rating:"Buy",
+    color:"#7B68EE", accent:"#4B0082",
+    activeMW:400,  contractedMW:4000, pipelineMW:1200, backlog:46,
+    backlogPerMCap: 0.64,
+    ev_contracted: 18.0,
+    keyDeals:"Meta $27B (5yr), Microsoft $17B; NVIDIA $2B investment by 2030. 1.2 GW PA AI factory announced. £1.7B UK expansion.",
+    note:"$46B multi-yr contracts. Q1 2026: revenue $399M (+684% YoY), net income $621M, 45% adj EBITDA margin — only profitable player at scale. Nasdaq-100 Jun 22. 52-wk range $44–$299. Analyst PT $244 = stock already above consensus.",
+    source:"Simply Wall St · Robinhood Jun 21 · StockAnalysis",
+  },
+  {
+    ticker:"IREN",  name:"IREN",         role:"AI Cloud / Data Center",      stage:"Ramping",
+    marketCap:13,  price:58,   hi52:77,   lo52:13,   analystPT:81,   analystN:15, rating:"Buy",
+    color:"#B2FF59", accent:"#76B000",
+    activeMW:100,  contractedMW:480,  pipelineMW:5000, backlog:13.1,
+    backlogPerMCap: 1.01,
+    ev_contracted: 27.1,
+    keyDeals:"Microsoft $9.7B (5yr, 200 MW), NVIDIA $3.54B (5yr) + $2.1B investment rights (600k GPU milestone)",
+    note:"$3.1B contracted ARR, $3.7B target YE2026. 480 MW active target YE2026. 5 GW global pipeline. Acquired Mirantis (650 engineers) + Nostrum (490 MW Spain). Trading 24% below 52-wk high.",
+    source:"MacroTrends Jun 17 · StockAnalysis Jun 11",
+  },
+  {
+    ticker:"HUT",   name:"Hut 8",        role:"Power-First / HPC Lessor",    stage:"Ramping",
+    marketCap:4.8, price:124,  hi52:141,  lo52:15,   analystPT:109,  analystN:16, rating:"Buy",
+    color:"#FF9100", accent:"#E65100",
+    activeMW:50,   contractedMW:597,  pipelineMW:8375, backlog:16.8,
+    backlogPerMCap: 3.50,
+    ev_contracted: 8.0,
+    keyDeals:"River Bend: Fluidstack/Google $7B 245 MW 15yr. Beacon Point: IG tenant $9.8B 352 MW 15yr",
+    note:"$16.8B triple-net take-or-pay backlog. 8,375 MW pipeline. River Bend Q2 2027 delivery. $3.25B IG construction bond. Stock near 52-wk high. Analyst PT $109 = -13% downside vs current $124.",
+    source:"Robinhood Jun 19 · Simply Wall St · Public.com",
+  },
+  {
+    ticker:"APLD",  name:"Applied Digital", role:"AI Factory Builder",       stage:"Ramping",
+    marketCap:9.5, price:46,   hi52:50,   lo52:4,    analystPT:73,   analystN:11, rating:"Strong Buy",
+    color:"#40C4FF", accent:"#0288D1",
+    activeMW:100,  contractedMW:1400, pipelineMW:1000, backlog:36,
+    backlogPerMCap: 3.79,
+    ev_contracted: 6.8,
+    keyDeals:"5 campuses: PF1 CoreWeave $11B, PF2 IG hyper $5B, DF1 IG hyper $7.5B (Apr 26), PF3 IG hyper $7.5B, DF2 IG hyper $5.2B 210 MW (Jun 8)",
+    note:"$36B contracted ($86B with renewals). 1,400 MW IT load. 70% IG hyperscalers. DF2 signed Jun 8 2026. Stock +87% YTD from lows but still 8% below 52-wk high. Analyst PT $73 = +59% upside. Northland raised to $82 Jun 17.",
+    source:"eToro Jun 21 · StockAnalysis Jun 17 · MacroTrends",
+  },
+  {
+    ticker:"WULF",  name:"TeraWulf",     role:"HPC Colocation Host",         stage:"Ramping",
+    marketCap:8.0, price:26,   hi52:28,   lo52:3,    analystPT:40,   analystN:13, rating:"Buy",
+    color:"#EA80FC", accent:"#AA00FF",
+    activeMW:60,   contractedMW:522,  pipelineMW:2800, backlog:12.8,
+    backlogPerMCap: 1.60,
+    ev_contracted: 15.3,
+    keyDeals:"Lake Mariner: Core42 60 MW + Fluidstack/Google 380 MW. Abernathy JV: Fluidstack/Google 168 MW 25yr.",
+    note:"522 MW contracted $12.8B. CB3 delivery end-May, CB4 Q3, CB5 Q4 2026. Morgan Stanley raised PT to $66.50 (Jun 1). BofA initiated Buy Jun 15. Bernstein Outperform Jun 3. Trading near 52-wk high.",
+    source:"MacroTrends Jun 17 · MarketBeat · StockAnalysis",
+  },
+  {
+    ticker:"CORZ",  name:"Core Scientific", role:"HPC Colocation Host",      stage:"Ramping",
+    marketCap:9.3, price:29,   hi52:30,   lo52:11,   analystPT:32,   analystN:16, rating:"Strong Buy",
+    color:"#FF6E40", accent:"#BF360C",
+    activeMW:243,  contractedMW:590,  pipelineMW:800,  backlog:10.2,
+    backlogPerMCap: 1.10,
+    ev_contracted: 15.8,
+    keyDeals:"CoreWeave 12yr $10.2B 590 MW (6 sites across 7 US states). Gross margin guided 80–85%.",
+    note:"243 MW billing, $350M+ annualized GAAP rev. 590 MW by Q1 2027. $3.3B bond at 7.75% closed. Near all-time high ($30.46 Jun 2). Bernstein PT $32 (Jun 3). Analyst mean $32.05. Next earnings Aug 6.",
+    source:"Robinhood Jun 21 · StockAnalysis Jun 3",
+  },
+  {
+    ticker:"CIFR",  name:"Cipher Digital", role:"Power Dev / HPC Lessor",   stage:"Pre-Revenue",
+    marketCap:8.4, price:18,   hi52:30,   lo52:4,    analystPT:32,   analystN:15, rating:"Strong Buy",
+    color:"#FFD740", accent:"#FF8F00",
+    activeMW:0,    contractedMW:900,  pipelineMW:3200, backlog:9.3,
+    backlogPerMCap: 1.11,
+    ev_contracted: 9.3,
+    keyDeals:"AWS 15yr 300 MW ~$5.5B (Black Pearl). Fluidstack/Google 10yr 300 MW (Barber Lake, Sept 2026). 3rd IG hyperscaler Q1 2026.",
+    note:"$9.3B backlog, all 3 leases with IG hyperscalers. Barber Lake topped out Apr 2026, revenue Sept 2026. $2B HY bond + $200M RCF. Stock 40% below 52-wk high — largest discount in group vs contracts signed. Analyst PT $31.60.",
+    source:"StockAnalysis · baxtel · Q1 2026 8-K May 5",
+  },
+  {
+    ticker:"KEEL",  name:"Keel Infra",    role:"Power Dev / HPC (Bitfarms→Keel)", stage:"Pipeline",
+    marketCap:1.8, price:4.5,  hi52:9,    lo52:1.8,  analystPT:9,    analystN:4,  rating:"Buy",
+    color:"#26C6DA", accent:"#00838F",
+    activeMW:0,    contractedMW:0,    pipelineMW:2200, backlog:0,
+    backlogPerMCap: 0,
+    ev_contracted: 0,
+    keyDeals:"No HPC leases signed. 2.2 GW pipeline with established grid interconnections. US redomicile completed Apr 1 2026 (formerly Bitfarms). Stronghold acquisition (PA power + remediation).",
+    note:"Rebranded from Bitfarms to Keel Infrastructure Apr 1 2026. Pure-play infrastructure developer with 2.2 GW pipeline and existing grid interconnections. Still in BTC mining. HPC conversations underway. Trading near 52-wk low = cheapest power-per-mkt-cap in group. No hyperscaler contract yet.",
+    source:"SEC 8-K (Apr 2026) · 10-Q FY2026",
+  },
+  {
+    ticker:"MARA",  name:"MARA Holdings", role:"Energy / Infra Developer",   stage:"Pipeline",
+    marketCap:3.6, price:14,   hi52:23,   lo52:7,    analystPT:12,   analystN:14, rating:"Hold",
+    color:"#FF4081", accent:"#AD1457",
+    activeMW:200,  contractedMW:0,    pipelineMW:2700, backlog:0,
+    backlogPerMCap: 0,
+    ev_contracted: 0,
+    keyDeals:"Long Ridge acq: 505 MW CCGT + 1,600 acres OH $1.5B (close H2 2026, $144M ann. EBITDA). Starwood JV: 1 GW near-term / 2.5 GW pathway.",
+    note:"No HPC leases. Long Ridge DC buildout starts H1 2027 (200 MW initial). $144M EBITDA addition post-close. Morgan Stanley Underweight ($8.50 PT). Stock 40% below 52-wk high. Analyst consensus Hold — weakest rating in group.",
+    source:"Robinhood Jun 20 · Long Ridge 8-K Apr 30",
+  },
+  {
+    ticker:"CLSK",  name:"CleanSpark",    role:"Mining → AI Developer",       stage:"Pipeline",
+    marketCap:4.4, price:12,   hi52:24,   lo52:9,    analystPT:20,   analystN:12, rating:"Strong Buy",
+    color:"#69F0AE", accent:"#00796B",
+    activeMW:0,    contractedMW:0,    pipelineMW:1800, backlog:0,
+    backlogPerMCap: 0,
+    ev_contracted: 0,
+    keyDeals:"Sandersville GA 250 MW: advanced talks with IG hyperscaler. Meta discussions reported Jun 2026. 1.8 GW contracted power (808 MW utilized for mining).",
+    note:"12 analysts all Strong Buy. PT $19.69 = +64% upside from $12. 50 EH/s self-operated (largest). GA/TX/TN/WY footprint. No HPC leases yet. Stock 50% below 52-wk high = highest discount to 52-wk peak in group.",
+    source:"StockAnalysis · Robinhood · MEXC Jun 18",
+  },
+  {
+    ticker:"HIVE",  name:"HIVE Digital",  role:"Sovereign AI Cloud",          stage:"Early",
+    marketCap:0.7, price:4.2,  hi52:7.8,  lo52:1.6,  analystPT:6.9,  analystN:7,  rating:"Strong Buy",
+    color:"#CE93D8", accent:"#7B1FA2",
+    activeMW:9,    contractedMW:320,  pipelineMW:790,  backlog:0.12,
+    backlogPerMCap: 0.17,
+    ev_contracted: 2.2,
+    keyDeals:"Bell Canada AI Fabric (Manitoba 4 MW + BC 5 MW). $220M sovereign AI: Bell + Cohere + 2,304 GB200 NVL72 GPUs (Merritt BC, late 2026). GTA Gigafactory 320 MW planned ($3.5B, 2H 2027).",
+    note:"$35M contracted ARR, B200 cluster live at $2.90/GPU-hr (+32% vs plan). FY2026: $297.8M rev (+158% YoY). GTA site acquired (25 acres CAD $58M). $660M ARR target YE2028. Cantor raised to $7 (Overweight), B. Riley $8 (Buy), Rosenblatt $5.50. Trading 46% below 52-wk high.",
+    source:"StockAnalysis Jun 2 · Blockspace Jun 18 · Robinhood",
+  },
+];
+
+/* ─────── VALUATION METRICS ─────── */
+const VMODES = [
+  { key:"priceTo52hi", label:"% Below 52-Wk High", desc:"How far current price is below the 52-week high. Higher = deeper discount.", lower_is_opp: false, invert: false },
+  { key:"upToTarget",  label:"Upside to Analyst PT", desc:"Consensus analyst price target vs current price. 12-month forward estimate.", lower_is_opp: false, invert: false },
+  { key:"backlogPerMCap", label:"Backlog ÷ Mkt Cap", desc:"Total contracted revenue backlog divided by market cap. Higher = more contracted value per dollar paid.", lower_is_opp: false, invert: false },
+  { key:"ev_contracted", label:"EV / Contracted MW ($M)", desc:"Rough enterprise value per contracted MW. Lower = cheaper infrastructure per MW.", lower_is_opp: false, invert: true },
+];
+
+const INFRA_METRICS = [
+  { key:"activeMW",     label:"Active MW",     max:1100 },
+  { key:"contractedMW", label:"Contracted MW", max:4100 },
+  { key:"pipelineMW",   label:"Pipeline MW",   max:8500 },
+  { key:"backlog",      label:"Backlog $B",    max:100 },
+];
+
+function fmtMW(v){ return v>=1000?`${(v/1000).toFixed(1)} GW`:`${v} MW`; }
+function fmtK(v,key){
+  if(key==="marketCap"||key==="backlog") return v===0?"—":`$${v}B`;
+  return v===0?"—":fmtMW(v);
+}
+function pct(v,max){ return Math.min(100,Math.max(0,(v/max)*100)); }
+
+const RATING_COLOR = {
+  "Strong Buy":"#00E676", "Buy":"#B2FF59", "Hold":"#FFD740", "Underweight":"#FF5252"
+};
+
+export default function App(){
+  const [tab, setTab]         = useState("valuation"); // valuation | infra | all
+  const [vmode, setVmode]     = useState("upToTarget");
+  const [imk, setImk]         = useState("contractedMW");
+  const [expanded, setExpanded] = useState(null);
+  const [stageF, setStageF]   = useState("All");
+
+  const vm = VMODES.find(v=>v.key===vmode);
+
+  // compute derived valuation fields
+  const enriched = useMemo(()=> COS.map(c=>({
+    ...c,
+    priceTo52hi: Math.round((1 - c.price/c.hi52)*100),
+    upToTarget:  Math.round((c.analystPT/c.price - 1)*100),
+  })), []);
+
+  const stages = ["All", ...Object.keys(SM)];
+  const filtered = stageF==="All" ? enriched : enriched.filter(c=>c.stage===stageF);
+
+  // for current vmode, sort descending (or ascending if invert)
+  const vmSorted = [...filtered].sort((a,b)=> vm.invert ? a[vmode]-b[vmode] : b[vmode]-a[vmode]);
+  const vmMax = Math.max(...filtered.map(c=>Math.abs(c[vmode])));
+
+  const imSorted = [...filtered].sort((a,b)=>b[imk]-a[imk]);
+  const imMax = Math.max(...filtered.map(c=>c[imk]));
+
+  return (
+    <div style={{minHeight:"100vh",background:"#06090D",fontFamily:"'IBM Plex Mono','Courier New',monospace",color:"#C8D6E5",padding:"24px 18px"}}>
+      <style>{`
+        *{box-sizing:border-box;}
+        .btn{background:transparent;border:1px solid #1A2A38;color:#507080;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:5px 11px;cursor:pointer;transition:all .18s;letter-spacing:.06em;text-transform:uppercase;border-radius:2px;}
+        .btn:hover{border-color:#2A4A60;color:#8BACC8;}
+        .btn.on{background:#0D1F2D;border-color:#00E5FF;color:#00E5FF;}
+        .row{border:1px solid #0F1D28;border-radius:3px;padding:12px 16px;margin-bottom:7px;cursor:pointer;transition:background .15s;background:#050810;}
+        .row:hover,.row.open{background:#0A1520;border-color:#1A3347;}
+        .bar{height:5px;background:#0D1A24;border-radius:2px;overflow:hidden;margin-top:9px;}
+        .fill{height:100%;border-radius:2px;transition:width .55s cubic-bezier(.16,1,.3,1);}
+        .stage{display:inline-flex;align-items:center;font-size:8px;padding:2px 6px;border-radius:2px;border:1px solid;letter-spacing:.06em;white-space:nowrap;}
+        .tab-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:16px;}
+        .pill{display:inline-block;font-size:9px;padding:2px 7px;border-radius:10px;border:1px solid;letter-spacing:.05em;}
+        .grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;}
+        .card{background:#07101A;border:1px solid #0F1D28;border-radius:3px;padding:10px 12px;}
+        .opp-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;padding:2px 8px;border-radius:2px;border:1px solid #00C85340;background:#001A10;color:#00E676;letter-spacing:.07em;}
+        .warn-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;padding:2px 8px;border-radius:2px;border:1px solid #FF525240;background:#1A0000;color:#FF5252;letter-spacing:.07em;}
+        select{background:#07101A;border:1px solid #1A2A38;color:#8BACC8;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:5px 10px;border-radius:2px;outline:none;cursor:pointer;}
+      `}</style>
+
+      {/* HEADER */}
+      <div style={{marginBottom:18}}>
+        <div style={{fontSize:18,fontWeight:800,color:"#E8F4FF",letterSpacing:"-.02em",marginBottom:2}}>
+          AI INFRASTRUCTURE <span style={{color:"#00E5FF"}}>UNIVERSE</span>
+          <span style={{fontSize:9,color:"#00C853",border:"1px solid #00C85360",padding:"2px 6px",borderRadius:2,marginLeft:10,verticalAlign:"middle"}}>12 TICKERS · v3</span>
+          <span style={{fontSize:9,color:"#FF9100",border:"1px solid #FF910040",padding:"2px 6px",borderRadius:2,marginLeft:6,verticalAlign:"middle"}}>+NBIS +KEEL ADDED</span>
+        </div>
+        <div style={{fontSize:8,color:"#2E4A5C",letterSpacing:".10em",textTransform:"uppercase"}}>
+          Prices: Jun 19–21 2026 · Analyst targets: Jun 2026 consensus · SEC filings verified
+        </div>
+      </div>
+
+      {/* MAIN TAB ROW */}
+      <div className="tab-row">
+        {[["valuation","📊 Valuation & Opportunity"],["infra","🏗 Infrastructure Scale"],["all","📋 Full Cards"]].map(([k,l])=>(
+          <button key={k} className={`btn ${tab===k?"on":""}`} onClick={()=>setTab(k)}>{l}</button>
+        ))}
+        <select value={stageF} onChange={e=>setStageF(e.target.value)} style={{marginLeft:"auto"}}>
+          {stages.map(s=><option key={s} value={s}>{s==="All"?"All Stages":s}</option>)}
+        </select>
+      </div>
+
+      {/* ══════════ VALUATION TAB ══════════ */}
+      {tab==="valuation" && (<>
+        <div style={{background:"#060E05",border:"1px solid #00C85330",borderRadius:3,padding:"10px 14px",marginBottom:16,fontSize:9,color:"#3A7A3A",lineHeight:1.7}}>
+          <span style={{color:"#00E676",fontWeight:700}}>How to read this section:</span> Four lenses to find buying opportunities — upside to analyst target, discount from 52-wk high, backlog/$mktcap ratio, and EV/contracted MW. None are buy signals alone; combine with stage and deal quality. Prices are <span style={{color:"#FFD740"}}>Sunday Jun 21 2026</span>.
+        </div>
+
+        {/* Valuation metric selector */}
+        <div className="tab-row">
+          {VMODES.map(v=>(
+            <button key={v.key} className={`btn ${vmode===v.key?"on":""}`} onClick={()=>setVmode(v.key)}>{v.label}</button>
+          ))}
+        </div>
+        <div style={{fontSize:9,color:"#2E4A5C",marginBottom:14,lineHeight:1.5}}>{vm.desc} {vm.invert&&"— bars show inverse: shorter bar = higher value."}</div>
+
+        {/* Valuation bars */}
+        {vmSorted.map((c,i)=>{
+          const val = c[vmode];
+          const barPct = vmMax>0 ? (vm.invert ? (1-(val/vmMax))*100 : (val/vmMax)*100) : 0;
+          const isNeg = val<0;
+          const sml = SM[c.stage];
+          const isOpen = expanded===c.ticker+"_v";
+          const isOpp = (vmode==="upToTarget"&&val>30) || (vmode==="priceTo52hi"&&val>35) || (vmode==="backlogPerMCap"&&val>1.5) || (vmode==="ev_contracted"&&val<10&&val>0);
+          const isRich = (vmode==="upToTarget"&&val<-10) || (vmode==="backlogPerMCap"&&val<0.3&&val>0);
+          return(
+            <div key={c.ticker} className={`row ${isOpen?"open":""}`} onClick={()=>setExpanded(isOpen?null:c.ticker+"_v")}>
+              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                <div style={{fontWeight:800,fontSize:12,color:c.color,minWidth:44}}>{c.ticker}</div>
+                <span className="stage" style={{color:sml.color,borderColor:sml.color+"50",background:sml.bg}}>{sml.label}</span>
+                <span className="pill" style={{color:RATING_COLOR[c.rating]||"#607A90",borderColor:(RATING_COLOR[c.rating]||"#607A90")+"50",background:"#07101A"}}>
+                  {c.rating} · {c.analystN} analysts
+                </span>
+                {isOpp && <span className="opp-badge">★ OPPORTUNITY</span>}
+                {isRich && <span className="warn-badge">⚠ RICH vs PT</span>}
+                <div style={{flex:1,minWidth:60}}/>
+                <div style={{display:"flex",gap:12,alignItems:"center"}}>
+                  <span style={{fontSize:11,color:"#8BACC8"}}>${c.price}</span>
+                  <span style={{fontSize:13,fontWeight:700,color: isNeg?"#FF5252":c.color}}>
+                    {vmode==="priceTo52hi"||vmode==="upToTarget"
+                      ? (val>0?"+":"")+val+"%"
+                      : vmode==="backlogPerMCap"
+                        ? val===0?"—":val.toFixed(2)+"x"
+                        : val===0?"—":"$"+val+"M/MW"}
+                  </span>
+                </div>
+              </div>
+              {/* price line: lo52 ... current ... PT ... hi52 */}
+              <div style={{marginTop:9,position:"relative",height:18}}>
+                <div style={{position:"absolute",top:6,left:0,right:0,height:3,background:"#0D1A24",borderRadius:2}}/>
+                {/* lo52 */}
+                <div style={{position:"absolute",top:0,left:"0%",fontSize:7,color:"#2E4A5C",whiteSpace:"nowrap"}}>${c.lo52}</div>
+                {/* hi52 */}
+                <div style={{position:"absolute",top:0,right:"0%",fontSize:7,color:"#2E4A5C",whiteSpace:"nowrap",transform:"translateX(50%)"}}>${c.hi52}</div>
+                {/* current price dot */}
+                {(()=>{
+                  const range=c.hi52-c.lo52;
+                  const cpct=range>0?(c.price-c.lo52)/range*100:50;
+                  const tpct=range>0?(c.analystPT-c.lo52)/range*100:60;
+                  return(<>
+                    {/* analyst PT line */}
+                    <div style={{position:"absolute",top:3,left:`${Math.min(99,Math.max(0,tpct))}%`,width:2,height:9,background:"#FFD74060",borderRadius:1,transform:"translateX(-50%)"}}/>
+                    {/* current price */}
+                    <div style={{position:"absolute",top:4,left:`${Math.min(98,Math.max(0,cpct))}%`,width:8,height:8,background:c.color,borderRadius:"50%",transform:"translateX(-50%)",boxShadow:`0 0 6px ${c.color}80`}}>
+                      <div style={{position:"absolute",top:-11,left:"50%",transform:"translateX(-50%)",fontSize:7,color:c.color,whiteSpace:"nowrap"}}>${c.price}</div>
+                    </div>
+                  </>);
+                })()}
+              </div>
+              <div style={{display:"flex",gap:16,marginTop:4,fontSize:8,color:"#2E4A5C"}}>
+                <span>52-wk low <span style={{color:"#FF5252"}}>${c.lo52}</span></span>
+                <span>current <span style={{color:c.color}}>${c.price}</span></span>
+                <span>PT <span style={{color:"#FFD740"}}>${c.analystPT}</span></span>
+                <span>52-wk high <span style={{color:"#00E676"}}>${c.hi52}</span></span>
+              </div>
+              {/* valuation bar */}
+              <div className="bar"><div className="fill" style={{width:`${Math.max(isNeg?0:barPct,0)}%`,background:`linear-gradient(90deg,${c.accent},${c.color})`}}/></div>
+
+              {isOpen&&(
+                <div style={{marginTop:12,paddingTop:10,borderTop:"1px solid #0F1D28"}}>
+                  <div className="grid2" style={{marginBottom:10}}>
+                    {[
+                      ["Current Price",`$${c.price}`],
+                      ["52-Wk High",`$${c.hi52}`],
+                      ["52-Wk Low",`$${c.lo52}`],
+                      ["Analyst PT",`$${c.analystPT}`],
+                      ["Upside to PT",`${c.upToTarget>0?"+":""}${c.upToTarget}%`],
+                      ["Below 52-Hi",`-${c.priceTo52hi}%`],
+                      ["Market Cap",`$${c.marketCap}B`],
+                      ["Backlog/MCap",c.backlogPerMCap===0?"—":c.backlogPerMCap.toFixed(2)+"x"],
+                      ["EV/Cont.MW",c.ev_contracted===0?"—":"$"+c.ev_contracted+"M/MW"],
+                      ["Rating",c.rating],
+                    ].map(([k,v])=>(
+                      <div key={k} className="card">
+                        <div style={{fontSize:8,color:"#2E4A5C",marginBottom:3}}>{k}</div>
+                        <div style={{fontSize:13,fontWeight:700,color:"#E8F4FF"}}>{v}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{background:"#07101A",border:`1px solid ${c.color}22`,borderLeft:`3px solid ${c.color}`,borderRadius:2,padding:"8px 12px",marginBottom:6}}>
+                    <div style={{fontSize:9,color:c.color,marginBottom:4,fontWeight:600}}>Deals & Thesis</div>
+                    <div style={{fontSize:9,color:"#607A90",lineHeight:1.6}}>{c.keyDeals}</div>
+                  </div>
+                  <div style={{fontSize:9,color:"#3D5A73",lineHeight:1.7,padding:"8px 2px"}}>{c.note}</div>
+                  <div style={{fontSize:7,color:"#1A2D3C",marginTop:6}}>Source: {c.source}</div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Opportunity summary table */}
+        <div style={{marginTop:20,padding:"14px 16px",background:"#050810",border:"1px solid #0F1D28",borderRadius:3}}>
+          <div style={{fontSize:9,color:"#2E4A5C",letterSpacing:".10em",textTransform:"uppercase",marginBottom:12}}>Opportunity matrix — all 12 tickers</div>
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:9}}>
+              <thead>
+                <tr>
+                  {["Ticker","Price","PT","Upside","−52Hi%","Backlog/MCap","EV/ContMW","Rating","Stage"].map(h=>(
+                    <th key={h} style={{textAlign:"left",color:"#304A5C",fontWeight:500,padding:"5px 8px",borderBottom:"1px solid #0F1D28",fontSize:8,textTransform:"uppercase",letterSpacing:".07em",whiteSpace:"nowrap"}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[...enriched].sort((a,b)=>b.upToTarget-a.upToTarget).map(c=>{
+                  const sml=SM[c.stage];
+                  return(
+                    <tr key={c.ticker} style={{cursor:"default"}}>
+                      <td style={{padding:"7px 8px",fontWeight:800,color:c.color,borderBottom:"1px solid #080F16"}}>{c.ticker}</td>
+                      <td style={{padding:"7px 8px",color:"#8BACC8",borderBottom:"1px solid #080F16"}}>${c.price}</td>
+                      <td style={{padding:"7px 8px",color:"#FFD740",borderBottom:"1px solid #080F16"}}>${c.analystPT}</td>
+                      <td style={{padding:"7px 8px",color:c.upToTarget>30?"#00E676":c.upToTarget<-5?"#FF5252":"#8BACC8",borderBottom:"1px solid #080F16",fontWeight:c.upToTarget>30?700:400}}>
+                        {c.upToTarget>0?"+":""}{c.upToTarget}%
+                      </td>
+                      <td style={{padding:"7px 8px",color:c.priceTo52hi>40?"#00E676":"#607A90",borderBottom:"1px solid #080F16"}}>-{c.priceTo52hi}%</td>
+                      <td style={{padding:"7px 8px",color:c.backlogPerMCap>2?"#00E676":c.backlogPerMCap>0?"#8BACC8":"#2E4A5C",borderBottom:"1px solid #080F16"}}>
+                        {c.backlogPerMCap===0?"—":c.backlogPerMCap.toFixed(2)+"x"}
+                      </td>
+                      <td style={{padding:"7px 8px",color:c.ev_contracted>0&&c.ev_contracted<10?"#00E676":c.ev_contracted>0?"#8BACC8":"#2E4A5C",borderBottom:"1px solid #080F16"}}>
+                        {c.ev_contracted===0?"—":"$"+c.ev_contracted+"M"}
+                      </td>
+                      <td style={{padding:"7px 8px",color:RATING_COLOR[c.rating]||"#607A90",borderBottom:"1px solid #080F16"}}>{c.rating}</td>
+                      <td style={{padding:"7px 8px",borderBottom:"1px solid #080F16"}}>
+                        <span className="stage" style={{color:sml.color,borderColor:sml.color+"50",background:sml.bg}}>{sml.label}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </>)}
+
+      {/* ══════════ INFRA TAB ══════════ */}
+      {tab==="infra" && (<>
+        <div className="tab-row">
+          {INFRA_METRICS.map(m=>(
+            <button key={m.key} className={`btn ${imk===m.key?"on":""}`} onClick={()=>setImk(m.key)}>{m.label}</button>
+          ))}
+        </div>
+        {imSorted.map(c=>{
+          const val=c[imk];
+          const sml=SM[c.stage];
+          const isOpen=expanded===c.ticker+"_i";
+          return(
+            <div key={c.ticker} className={`row ${isOpen?"open":""}`} onClick={()=>setExpanded(isOpen?null:c.ticker+"_i")}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{fontWeight:800,fontSize:12,color:c.color,minWidth:44}}>{c.ticker}</div>
+                <span className="stage" style={{color:sml.color,borderColor:sml.color+"50",background:sml.bg}}>{sml.label}</span>
+                <div style={{flex:1,fontSize:9,color:"#3D5A73",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{c.name}</div>
+                <div style={{fontSize:12,fontWeight:700,color:"#E8F4FF"}}>{fmtK(c,imk)}</div>
+                <div style={{color:"#3D5A73",fontSize:9}}>{isOpen?"▲":"▼"}</div>
+              </div>
+              <div className="bar"><div className="fill" style={{width:`${imMax>0?pct(val,imMax)*0.99:0}%`,background:`linear-gradient(90deg,${c.accent},${c.color})`}}/></div>
+              {isOpen&&(
+                <div style={{marginTop:12,paddingTop:10,borderTop:"1px solid #0F1D28"}}>
+                  <div className="grid2" style={{marginBottom:10}}>
+                    {INFRA_METRICS.map(m=>(
+                      <div key={m.key} className="card" style={{borderColor:m.key===imk?c.color:"#0F1D28"}}>
+                        <div style={{fontSize:8,color:"#2E4A5C",marginBottom:3}}>{m.label}</div>
+                        <div style={{fontSize:13,fontWeight:700,color:m.key===imk?c.color:"#E8F4FF"}}>{fmtK(c,m.key)}</div>
+                      </div>
+                    ))}
+                    <div className="card">
+                      <div style={{fontSize:8,color:"#2E4A5C",marginBottom:3}}>Market Cap</div>
+                      <div style={{fontSize:13,fontWeight:700,color:"#E8F4FF"}}>${c.marketCap}B</div>
+                    </div>
+                  </div>
+                  <div style={{background:"#07101A",border:`1px solid ${c.color}22`,borderLeft:`3px solid ${c.color}`,borderRadius:2,padding:"8px 12px",fontSize:9,color:"#607A90",lineHeight:1.6,marginBottom:6}}>
+                    <div style={{color:c.color,fontWeight:600,marginBottom:4}}>Key Contracts</div>
+                    {c.keyDeals}
+                  </div>
+                  <div style={{fontSize:9,color:"#3D5A73",lineHeight:1.7}}>{c.note}</div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </>)}
+
+      {/* ══════════ FULL CARDS TAB ══════════ */}
+      {tab==="all" && (
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
+          {filtered.map(c=>{
+            const sml=SM[c.stage];
+            const isOpen=expanded===c.ticker+"_c";
+            return(
+              <div key={c.ticker} style={{background:"#050810",border:`1px solid ${isOpen?c.color:"#0F1D28"}`,borderRadius:4,padding:"14px 16px",cursor:"pointer"}} onClick={()=>setExpanded(isOpen?null:c.ticker+"_c")}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                  <span style={{fontWeight:800,fontSize:14,color:c.color}}>{c.ticker}</span>
+                  <span className="stage" style={{color:sml.color,borderColor:sml.color+"50",background:sml.bg}}>{sml.label}</span>
+                  <span style={{marginLeft:"auto",fontSize:11,fontWeight:700,color:"#E8F4FF"}}>${c.price}</span>
+                </div>
+                <div style={{fontSize:9,color:"#3D5A73",marginBottom:8}}>{c.name} · {c.role}</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:5}}>
+                  {[
+                    ["Mkt Cap",`$${c.marketCap}B`],
+                    ["Backlog",c.backlog===0?"—":`$${c.backlog}B`],
+                    ["Active",fmtMW(c.activeMW)||"—"],
+                    ["Contracted",c.contractedMW===0?"—":fmtMW(c.contractedMW)],
+                    ["PT",`$${c.analystPT}`],
+                    ["Upside",`${c.upToTarget>0?"+":""}${c.upToTarget}%`],
+                  ].map(([k,v])=>(
+                    <div key={k} style={{background:"#07101A",border:"1px solid #0D1820",borderRadius:2,padding:"5px 8px"}}>
+                      <div style={{fontSize:7,color:"#2E4A5C",marginBottom:2}}>{k}</div>
+                      <div style={{fontSize:11,fontWeight:700,color:k==="Upside"?(c.upToTarget>30?"#00E676":c.upToTarget<0?"#FF5252":"#E8F4FF"):"#E8F4FF"}}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+                {isOpen&&(
+                  <div style={{marginTop:10,paddingTop:10,borderTop:"1px solid #0F1D28"}}>
+                    <div style={{fontSize:9,color:"#607A90",lineHeight:1.7,marginBottom:8}}>{c.keyDeals}</div>
+                    <div style={{fontSize:9,color:"#3D5A73",lineHeight:1.7}}>{c.note}</div>
+                    <div style={{marginTop:8,fontSize:8,color:"#1A2D3C"}}>{c.source}</div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* LEGEND */}
+      <div style={{marginTop:24,padding:"12px 14px",background:"#050810",border:"1px solid #0F1D28",borderRadius:3}}>
+        <div style={{fontSize:8,color:"#2E4A5C",letterSpacing:".10em",textTransform:"uppercase",marginBottom:10}}>Metric definitions</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:8,fontSize:9,color:"#3D5A73",lineHeight:1.6}}>
+          <div><span style={{color:"#00E5FF"}}>Upside to PT</span> — consensus 12-month analyst price target vs current price. Green = >30% upside. Not a guarantee.</div>
+          <div><span style={{color:"#00E5FF"}}>% Below 52-Hi</span> — how far the stock has pulled from its annual peak. High discount + intact thesis = watch list candidate.</div>
+          <div><span style={{color:"#00E5FF"}}>Backlog ÷ MCap</span> — total contracted multi-year lease revenue / market cap. >1.5x means the market is paying less than the contracted pipeline. APLD (3.79x) and HUT (3.50x) lead.</div>
+          <div><span style={{color:"#00E5FF"}}>EV/Contracted MW</span> — rough enterprise value per contracted megawatt. Lower = cheaper infrastructure per MW. HUT ($8M) and APLD ($6.8M) cheapest on this basis.</div>
+          <div><span style={{color:"#CE93D8"}}>NBIS</span> — new addition. Only company here profitable at scale ($621M net income Q1). $46B contracts. Nasdaq-100 Jun 22. Stock above analyst PT.</div>
+          <div><span style={{color:"#26C6DA"}}>KEEL</span> — new addition (formerly Bitfarms). 2.2 GW pipeline, established grid interconnects, no HPC leases yet. Cheapest power capacity per mkt cap.</div>
+        </div>
+        <div style={{marginTop:10,fontSize:8,color:"#1A2D3C",lineHeight:1.7}}>
+          Prices sourced from Robinhood, MacroTrends, eToro Jun 19–21 2026. Analyst targets from StockAnalysis (S&P Global), MarketBeat, Public.com consensus. EV/Contracted MW uses approximate figures (market cap proxy for EV) and contracted critical IT load MW — figures non-standardized. Backlog/MCap uses disclosed contracted revenue totals vs current market cap. Not investment advice.
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MSTR Model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#09090B; --surface:#111318; --surface2:#181C22;
+  --border:#1E2430; --border2:#28303E;
+  --text:#CDD5E0; --muted:#52606E; --dim:#2C3440;
+  --orange:#F7931A; --orange-bg:#1C1208;
+  --green:#10B981; --red:#EF4444; --amber:#F59E0B;
+  --blue:#3B82F6; --blue-bg:#0C1624;
+  --pink:#F472B6;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:13px;line-height:1.5;min-height:100vh}
+
+/* topbar */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:20}
+.logo{display:flex;align-items:center;gap:10px;font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:14px;letter-spacing:0.07em}
+.logo-icon{width:28px;height:28px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-weight:500;font-size:14px;color:#000;flex-shrink:0}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.live-badge{font-size:10px;font-family:'IBM Plex Mono',monospace;padding:3px 8px;border-radius:4px;background:rgba(16,185,129,0.12);color:var(--green);border:1px solid rgba(16,185,129,0.25);letter-spacing:0.06em;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+.refresh-btn{background:none;border:1px solid var(--border2);border-radius:5px;color:var(--muted);padding:4px 10px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:11px}
+.refresh-btn:hover{border-color:var(--orange);color:var(--orange)}
+
+/* summary bar */
+.summary-bar{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto}
+.sum-item{padding:10px 18px;border-right:1px solid var(--border);flex-shrink:0;min-width:100px}
+.sum-item:last-child{border-right:none}
+.sum-label{font-size:10px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:2px}
+.sum-val{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:500;color:var(--text)}
+.sum-val.orange{color:var(--orange)}
+.sum-val.green{color:var(--green)}
+.sum-val.red{color:var(--red)}
+.live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:4px;animation:pulse 1.5s infinite}
+
+/* assumptions */
+.assump-wrap{background:var(--surface2);border-bottom:1px solid var(--border);padding:14px 20px}
+.assump-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;cursor:pointer;user-select:none}
+.assump-title{font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}
+.toggle-btn{font-size:11px;color:var(--muted);background:none;border:1px solid var(--border2);border-radius:4px;cursor:pointer;padding:2px 8px;font-family:'IBM Plex Sans',sans-serif}
+.toggle-btn:hover{color:var(--text);border-color:var(--border)}
+.assump-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px 24px}
+.assump-item label{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;color:var(--muted);margin-bottom:5px}
+.assump-item label .val{font-family:'IBM Plex Mono',monospace;font-weight:500;color:var(--orange);font-size:12px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:var(--dim);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--orange);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 0 1px var(--orange)}
+input[type=number]{background:var(--surface);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:5px 8px;width:100%;outline:none}
+input[type=number]:focus{border-color:var(--orange)}
+.num-wrap{display:flex;gap:6px;align-items:center}
+.num-suffix{font-size:11px;color:var(--muted);white-space:nowrap}
+
+/* legend */
+.legend-bar{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--bg);overflow-x:auto}
+.leg-item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);padding:7px 16px;border-right:1px solid var(--border);white-space:nowrap}
+.leg-item:last-child{border-right:none}
+.leg-swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.leg-sep{padding:7px 8px;color:var(--dim);border-right:1px solid var(--border)}
+
+/* table */
+.table-container{overflow:auto;max-height:calc(100vh - 290px);min-height:300px}
+table{width:100%;border-collapse:collapse;min-width:1120px;font-family:'IBM Plex Mono',monospace;font-size:12px}
+thead th{background:var(--surface2);padding:8px 12px;text-align:right;font-size:10px;font-weight:500;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:5;font-family:'IBM Plex Sans',sans-serif}
+thead th:first-child{text-align:left;position:sticky;left:0;z-index:6;background:var(--surface2);min-width:96px}
+tbody td{padding:6px 12px;text-align:right;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;font-variant-numeric:tabular-nums}
+tbody td:first-child{text-align:left;position:sticky;left:0;z-index:4;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500}
+
+/* row types */
+tr.past>td{background:var(--surface)}
+tr.past>td:first-child{background:var(--surface)}
+tr.current>td{background:color-mix(in srgb,var(--orange-bg) 70%,var(--surface));border-top:1px solid #3A2208;border-bottom:1px solid #3A2208}
+tr.current>td:first-child{background:color-mix(in srgb,var(--orange-bg) 70%,var(--surface));color:var(--orange)}
+tr.proj>td{background:color-mix(in srgb,var(--blue-bg) 80%,var(--surface))}
+tr.proj>td:first-child{background:color-mix(in srgb,var(--blue-bg) 80%,var(--surface));color:var(--blue)}
+tr.proj.first-proj>td{border-top:1px solid #1A2840}
+tr:hover>td{filter:brightness(1.14)}
+
+/* mNAV coloring */
+.mn-critical{color:#FF6090!important;font-weight:500}
+.mn-low{color:var(--green)!important}
+.mn-mid{color:var(--text)!important}
+.mn-high{color:var(--amber)!important}
+.mn-xhigh{color:var(--red)!important}
+
+.btc-col{color:var(--orange)}
+.dash{color:var(--dim)}
+.live-val{color:var(--green)}
+.loading-val{color:var(--muted)}
+
+/* source note */
+.footnote{font-size:10px;color:var(--muted);padding:8px 20px;border-top:1px solid var(--border);line-height:1.6}
+.footnote span{color:var(--dim)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">₿</div>
+    MSTR MODEL
+    <span style="color:var(--muted);font-weight:400;font-size:11px;margin-left:2px">/ Strategy Bitcoin Treasury</span>
+  </div>
+  <div class="topbar-right">
+    <span class="live-badge">● LIVE</span>
+    <span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--muted)" id="lastFetch">fetching…</span>
+    <button class="refresh-btn" onclick="fetchLive()">↻ refresh</button>
+  </div>
+</div>
+
+<div class="summary-bar">
+  <div class="sum-item"><div class="sum-label">BTC holdings</div><div class="sum-val orange" id="s-h">846,842</div></div>
+  <div class="sum-item"><div class="sum-label"><span class="live-dot"></span>BTC price</div><div class="sum-val orange" id="s-bp">…</div></div>
+  <div class="sum-item"><div class="sum-label">BTC value</div><div class="sum-val" id="s-bv">…</div></div>
+  <div class="sum-item"><div class="sum-label">Debt</div><div class="sum-val" id="s-d">$6.7B</div></div>
+  <div class="sum-item"><div class="sum-label">Mkt cap</div><div class="sum-val" id="s-mc">…</div></div>
+  <div class="sum-item"><div class="sum-label">Shares out.</div><div class="sum-val" id="s-sh">~360M</div></div>
+  <div class="sum-item"><div class="sum-label">mNAV</div><div class="sum-val" id="s-mn">…</div></div>
+  <div class="sum-item"><div class="sum-label"><span class="live-dot"></span>MSTR price</div><div class="sum-val" id="s-mp">…</div></div>
+</div>
+
+<div class="assump-wrap">
+  <div class="assump-header" onclick="toggleAssump()">
+    <span class="assump-title">Projection assumptions — Jul 2026 onward</span>
+    <button class="toggle-btn" id="toggleBtn">▲ collapse</button>
+  </div>
+  <div id="assumBody">
+    <div class="assump-grid" id="assumGrid"></div>
+  </div>
+</div>
+
+<div class="legend-bar">
+  <div class="leg-item"><div class="leg-swatch" style="background:var(--surface);border:1px solid var(--border2)"></div>Historical actuals</div>
+  <div class="leg-item"><div class="leg-swatch" style="background:color-mix(in srgb,var(--orange) 20%,var(--surface))"></div>Current month (live)</div>
+  <div class="leg-item"><div class="leg-swatch" style="background:color-mix(in srgb,var(--blue) 18%,var(--surface))"></div>Projected</div>
+  <div class="leg-sep">·</div>
+  <div class="leg-item"><span style="color:var(--green);font-family:'IBM Plex Mono',monospace;font-size:11px">1.50x</span>&nbsp;mNAV 1–2×</div>
+  <div class="leg-item"><span style="color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px">2.00x</span>&nbsp;mNAV 2–2.5×</div>
+  <div class="leg-item"><span style="color:var(--amber);font-family:'IBM Plex Mono',monospace;font-size:11px">3.00x</span>&nbsp;mNAV &gt; 2.5×</div>
+  <div class="leg-item"><span style="color:#FF6090;font-family:'IBM Plex Mono',monospace;font-size:11px">0.80x</span>&nbsp;mNAV &lt; 1×</div>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align:left">Month</th>
+        <th>BTC price</th>
+        <th>BTC holdings</th>
+        <th>BTC value</th>
+        <th>Debt</th>
+        <th>MSTR price</th>
+        <th>mNAV</th>
+        <th>Mkt cap</th>
+        <th>Shares out.</th>
+        <th>Capital raise</th>
+        <th>BTC buys</th>
+      </tr>
+    </thead>
+    <tbody id="modelBody"></tbody>
+  </table>
+</div>
+
+<div class="footnote">
+  <b>Sources</b> — BTC holdings &amp; purchases: Strategy 8-K SEC filings + bitbo.io treasury tracker.
+  BTC price: month-end close from CoinGecko historical data.
+  Debt: Strategy 10-K/10-Q SEC filings (Q1-Q4 2025 ~$8.2B; May 2026 reduced to ~$6.7B after $1.5B convertible note repurchase).
+  Shares outstanding: Strategy 10-Q weighted-average disclosures + Apr 17, 2026 proxy record date (347M confirmed).
+  MSTR stock price: approximate month-end closes, post 10:1 split (Aug 2024).
+  <span>Live BTC &amp; MSTR prices fetched from CoinGecko and Yahoo Finance on page load.</span>
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────
+// All prices post 10:1 split (Aug 2024). Shares in millions.
+// Debt in $B. Raise in $M. bp = BTC price, h = holdings, d = debt,
+// mp = MSTR price, sh = shares outstanding (M), r = capital raise ($M), bb = BTC bought.
+const HIST = [
+  // 2024
+  {m:'Jan 2024',bp:43000,h:190000,d:2.2,mp:55,sh:180,r:0,bb:850},
+  {m:'Feb 2024',bp:61000,h:193000,d:2.2,mp:72,sh:181,r:600,bb:3000},
+  {m:'Mar 2024',bp:71000,h:205000,d:2.4,mp:183,sh:184,r:600,bb:12000},
+  {m:'Apr 2024',bp:60000,h:214000,d:2.5,mp:149,sh:185,r:700,bb:9000},
+  {m:'May 2024',bp:67000,h:214000,d:2.5,mp:163,sh:186,r:0,bb:0},
+  {m:'Jun 2024',bp:62000,h:226000,d:2.8,mp:136,sh:188,r:800,bb:12000},
+  {m:'Jul 2024',bp:66000,h:226000,d:2.8,mp:135,sh:190,r:0,bb:0},
+  {m:'Aug 2024',bp:59000,h:226000,d:2.8,mp:127,sh:190,r:0,bb:0},
+  {m:'Sep 2024',bp:63000,h:252000,d:3.0,mp:155,sh:194,r:1100,bb:26000},
+  {m:'Oct 2024',bp:72000,h:252000,d:3.0,mp:243,sh:196,r:0,bb:0},
+  {m:'Nov 2024',bp:98000,h:402000,d:6.0,mp:398,sh:235,r:12000,bb:150000},
+  {m:'Dec 2024',bp:94000,h:446000,d:7.2,mp:340,sh:246,r:5000,bb:44000},
+  // 2025 — Q1 (10-Q confirmed; shares weighted-avg 256M Q1, holdings from 8-Ks)
+  {m:'Jan 2025',bp:100000,h:462000,d:7.7,mp:388,sh:252,r:2400,bb:16000},
+  {m:'Feb 2025',bp:84000,h:478000,d:8.2,mp:290,sh:258,r:2000,bb:16000},
+  {m:'Mar 2025',bp:82000,h:506000,d:8.2,mp:285,sh:265,r:2000,bb:28000},
+  // 2025 — Q2 (holdings from 8-Ks; shares weighted-avg 275M Q2)
+  {m:'Apr 2025',bp:94000,h:553555,d:8.2,mp:340,sh:272,r:3500,bb:47555},
+  {m:'May 2025',bp:104000,h:580250,d:8.2,mp:390,sh:279,r:2700,bb:26695},
+  {m:'Jun 2025',bp:107000,h:597325,d:8.163,mp:408,sh:286,r:1700,bb:17075},
+  // 2025 — Q3 (holdings from 8-Ks; shares weighted-avg 284M Q3; Aug −17%, STRC IPO Jul)
+  {m:'Jul 2025',bp:116000,h:628791,d:8.17,mp:430,sh:290,r:3700,bb:31466},
+  {m:'Aug 2025',bp:118000,h:632457,d:8.17,mp:358,sh:292,r:450,bb:3666},
+  {m:'Sep 2025',bp:109000,h:640031,d:8.174,mp:372,sh:295,r:900,bb:7574},
+  // 2025 — Q4 (Oct −16%, Nov −34%; minimal equity raises at depressed prices; Dec 2025 293.998M confirmed)
+  {m:'Oct 2025',bp:92000,h:640808,d:8.174,mp:311,sh:296,r:100,bb:777},
+  {m:'Nov 2025',bp:86000,h:649870,d:8.174,mp:204,sh:297,r:900,bb:9062},
+  {m:'Dec 2025',bp:87500,h:672500,d:8.19,mp:268,sh:298,r:2000,bb:22630},
+  // 2026 — Q1 (89,599 BTC bought for ~$7.3B avg $80,900; debt flat at $8.2B; Apr 17 proxy confirms 347M shares)
+  {m:'Jan 2026',bp:97000,h:713502,d:8.2,mp:372,sh:309,r:3900,bb:41002},
+  {m:'Feb 2026',bp:83000,h:717722,d:8.2,mp:255,sh:321,r:400,bb:4220},
+  {m:'Mar 2026',bp:67800,h:762099,d:8.2,mp:170,sh:335,r:3100,bb:44377},
+  // 2026 — Q2 partial (debt to $6.7B in May after $1.5B note repurchase; Apr 17 proxy 347M shares)
+  {m:'Apr 2026',bp:79000,h:818334,d:8.2,mp:172,sh:347,r:4100,bb:56235},
+  {m:'May 2026',bp:68000,h:843706,d:6.7,mp:140,sh:355,r:2100,bb:25372},
+];
+
+// Current month — Jun 2026 (partial actuals through Jun 14; live BTC/MSTR via API)
+const CUR = {m:'Jun 2026', h:846842, d:6.7, sh:360, r:201, bb:3137};
+
+// Projection assumptions
+const A = {btcGrowth:5, raise:1000, debtPct:0, deployPct:95, mNAV:1.5, months:24};
+
+const DEFS = [
+  {k:'btcGrowth',l:'BTC monthly price growth',u:'%',min:0,max:30,step:0.5,r:true},
+  {k:'mNAV',l:'Target mNAV multiple',u:'x',min:0.3,max:10,step:0.1,r:true},
+  {k:'debtPct',l:'Debt % of raise',u:'%',min:0,max:100,step:5,r:true},
+  {k:'deployPct',l:'% raise deployed to BTC',u:'%',min:0,max:100,step:5,r:true},
+  {k:'raise',l:'Monthly capital raise',u:'$M',min:0,max:20000,step:100,r:false},
+  {k:'months',l:'Projection months',u:'mo',min:6,max:60,step:1,r:false},
+];
+
+// ── LIVE DATA ────────────────────────────────────────────────
+let liveBTC = null, liveMSTR = null;
+
+async function fetchLive() {
+  document.getElementById('lastFetch').textContent = 'fetching…';
+  try {
+    const btcRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+    const btcData = await btcRes.json();
+    liveBTC = btcData.bitcoin.usd;
+  } catch(e) { console.warn('BTC fetch failed', e); }
+  try {
+    // Yahoo Finance via allorigins proxy
+    const url = encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/MSTR?interval=1d&range=5d');
+    const res = await fetch('https://api.allorigins.win/get?url=' + url);
+    const wrapper = await res.json();
+    const data = JSON.parse(wrapper.contents);
+    const closes = data.chart.result[0].indicators.quote[0].close;
+    liveMSTR = closes[closes.length - 1];
+  } catch(e) { console.warn('MSTR fetch failed', e); }
+  const now = new Date();
+  document.getElementById('lastFetch').textContent =
+    now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}) + ' UTC';
+  render();
+  updateSummary();
+}
+
+// ── ASSUMPTIONS UI ──────────────────────────────────────────
+function fmtAV(d,v){
+  if(d.u==='%')return v.toFixed(1)+'%';
+  if(d.u==='x')return v.toFixed(1)+'x';
+  return v;
+}
+function buildGrid(){
+  const g=document.getElementById('assumGrid'); g.innerHTML='';
+  DEFS.forEach(d=>{
+    const div=document.createElement('div'); div.className='assump-item';
+    const v=A[d.k];
+    if(d.r){
+      div.innerHTML=`<label>${d.l}<span class="val" id="av_${d.k}">${fmtAV(d,v)}</span></label>
+        <input type="range" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}" data-k="${d.k}">`;
+    }else{
+      div.innerHTML=`<label>${d.l}</label>
+        <div class="num-wrap"><input type="number" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}" data-k="${d.k}">
+        <span class="num-suffix">${d.u}</span></div>`;
+    }
+    g.appendChild(div);
+  });
+  g.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      const def=DEFS.find(x=>x.k===inp.dataset.k);
+      const val=parseFloat(inp.value);
+      if(isNaN(val))return;
+      A[def.k]=val;
+      const av=document.getElementById('av_'+def.k);
+      if(av)av.textContent=fmtAV(def,val);
+      render();
+    });
+  });
+}
+let assumOpen=true;
+function toggleAssump(){
+  assumOpen=!assumOpen;
+  document.getElementById('assumBody').style.display=assumOpen?'':'none';
+  document.getElementById('toggleBtn').textContent=assumOpen?'▲ collapse':'▼ expand';
+}
+
+// ── PROJECTIONS ──────────────────────────────────────────────
+function project(){
+  // Seed from current month if live data available, else last historical
+  const last = CUR;
+  const seedBP = (liveBTC && !isNaN(liveBTC)) ? liveBTC : (HIST[HIST.length-1].bp);
+  const seedMP = (liveMSTR && !isNaN(liveMSTR)) ? liveMSTR : (HIST[HIST.length-1].mp);
+  let bp=seedBP, h=last.h, d=last.d, mp=seedMP, sh=last.sh;
+  const rows=[];
+  for(let i=0;i<Math.round(A.months);i++){
+    bp=bp*(1+A.btcGrowth/100);
+    const raise=A.raise;
+    const debtRaise=raise*A.debtPct/100;
+    const equityRaise=raise-debtRaise;
+    d=d+debtRaise/1000;
+    const bb=(raise*A.deployPct/100)*1e6/bp;
+    h=h+bb;
+    sh=sh+equityRaise/mp;
+    mp=(h*bp/(sh*1e6))*A.mNAV;
+    const bv=h*bp/1e9;
+    const mc=sh*mp/1e3;
+    const dt=new Date(2026,6+i);
+    rows.push({
+      m:dt.toLocaleString('default',{month:'short',year:'numeric'}),
+      bp,h,d,mp,sh,r:raise,bb,bv,mc,mn:A.mNAV,proj:true
+    });
+  }
+  return rows;
+}
+
+// ── FORMAT ───────────────────────────────────────────────────
+function mnavClass(v){
+  if(v<1)return'mn-critical';
+  if(v<2)return'mn-low';
+  if(v<2.5)return'mn-mid';
+  if(v<4)return'mn-high';
+  return'mn-xhigh';
+}
+function c(v,t){
+  if(v===null||v===undefined||isNaN(v))return'<span class="dash">—</span>';
+  switch(t){
+    case'bp':return'<span class="btc-col">$'+Math.round(v).toLocaleString()+'</span>';
+    case'h':return Math.round(v).toLocaleString();
+    case'bv':return'$'+v.toFixed(1)+'B';
+    case'd':return'$'+v.toFixed(1)+'B';
+    case'mp':return'$'+Math.round(v).toLocaleString();
+    case'mn':return`<span class="${mnavClass(v)}">${v.toFixed(2)}x</span>`;
+    case'mc':return'$'+v.toFixed(1)+'B';
+    case'sh':return v.toFixed(0)+'M';
+    case'r':return v===0?'<span class="dash">—</span>':'$'+Math.round(v).toLocaleString()+'M';
+    case'bb':return v===0?'<span class="dash">—</span>':Math.round(v).toLocaleString();
+    default:return v;
+  }
+}
+
+// ── RENDER ───────────────────────────────────────────────────
+function render(){
+  const prows=project();
+  // Build current row with live or last-known prices
+  const curBP = (liveBTC&&!isNaN(liveBTC)) ? liveBTC : null;
+  const curMP = (liveMSTR&&!isNaN(liveMSTR)) ? liveMSTR : null;
+  const curBV = curBP ? CUR.h*curBP/1e9 : null;
+  const curMC = (curBP&&curMP) ? CUR.sh*curMP/1e3 : null;
+  const curMN = (curBV&&curMC) ? curMC/curBV : null;
+
+  const all=[
+    ...HIST.map(r=>({...r,type:'past'})),
+    {m:CUR.m,bp:curBP,h:CUR.h,d:CUR.d,mp:curMP,sh:CUR.sh,r:CUR.r,bb:CUR.bb,
+     bv:curBV,mc:curMC,mn:curMN,type:'current'},
+    ...prows.map((r,i)=>({...r,type:'proj',firstProj:i===0}))
+  ];
+  let html='';
+  all.forEach(r=>{
+    const bv=r.type==='past'?(r.h*r.bp/1e9):r.bv;
+    const mc=r.type==='past'?(r.sh*r.mp/1e3):r.mc;
+    const mn=r.type==='past'?(mc/bv):(r.mn||null);
+    const isCur=r.type==='current';
+    const cls=r.type+(r.firstProj?' first-proj':'');
+    const bpCell=isCur&&!curBP
+      ? '<span class="loading-val">fetching…</span>'
+      : c(r.bp,'bp');
+    const mpCell=isCur&&!curMP
+      ? '<span class="loading-val">fetching…</span>'
+      : c(r.mp,'mp');
+    html+=`<tr class="${cls}">
+      <td>${r.m}</td>
+      <td>${bpCell}</td>
+      <td>${c(r.h,'h')}</td>
+      <td>${c(bv,'bv')}</td>
+      <td>${c(r.d,'d')}</td>
+      <td>${mpCell}</td>
+      <td>${c(mn,'mn')}</td>
+      <td>${c(mc,'mc')}</td>
+      <td>${c(r.sh,'sh')}</td>
+      <td>${c(r.r,'r')}</td>
+      <td>${c(r.bb,'bb')}</td>
+    </tr>`;
+  });
+  document.getElementById('modelBody').innerHTML=html;
+}
+
+// ── SUMMARY BAR ──────────────────────────────────────────────
+function updateSummary(){
+  const bp = (liveBTC&&!isNaN(liveBTC)) ? liveBTC : null;
+  const mp = (liveMSTR&&!isNaN(liveMSTR)) ? liveMSTR : null;
+  const h=CUR.h, sh=CUR.sh, d=CUR.d;
+  const bv=bp?h*bp/1e9:null;
+  const mc=(mp)?sh*mp/1e3:null;
+  const mn=(bv&&mc)?mc/bv:null;
+  document.getElementById('s-h').textContent=h.toLocaleString();
+  document.getElementById('s-bp').textContent=bp?'$'+Math.round(bp).toLocaleString():'…';
+  document.getElementById('s-bv').textContent=bv?'$'+bv.toFixed(1)+'B':'…';
+  document.getElementById('s-d').textContent='$'+d.toFixed(1)+'B';
+  document.getElementById('s-mc').textContent=mc?'$'+mc.toFixed(1)+'B':'…';
+  document.getElementById('s-sh').textContent=sh+'M';
+  const mnEl=document.getElementById('s-mn');
+  if(mn){
+    mnEl.textContent=mn.toFixed(2)+'x';
+    mnEl.className='sum-val '+(mn<1?'red':mn<2?'green':'orange');
+  } else {
+    mnEl.textContent='…';
+    mnEl.className='sum-val';
+  }
+  const mpEl=document.getElementById('s-mp');
+  mpEl.textContent=mp?'$'+Math.round(mp).toLocaleString():'…';
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+buildGrid();
+render(); // initial render with null live prices
+updateSummary();
+fetchLive(); // fetch and re-render
+</script>
+</body>
+</html>

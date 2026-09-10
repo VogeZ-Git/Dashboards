@@ -1,0 +1,704 @@
+import React, { useState, useMemo } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { TrendingUp, Bitcoin, Building2, Zap } from 'lucide-react';
+
+export default function MSTRModel() {
+  const [inputs, setInputs] = useState({
+    currentBtcPrice: 87829,
+    btcFairValue: 100000,
+    currentMstrPrice: 165,
+    btcCAGR: 20,
+    mstrHoldings: 446000,
+    amplification: 0,
+    btcShareGrowth: 10,
+    currentMNAV: 1,
+    expectedMNAV: 1.1,
+    timeHorizon: 10,
+    includeMnavRerating: true,
+    includeBtcShareGrowth: true,
+    includeAmplification: true,
+    // TSLA inputs
+    currentTslaPrice: 485,
+    tslaFairValue: 500,
+    tslaBearCAGR: 20,
+    tslaBaseCAGR: 35,
+    tslaBullCAGR: 50,
+    tslaScenario: 'base' // bear, base, or bull
+  });
+
+  const handleInputChange = (field, value) => {
+    setInputs(prev => ({ ...prev, [field]: value }));
+  };
+
+  const calculations = useMemo(() => {
+    const months = inputs.timeHorizon * 12;
+    const monthlyData = [];
+    
+    // Calculate shares outstanding (approximate based on current metrics)
+    const currentBtcPerShare = inputs.mstrHoldings / 200; // Approximate 200M shares
+    
+    // Get TSLA CAGR based on scenario
+    const tslaCAGR = inputs.tslaScenario === 'bear' ? inputs.tslaBearCAGR :
+                     inputs.tslaScenario === 'bull' ? inputs.tslaBullCAGR :
+                     inputs.tslaBaseCAGR;
+    
+    for (let month = 0; month <= months; month++) {
+      const year = month / 12;
+      
+      // Bitcoin price: trend from current to fair value, then apply CAGR to fair value
+      let btcPrice;
+      if (year === 0) {
+        btcPrice = inputs.currentBtcPrice;
+      } else {
+        // Linear interpolation from current to fair value over time horizon
+        const trendProgress = Math.min(year / inputs.timeHorizon, 1);
+        const trendedPrice = inputs.currentBtcPrice + (inputs.btcFairValue - inputs.currentBtcPrice) * trendProgress;
+        
+        // Apply CAGR to fair value component
+        const fairValueGrowth = inputs.btcFairValue * (Math.pow(1 + inputs.btcCAGR / 100, year) - 1);
+        btcPrice = trendedPrice + fairValueGrowth;
+      }
+      
+      const btcPriceGrowth = (btcPrice / inputs.currentBtcPrice) - 1; // % increase
+      
+      // Calculate MSTR price growth components
+      let totalPriceGrowth = btcPriceGrowth;
+      
+      // Add amplification effect on price growth
+      if (inputs.includeAmplification) {
+        const amplificationEffect = btcPriceGrowth * (inputs.amplification / 100);
+        totalPriceGrowth += amplificationEffect;
+      }
+      
+      // Add BTC/share growth effect
+      if (inputs.includeBtcShareGrowth) {
+        const btcShareGrowthFactor = Math.pow(1 + inputs.btcShareGrowth / 100, year) - 1;
+        totalPriceGrowth += btcShareGrowthFactor;
+      }
+      
+      // Calculate base MSTR price from total growth
+      const mstrPriceBeforeRerating = inputs.currentMstrPrice * (1 + totalPriceGrowth);
+      
+      // Apply mNAV rerating
+      let mnavMultiplier = 1;
+      if (inputs.includeMnavRerating && year > 0) {
+        const currentMultiplier = inputs.currentMNAV;
+        const targetMultiplier = inputs.expectedMNAV;
+        const reratingProgress = year / inputs.timeHorizon;
+        const currentMnav = currentMultiplier + (targetMultiplier - currentMultiplier) * reratingProgress;
+        mnavMultiplier = currentMnav / inputs.currentMNAV;
+      }
+      
+      const mstrPrice = mstrPriceBeforeRerating * mnavMultiplier;
+      
+      // Calculate TSLA price: trend from current to fair value, then apply CAGR to fair value
+      let tslaPrice;
+      if (year === 0) {
+        tslaPrice = inputs.currentTslaPrice;
+      } else {
+        // Linear interpolation from current to fair value over time horizon
+        const trendProgress = Math.min(year / inputs.timeHorizon, 1);
+        const trendedPrice = inputs.currentTslaPrice + (inputs.tslaFairValue - inputs.currentTslaPrice) * trendProgress;
+        
+        // Apply CAGR to fair value component
+        const fairValueGrowth = inputs.tslaFairValue * (Math.pow(1 + tslaCAGR / 100, year) - 1);
+        tslaPrice = trendedPrice + fairValueGrowth;
+      }
+      
+      // Calculate holdings for display (separate from price calculation)
+      let mstrBtcHoldings = inputs.mstrHoldings;
+      if (inputs.includeAmplification) {
+        mstrBtcHoldings = inputs.mstrHoldings * Math.pow(1 + inputs.amplification / 100, year);
+      }
+      
+      let btcPerShare = currentBtcPerShare;
+      let effectiveBtcShareGrowthRate = 0;
+      if (inputs.includeBtcShareGrowth) {
+        // Exponential decay: rate decreases exponentially over time
+        const decayFactor = 0.85; // Adjust between 0.5-0.95 for faster/slower decay
+        const diminishedRate = inputs.btcShareGrowth * Math.pow(decayFactor, year);
+        btcPerShare = currentBtcPerShare * Math.pow(1 + diminishedRate / 100, year);
+        effectiveBtcShareGrowthRate = diminishedRate;
+      }
+      
+      monthlyData.push({
+        month,
+        year: year.toFixed(1),
+        btcPrice: Math.round(btcPrice),
+        mstrPrice: Math.round(mstrPrice),
+        tslaPrice: Math.round(tslaPrice),
+        btcPctIncrease: ((btcPrice / inputs.currentBtcPrice - 1) * 100),
+        mstrPctIncrease: ((mstrPrice / inputs.currentMstrPrice - 1) * 100),
+        tslaPctIncrease: ((tslaPrice / inputs.currentTslaPrice - 1) * 100),
+        mstrBtcHoldings: Math.round(mstrBtcHoldings),
+        btcPerShare: btcPerShare.toFixed(3),
+        btcShareGrowthRate: effectiveBtcShareGrowthRate.toFixed(2)
+      });
+    }
+    
+    const finalData = monthlyData[monthlyData.length - 1];
+    const mstrCAGR = ((Math.pow(finalData.mstrPrice / inputs.currentMstrPrice, 1 / inputs.timeHorizon) - 1) * 100).toFixed(1);
+    const mstrMultiple = (finalData.mstrPrice / inputs.currentMstrPrice).toFixed(2);
+    
+    const btcCAGR = ((Math.pow(finalData.btcPrice / inputs.currentBtcPrice, 1 / inputs.timeHorizon) - 1) * 100).toFixed(1);
+    const btcMultiple = (finalData.btcPrice / inputs.currentBtcPrice).toFixed(2);
+    
+    const tslaActualCAGR = ((Math.pow(finalData.tslaPrice / inputs.currentTslaPrice, 1 / inputs.timeHorizon) - 1) * 100).toFixed(1);
+    const tslaMultiple = (finalData.tslaPrice / inputs.currentTslaPrice).toFixed(2);
+    
+    return {
+      monthlyData,
+      finalYear: {
+        btcPrice: finalData.btcPrice,
+        btcCAGR,
+        btcMultiple,
+        mstrPrice: finalData.mstrPrice,
+        mstrCAGR,
+        mstrMultiple,
+        tslaPrice: finalData.tslaPrice,
+        tslaCAGR: tslaActualCAGR,
+        tslaMultiple
+      }
+    };
+  }, [inputs]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 p-4 sm:p-8">
+      <div className="max-w-[1800px] mx-auto">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Financial Model Dashboard</h1>
+          <p className="text-gray-600">MSTR Bitcoin-leveraged equity & TSLA growth projections</p>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* MSTR Model - Takes 2 columns */}
+          <div className="xl:col-span-2 space-y-8">
+            {/* MSTR Input Panel */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <Building2 className="w-6 h-6 text-orange-600" />
+                MSTR Model Inputs
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Current Prices */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Current Bitcoin Price ($)
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.currentBtcPrice}
+                    onChange={(e) => handleInputChange('currentBtcPrice', parseFloat(e.target.value))}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Bitcoin Fair Value ($)
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.btcFairValue}
+                    onChange={(e) => handleInputChange('btcFairValue', parseFloat(e.target.value))}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Bitcoin CAGR % per year
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.btcCAGR}
+                    onChange={(e) => handleInputChange('btcCAGR', parseFloat(e.target.value))}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* MSTR Metrics */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Current MSTR Price ($)
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.currentMstrPrice}
+                    onChange={(e) => handleInputChange('currentMstrPrice', parseFloat(e.target.value))}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    MSTR Current Holdings (BTC)
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.mstrHoldings}
+                    onChange={(e) => handleInputChange('mstrHoldings', parseFloat(e.target.value))}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    MSTR Amplification % per year
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.amplification}
+                    onChange={(e) => handleInputChange('amplification', parseFloat(e.target.value))}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    MSTR BTC/Share Growth % per year
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.btcShareGrowth}
+                    onChange={(e) => handleInputChange('btcShareGrowth', parseFloat(e.target.value))}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Valuation */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Current mNAV
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={inputs.currentMNAV}
+                    onChange={(e) => handleInputChange('currentMNAV', parseFloat(e.target.value))}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Expected mNAV Rerating
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={inputs.expectedMNAV}
+                    onChange={(e) => handleInputChange('expectedMNAV', parseFloat(e.target.value))}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Time Horizon (years)
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.timeHorizon}
+                    onChange={(e) => handleInputChange('timeHorizon', parseInt(e.target.value))}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Case Settings */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Case Settings</h3>
+                <div className="flex flex-wrap gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={inputs.includeMnavRerating}
+                      onChange={(e) => handleInputChange('includeMnavRerating', e.target.checked)}
+                      className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500"
+                    />
+                    <span className="text-gray-700 font-medium">Include mNAV Rerating</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={inputs.includeBtcShareGrowth}
+                      onChange={(e) => handleInputChange('includeBtcShareGrowth', e.target.checked)}
+                      className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500"
+                    />
+                    <span className="text-gray-700 font-medium">Include BTC/Share Growth</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={inputs.includeAmplification}
+                      onChange={(e) => handleInputChange('includeAmplification', e.target.checked)}
+                      className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500"
+                    />
+                    <span className="text-gray-700 font-medium">Include Amplification</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* MSTR Output Panel */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                Year {inputs.timeHorizon} Projections
+              </h2>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Bitcoin Section */}
+                <div className="border-2 border-orange-200 rounded-lg p-5 bg-orange-50">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Bitcoin className="w-6 h-6 text-orange-600" />
+                    <h3 className="text-xl font-bold text-orange-900">Bitcoin</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="bg-white rounded-lg p-4">
+                      <div className="text-sm text-gray-600 font-semibold mb-1">Price</div>
+                      <div className="text-3xl font-bold text-orange-900">
+                        ${calculations.finalYear.btcPrice.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-4">
+                      <div className="text-sm text-gray-600 font-semibold mb-1">Multiple on Current</div>
+                      <div className="text-3xl font-bold text-orange-900">
+                        {calculations.finalYear.btcMultiple}x
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-4">
+                      <div className="text-sm text-gray-600 font-semibold mb-1">CAGR</div>
+                      <div className="text-3xl font-bold text-orange-900">
+                        {calculations.finalYear.btcCAGR}%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* MSTR Section */}
+                <div className="border-2 border-blue-200 rounded-lg p-5 bg-blue-50">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Building2 className="w-6 h-6 text-blue-600" />
+                    <h3 className="text-xl font-bold text-blue-900">MSTR</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="bg-white rounded-lg p-4">
+                      <div className="text-sm text-gray-600 font-semibold mb-1">Price</div>
+                      <div className="text-3xl font-bold text-blue-900">
+                        ${calculations.finalYear.mstrPrice.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-4">
+                      <div className="text-sm text-gray-600 font-semibold mb-1">Multiple on Current</div>
+                      <div className="text-3xl font-bold text-blue-900">
+                        {calculations.finalYear.mstrMultiple}x
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-4">
+                      <div className="text-sm text-gray-600 font-semibold mb-1">CAGR</div>
+                      <div className="text-3xl font-bold text-blue-900">
+                        {calculations.finalYear.mstrCAGR}%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Charts */}
+            <div className="grid grid-cols-1 gap-8">
+              {/* Price Chart */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Price Projections</h3>
+                <ResponsiveContainer width="100%" height={350}>
+                  <LineChart data={calculations.monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="year" 
+                      label={{ value: 'Years', position: 'insideBottom', offset: -5 }}
+                      stroke="#6b7280"
+                    />
+                    <YAxis yAxisId="left" stroke="#f97316" label={{ value: 'Bitcoin ($)', angle: -90, position: 'insideLeft' }} />
+                    <YAxis yAxisId="right" orientation="right" stroke="#6b7280" label={{ value: 'MSTR & TSLA ($)', angle: 90, position: 'insideRight' }} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#fff', border: '2px solid #e5e7eb', borderRadius: '8px' }}
+                      formatter={(value) => `${value.toLocaleString()}`}
+                    />
+                    <Legend />
+                    <Line 
+                      yAxisId="left"
+                      type="monotone" 
+                      dataKey="btcPrice" 
+                      stroke="#f97316" 
+                      strokeWidth={3}
+                      name="Bitcoin"
+                      dot={false}
+                    />
+                    <Line 
+                      yAxisId="right"
+                      type="monotone" 
+                      dataKey="mstrPrice" 
+                      stroke="#3b82f6" 
+                      strokeWidth={3}
+                      name="MSTR"
+                      dot={false}
+                    />
+                    <Line 
+                      yAxisId="right"
+                      type="monotone" 
+                      dataKey="tslaPrice" 
+                      stroke="#22c55e" 
+                      strokeWidth={3}
+                      name="TSLA"
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Percentage Increase Chart */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">% Increase from Current</h3>
+                <ResponsiveContainer width="100%" height={350}>
+                  <LineChart data={calculations.monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="year" 
+                      label={{ value: 'Years', position: 'insideBottom', offset: -5 }}
+                      stroke="#6b7280"
+                    />
+                    <YAxis stroke="#6b7280" label={{ value: '% Increase', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#fff', border: '2px solid #e5e7eb', borderRadius: '8px' }}
+                      formatter={(value) => `${value.toFixed(1)}%`}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="btcPctIncrease" 
+                      stroke="#f97316" 
+                      strokeWidth={3}
+                      name="Bitcoin"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="mstrPctIncrease" 
+                      stroke="#3b82f6" 
+                      strokeWidth={3}
+                      name="MSTR"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="tslaPctIncrease" 
+                      stroke="#22c55e" 
+                      strokeWidth={3}
+                      name="TSLA"
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Holdings Chart */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">MSTR Bitcoin Metrics</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={calculations.monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="year" 
+                      label={{ value: 'Years', position: 'insideBottom', offset: -5 }}
+                      stroke="#6b7280"
+                    />
+                    <YAxis yAxisId="left" stroke="#6b7280" />
+                    <YAxis yAxisId="right" orientation="right" stroke="#6b7280" />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#fff', border: '2px solid #e5e7eb', borderRadius: '8px' }}
+                    />
+                    <Legend />
+                    <Line 
+                      yAxisId="left"
+                      type="monotone" 
+                      dataKey="mstrBtcHoldings" 
+                      stroke="#10b981" 
+                      strokeWidth={3}
+                      name="Total BTC Holdings"
+                      dot={false}
+                    />
+                    <Line 
+                      yAxisId="right"
+                      type="monotone" 
+                      dataKey="btcPerShare" 
+                      stroke="#8b5cf6" 
+                      strokeWidth={3}
+                      name="BTC per Share"
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* BTC/Share Growth Rate Chart */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">BTC/Share Growth Rate (Diminishing)</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={calculations.monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="year" 
+                      label={{ value: 'Years', position: 'insideBottom', offset: -5 }}
+                      stroke="#6b7280"
+                    />
+                    <YAxis stroke="#6b7280" label={{ value: 'Growth Rate (%)', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#fff', border: '2px solid #e5e7eb', borderRadius: '8px' }}
+                      formatter={(value) => `${value}%`}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="btcShareGrowthRate" 
+                      stroke="#8b5cf6" 
+                      strokeWidth={3}
+                      name="BTC/Share Annual Growth Rate"
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* TSLA Model - Takes 1 column */}
+          <div className="space-y-8">
+            {/* TSLA Input Panel */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <Zap className="w-6 h-6 text-green-600" />
+                TSLA Model Inputs
+              </h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Current TSLA Price ($)
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.currentTslaPrice}
+                    onChange={(e) => handleInputChange('currentTslaPrice', parseFloat(e.target.value))}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Model Fair Value ($)
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.tslaFairValue}
+                    onChange={(e) => handleInputChange('tslaFairValue', parseFloat(e.target.value))}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Bear CAGR (%)
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.tslaBearCAGR}
+                    onChange={(e) => handleInputChange('tslaBearCAGR', parseFloat(e.target.value))}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Base CAGR (%)
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.tslaBaseCAGR}
+                    onChange={(e) => handleInputChange('tslaBaseCAGR', parseFloat(e.target.value))}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Bull CAGR (%)
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.tslaBullCAGR}
+                    onChange={(e) => handleInputChange('tslaBullCAGR', parseFloat(e.target.value))}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Scenario
+                  </label>
+                  <select
+                    value={inputs.tslaScenario}
+                    onChange={(e) => handleInputChange('tslaScenario', e.target.value)}
+                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none"
+                  >
+                    <option value="bear">Bear</option>
+                    <option value="base">Base</option>
+                    <option value="bull">Bull</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* TSLA Output Panel */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                TSLA Year {inputs.timeHorizon} Projection
+              </h2>
+              
+              <div className="border-2 border-green-200 rounded-lg p-5 bg-green-50">
+                <div className="flex items-center gap-2 mb-4">
+                  <Zap className="w-6 h-6 text-green-600" />
+                  <h3 className="text-xl font-bold text-green-900">
+                    TSLA ({inputs.tslaScenario.charAt(0).toUpperCase() + inputs.tslaScenario.slice(1)})
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="bg-white rounded-lg p-4">
+                    <div className="text-sm text-gray-600 font-semibold mb-1">Price</div>
+                    <div className="text-3xl font-bold text-green-900">
+                      ${calculations.finalYear.tslaPrice.toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4">
+                    <div className="text-sm text-gray-600 font-semibold mb-1">Multiple on Current</div>
+                    <div className="text-3xl font-bold text-green-900">
+                      {calculations.finalYear.tslaMultiple}x
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4">
+                    <div className="text-sm text-gray-600 font-semibold mb-1">CAGR</div>
+                    <div className="text-3xl font-bold text-green-900">
+                      {calculations.finalYear.tslaCAGR}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

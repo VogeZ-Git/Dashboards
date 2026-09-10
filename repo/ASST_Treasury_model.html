@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASST Model — Strive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#09090B; --surface:#111318; --surface2:#181C22;
+  --border:#1E2430; --border2:#28303E;
+  --text:#CDD5E0; --muted:#52606E; --dim:#2C3440;
+  --orange:#F7931A; --orange-bg:#1C1208;
+  --teal:#14B8A6; --teal-bg:#06201E;
+  --green:#10B981; --red:#EF4444; --amber:#F59E0B;
+  --blue:#3B82F6; --blue-bg:#0C1624;
+  --pink:#F472B6;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:13px;line-height:1.5;min-height:100vh}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:20}
+.logo{display:flex;align-items:center;gap:10px;font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:14px;letter-spacing:0.07em}
+.logo-icon{width:28px;height:28px;border-radius:6px;background:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:500;font-size:11px;color:#000;flex-shrink:0;letter-spacing:0}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.live-badge{font-size:10px;font-family:'IBM Plex Mono',monospace;padding:3px 8px;border-radius:4px;background:rgba(16,185,129,0.12);color:var(--green);border:1px solid rgba(16,185,129,0.25);letter-spacing:0.06em;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+.refresh-btn{background:none;border:1px solid var(--border2);border-radius:5px;color:var(--muted);padding:4px 10px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:11px}
+.refresh-btn:hover{border-color:var(--teal);color:var(--teal)}
+
+.summary-bar{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto}
+.sum-item{padding:10px 18px;border-right:1px solid var(--border);flex-shrink:0;min-width:100px}
+.sum-item:last-child{border-right:none}
+.sum-label{font-size:10px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:2px}
+.sum-val{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:500;color:var(--text)}
+.sum-val.teal{color:var(--teal)}
+.sum-val.orange{color:var(--orange)}
+.sum-val.green{color:var(--green)}
+.sum-val.red{color:var(--red)}
+.live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:4px;animation:pulse 1.5s infinite}
+
+.assump-wrap{background:var(--surface2);border-bottom:1px solid var(--border);padding:14px 20px}
+.assump-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;cursor:pointer;user-select:none}
+.assump-title{font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}
+.toggle-btn{font-size:11px;color:var(--muted);background:none;border:1px solid var(--border2);border-radius:4px;cursor:pointer;padding:2px 8px;font-family:'IBM Plex Sans',sans-serif}
+.toggle-btn:hover{color:var(--text);border-color:var(--border)}
+.assump-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px 24px}
+.assump-item label{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;color:var(--muted);margin-bottom:5px}
+.assump-item label .val{font-family:'IBM Plex Mono',monospace;font-weight:500;color:var(--teal);font-size:12px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:var(--dim);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--teal);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 0 1px var(--teal)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--teal);cursor:pointer;border:2px solid var(--bg)}
+input[type=number]{background:var(--surface);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:5px 8px;width:100%;outline:none}
+input[type=number]:focus{border-color:var(--teal)}
+.num-wrap{display:flex;gap:6px;align-items:center}
+.num-suffix{font-size:11px;color:var(--muted);white-space:nowrap}
+
+.legend-bar{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--bg);overflow-x:auto}
+.leg-item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);padding:7px 16px;border-right:1px solid var(--border);white-space:nowrap}
+.leg-item:last-child{border-right:none}
+.leg-swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.leg-sep{padding:7px 8px;color:var(--dim);border-right:1px solid var(--border)}
+
+.table-container{overflow:auto;max-height:calc(100vh - 290px);min-height:300px}
+table{width:100%;border-collapse:collapse;min-width:1120px;font-family:'IBM Plex Mono',monospace;font-size:12px}
+thead th{background:var(--surface2);padding:8px 12px;text-align:right;font-size:10px;font-weight:500;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:5;font-family:'IBM Plex Sans',sans-serif}
+thead th:first-child{text-align:left;position:sticky;left:0;z-index:6;background:var(--surface2);min-width:96px}
+tbody td{padding:6px 12px;text-align:right;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;font-variant-numeric:tabular-nums}
+tbody td:first-child{text-align:left;position:sticky;left:0;z-index:4;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500}
+
+tr.past>td{background:var(--surface)}
+tr.past>td:first-child{background:var(--surface)}
+tr.current>td{background:color-mix(in srgb,var(--teal-bg) 70%,var(--surface));border-top:1px solid #0E2E2A;border-bottom:1px solid #0E2E2A}
+tr.current>td:first-child{background:color-mix(in srgb,var(--teal-bg) 70%,var(--surface));color:var(--teal)}
+tr.proj>td{background:color-mix(in srgb,var(--blue-bg) 80%,var(--surface))}
+tr.proj>td:first-child{background:color-mix(in srgb,var(--blue-bg) 80%,var(--surface));color:var(--blue)}
+tr.proj.first-proj>td{border-top:1px solid #1A2840}
+tr:hover>td{filter:brightness(1.14)}
+
+.mn-critical{color:#FF6090!important;font-weight:500}
+.mn-low{color:var(--green)!important}
+.mn-mid{color:var(--text)!important}
+.mn-high{color:var(--amber)!important}
+.mn-xhigh{color:var(--red)!important}
+
+.btc-col{color:var(--orange)}
+.dash{color:var(--dim)}
+.semler-note{font-size:9px;color:var(--teal);vertical-align:super;margin-left:2px}
+
+.footnote{font-size:10px;color:var(--muted);padding:8px 20px;border-top:1px solid var(--border);line-height:1.7}
+.footnote b{color:var(--text)}
+.footnote span{color:var(--dim)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">ASST</div>
+    STRIVE MODEL
+    <span style="color:var(--muted);font-weight:400;font-size:11px;margin-left:2px">/ Bitcoin Treasury Asset Manager</span>
+  </div>
+  <div class="topbar-right">
+    <span class="live-badge">● LIVE</span>
+    <span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--muted)" id="lastFetch">fetching…</span>
+    <button class="refresh-btn" onclick="fetchLive()">↻ refresh</button>
+  </div>
+</div>
+
+<div class="summary-bar">
+  <div class="sum-item"><div class="sum-label">BTC holdings</div><div class="sum-val teal" id="s-h">19,105</div></div>
+  <div class="sum-item"><div class="sum-label"><span class="live-dot"></span>BTC price</div><div class="sum-val orange" id="s-bp">…</div></div>
+  <div class="sum-item"><div class="sum-label">BTC value</div><div class="sum-val" id="s-bv">…</div></div>
+  <div class="sum-item"><div class="sum-label">Debt</div><div class="sum-val green" id="s-d">~$0</div></div>
+  <div class="sum-item"><div class="sum-label">Mkt cap</div><div class="sum-val" id="s-mc">…</div></div>
+  <div class="sum-item"><div class="sum-label">Shares out.</div><div class="sum-val" id="s-sh">~80M</div></div>
+  <div class="sum-item"><div class="sum-label">mNAV</div><div class="sum-val" id="s-mn">…</div></div>
+  <div class="sum-item"><div class="sum-label"><span class="live-dot"></span>ASST price</div><div class="sum-val" id="s-mp">…</div></div>
+</div>
+
+<div class="assump-wrap">
+  <div class="assump-header" onclick="toggleAssump()">
+    <span class="assump-title">Projection assumptions — Jul 2026 onward</span>
+    <button class="toggle-btn" id="toggleBtn">▲ collapse</button>
+  </div>
+  <div id="assumBody">
+    <div class="assump-grid" id="assumGrid"></div>
+  </div>
+</div>
+
+<div class="legend-bar">
+  <div class="leg-item"><div class="leg-swatch" style="background:var(--surface);border:1px solid var(--border2)"></div>Historical actuals</div>
+  <div class="leg-item"><div class="leg-swatch" style="background:color-mix(in srgb,var(--teal) 20%,var(--surface))"></div>Current month (live)</div>
+  <div class="leg-item"><div class="leg-swatch" style="background:color-mix(in srgb,var(--blue) 18%,var(--surface))"></div>Projected</div>
+  <div class="leg-sep">·</div>
+  <div class="leg-item"><span style="color:var(--green);font-family:'IBM Plex Mono',monospace;font-size:11px">1.50x</span>&nbsp;mNAV 1–2×</div>
+  <div class="leg-item"><span style="color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px">2.50x</span>&nbsp;mNAV 2–3×</div>
+  <div class="leg-item"><span style="color:var(--amber);font-family:'IBM Plex Mono',monospace;font-size:11px">3.50x</span>&nbsp;mNAV &gt; 3×</div>
+  <div class="leg-item"><span style="color:#FF6090;font-family:'IBM Plex Mono',monospace;font-size:11px">0.80x</span>&nbsp;mNAV &lt; 1×</div>
+  <div class="leg-item"><span class="semler-note" style="font-size:11px;position:static">†</span>&nbsp;incl. Semler acquisition</div>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align:left">Month</th>
+        <th>BTC price</th>
+        <th>BTC holdings</th>
+        <th>BTC value</th>
+        <th>Debt</th>
+        <th>ASST price</th>
+        <th>mNAV</th>
+        <th>Mkt cap</th>
+        <th>Shares out.</th>
+        <th>Capital raise</th>
+        <th>BTC buys</th>
+      </tr>
+    </thead>
+    <tbody id="modelBody"></tbody>
+  </table>
+</div>
+
+<div class="footnote">
+  <b>Sources</b> — BTC holdings: Strive 8-K SEC filings + bitcointreasuries.net.
+  Sep 2025: Strive went public via reverse merger with Asset Entities; $762M PIPE deployed.
+  <b>Jan 2026 BTC buys include 5,048 BTC from all-stock Semler Scientific acquisition</b> (†), not purchased with cash.
+  Debt: Strive cleared its $20M Coinbase loan and exchanged $90M of Semler convertible notes for SATA preferred in Jan 2026; debt-free from May 2026 (Q1 2026 filing confirmed).
+  Shares: Q4 2025 diluted avg ~44M; May 12, 2026 = 73.1M confirmed; Jun 14, 2026 = 79.8M confirmed; intermediate months estimated.
+  ASST stock price: approximate monthly closes; company only public since Sep 12, 2025.
+  Capital raise includes PIPE proceeds, SATA IPO ($160M Nov 2025), SATA follow-on ($109M Jan 2026), SATA ATM, and ASST common ATM.
+  <span>Live BTC and ASST prices fetched from CoinGecko and Yahoo Finance on page load.</span>
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────
+// Strive (ASST) only went public Sep 12, 2025 via reverse merger.
+// Shares in millions. Debt in $B. Raise in $M.
+// bp=BTC price, h=holdings, d=debt, mp=ASST price, sh=shares (M), r=raise ($M), bb=BTC bought
+// Note: Jan 2026 includes 5,048 BTC from Semler acquisition (all-stock, no cash)
+const HIST = [
+  // Q3 2025 — IPO via reverse merger Sep 12; $762M PIPE; 69 BTC via S.351 + ~5,817 purchased
+  {m:'Sep 2025',bp:109000,h:5886,d:0,mp:42,sh:35,r:762,bb:5886},
+  // Q4 2025
+  {m:'Oct 2025',bp:92000,h:6200,d:0,mp:24,sh:40,r:50,bb:314},
+  // Nov 10: SATA IPO 2M shares at $80 = $160M net; total BTC ~7,525 as of Nov 10
+  {m:'Nov 2025',bp:86000,h:7525,d:0,mp:22,sh:43,r:160,bb:1325},
+  // Dec 9: $500M SATA ATM announced; slow accumulation; Jan 13 8-K shows 7,749.8 → Dec end ~7,627
+  {m:'Dec 2025',bp:87500,h:7627,d:0,mp:18,sh:44,r:200,bb:102},
+  // Jan 16: Semler close (+5,048 BTC); SATA follow-on $109M at $90/sh; cleared Coinbase $20M debt
+  // +334 BTC direct purchase Jan 28 at avg $89,851; 13,131 BTC confirmed
+  {m:'Jan 2026',bp:97000,h:13131,d:0.01,mp:25,sh:66,r:225,bb:5504,semler:true},
+  // Feb 2026
+  {m:'Feb 2026',bp:83000,h:13450,d:0.01,mp:14,sh:68,r:100,bb:319},
+  // Mar 11: +179 BTC; 13,628 as of Mar 17
+  {m:'Mar 2026',bp:67800,h:13628,d:0.01,mp:10,sh:70,r:60,bb:178},
+  // Apr 2026: 1,381 total BTC Apr 1 – May 12; mainly April (Apr 6 +113, Apr 15 +27, Apr 27 +789 → ~1,250 in Apr)
+  {m:'Apr 2026',bp:79000,h:14878,d:0,mp:12,sh:72,r:200,bb:1250},
+  // May 2026: $185M BTC purchases late May; 15,009 as of May 12; ~16,500 by May 31; $17.75 close May 29
+  {m:'May 2026',bp:68000,h:16509,d:0,mp:17.75,sh:73,r:480,bb:1631},
+];
+
+// Current month — Jun 2026 (partial actuals through Jun 14)
+// 73 BTC purchased Jun 8-14; total 19,105 as of Jun 14; 79.8M shares Jun 14
+const CUR = {m:'Jun 2026', h:19105, d:0, sh:80, r:80, bb:2596};
+
+const A = {btcGrowth:5, raise:500, debtPct:0, deployPct:95, mNAV:1.2, months:24};
+
+const DEFS = [
+  {k:'btcGrowth',l:'BTC monthly price growth',u:'%',min:0,max:30,step:0.5,r:true},
+  {k:'mNAV',l:'Target mNAV multiple',u:'x',min:0.3,max:10,step:0.1,r:true},
+  {k:'debtPct',l:'Debt % of raise',u:'%',min:0,max:100,step:5,r:true},
+  {k:'deployPct',l:'% raise deployed to BTC',u:'%',min:0,max:100,step:5,r:true},
+  {k:'raise',l:'Monthly capital raise',u:'$M',min:0,max:10000,step:50,r:false},
+  {k:'months',l:'Projection months',u:'mo',min:6,max:60,step:1,r:false},
+];
+
+// ── LIVE DATA ────────────────────────────────────────────────
+let liveBTC = null, liveAST = null;
+
+async function fetchLive() {
+  document.getElementById('lastFetch').textContent = 'fetching…';
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+    liveBTC = (await r.json()).bitcoin.usd;
+  } catch(e) { console.warn('BTC fetch failed', e); }
+  try {
+    const url = encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/ASST?interval=1d&range=5d');
+    const res = await fetch('https://api.allorigins.win/get?url=' + url);
+    const wrapper = await res.json();
+    const data = JSON.parse(wrapper.contents);
+    const closes = data.chart.result[0].indicators.quote[0].close;
+    liveAST = closes[closes.length - 1];
+  } catch(e) { console.warn('ASST fetch failed', e); }
+  const now = new Date();
+  document.getElementById('lastFetch').textContent =
+    now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}) + ' UTC';
+  render();
+  updateSummary();
+}
+
+// ── ASSUMPTIONS UI ──────────────────────────────────────────
+function fmtAV(d, v) {
+  if (d.u==='%') return v.toFixed(1)+'%';
+  if (d.u==='x') return v.toFixed(1)+'x';
+  return v;
+}
+function buildGrid() {
+  const g = document.getElementById('assumGrid'); g.innerHTML = '';
+  DEFS.forEach(d => {
+    const div = document.createElement('div'); div.className = 'assump-item';
+    const v = A[d.k];
+    if (d.r) {
+      div.innerHTML = `<label>${d.l}<span class="val" id="av_${d.k}">${fmtAV(d,v)}</span></label>
+        <input type="range" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}" data-k="${d.k}">`;
+    } else {
+      div.innerHTML = `<label>${d.l}</label>
+        <div class="num-wrap"><input type="number" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}" data-k="${d.k}">
+        <span class="num-suffix">${d.u}</span></div>`;
+    }
+    g.appendChild(div);
+  });
+  g.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const def = DEFS.find(x => x.k === inp.dataset.k);
+      const val = parseFloat(inp.value);
+      if (isNaN(val)) return;
+      A[def.k] = val;
+      const av = document.getElementById('av_' + def.k);
+      if (av) av.textContent = fmtAV(def, val);
+      render();
+    });
+  });
+}
+let assumOpen = true;
+function toggleAssump() {
+  assumOpen = !assumOpen;
+  document.getElementById('assumBody').style.display = assumOpen ? '' : 'none';
+  document.getElementById('toggleBtn').textContent = assumOpen ? '▲ collapse' : '▼ expand';
+}
+
+// ── PROJECTIONS ──────────────────────────────────────────────
+function project() {
+  const seedBP = (liveBTC && !isNaN(liveBTC)) ? liveBTC : HIST[HIST.length-1].bp;
+  const seedMP = (liveAST && !isNaN(liveAST)) ? liveAST : HIST[HIST.length-1].mp;
+  let bp = seedBP, h = CUR.h, d = CUR.d, mp = seedMP, sh = CUR.sh;
+  const rows = [];
+  for (let i = 0; i < Math.round(A.months); i++) {
+    bp = bp * (1 + A.btcGrowth / 100);
+    const raise = A.raise;
+    const debtRaise = raise * A.debtPct / 100;
+    const equityRaise = raise - debtRaise;
+    d = d + debtRaise / 1000;
+    const bb = (raise * A.deployPct / 100) * 1e6 / bp;
+    h = h + bb;
+    sh = sh + equityRaise / mp;
+    mp = (h * bp / (sh * 1e6)) * A.mNAV;
+    const bv = h * bp / 1e9;
+    const mc = sh * mp / 1e3;
+    const dt = new Date(2026, 6 + i);
+    rows.push({
+      m: dt.toLocaleString('default', {month:'short', year:'numeric'}),
+      bp, h, d, mp, sh, r: raise, bb, bv, mc, mn: A.mNAV, proj: true
+    });
+  }
+  return rows;
+}
+
+// ── FORMAT ───────────────────────────────────────────────────
+function mnavClass(v) {
+  if (v < 1)   return 'mn-critical';
+  if (v < 2)   return 'mn-low';
+  if (v < 3)   return 'mn-mid';
+  if (v < 4)   return 'mn-high';
+  return 'mn-xhigh';
+}
+function c(v, t) {
+  if (v === null || v === undefined || isNaN(v)) return '<span class="dash">—</span>';
+  switch(t) {
+    case 'bp': return '<span class="btc-col">$' + Math.round(v).toLocaleString() + '</span>';
+    case 'h':  return Math.round(v).toLocaleString();
+    case 'bv': return '$' + v.toFixed(2) + 'B';
+    case 'd':  return v < 0.005 ? '<span style="color:var(--green)">nil</span>' : '$' + v.toFixed(2) + 'B';
+    case 'mp': return '$' + (+v).toFixed(2);
+    case 'mn': return `<span class="${mnavClass(v)}">${v.toFixed(2)}x</span>`;
+    case 'mc': return '$' + v.toFixed(2) + 'B';
+    case 'sh': return v.toFixed(0) + 'M';
+    case 'r':  return v === 0 ? '<span class="dash">—</span>' : '$' + Math.round(v).toLocaleString() + 'M';
+    case 'bb': return v === 0 ? '<span class="dash">—</span>' : Math.round(v).toLocaleString();
+    default:   return v;
+  }
+}
+
+// ── RENDER ───────────────────────────────────────────────────
+function render() {
+  const prows = project();
+  const curBP = (liveBTC && !isNaN(liveBTC)) ? liveBTC : null;
+  const curMP = (liveAST && !isNaN(liveAST)) ? liveAST : null;
+  const curBV = curBP ? CUR.h * curBP / 1e9 : null;
+  const curMC = (curMP) ? CUR.sh * curMP / 1e3 : null;
+  const curMN = (curBV && curMC) ? curMC / curBV : null;
+
+  const all = [
+    ...HIST.map(r => ({...r, type:'past'})),
+    {m:CUR.m, bp:curBP, h:CUR.h, d:CUR.d, mp:curMP, sh:CUR.sh, r:CUR.r, bb:CUR.bb,
+     bv:curBV, mc:curMC, mn:curMN, type:'current'},
+    ...prows.map((r,i) => ({...r, type:'proj', firstProj:i===0}))
+  ];
+
+  let html = '';
+  all.forEach(r => {
+    const bv = r.type === 'past' ? (r.h * r.bp / 1e9) : r.bv;
+    const mc = r.type === 'past' ? (r.sh * r.mp / 1e3) : r.mc;
+    const mn = r.type === 'past' ? (mc / bv) : (r.mn || null);
+    const isCur = r.type === 'current';
+    const cls = r.type + (r.firstProj ? ' first-proj' : '');
+    const bpCell = isCur && !curBP ? '<span style="color:var(--muted)">fetching…</span>' : c(r.bp, 'bp');
+    const mpCell = isCur && !curMP ? '<span style="color:var(--muted)">fetching…</span>' : c(r.mp, 'mp');
+    const semlerTag = r.semler ? '<span class="semler-note">†</span>' : '';
+    html += `<tr class="${cls}">
+      <td>${r.m}</td>
+      <td>${bpCell}</td>
+      <td>${c(r.h, 'h')}${semlerTag}</td>
+      <td>${c(bv, 'bv')}</td>
+      <td>${c(r.d, 'd')}</td>
+      <td>${mpCell}</td>
+      <td>${c(mn, 'mn')}</td>
+      <td>${c(mc, 'mc')}</td>
+      <td>${c(r.sh, 'sh')}</td>
+      <td>${c(r.r, 'r')}</td>
+      <td>${c(r.bb, 'bb')}</td>
+    </tr>`;
+  });
+  document.getElementById('modelBody').innerHTML = html;
+}
+
+// ── SUMMARY ──────────────────────────────────────────────────
+function updateSummary() {
+  const bp = (liveBTC && !isNaN(liveBTC)) ? liveBTC : null;
+  const mp = (liveAST && !isNaN(liveAST)) ? liveAST : null;
+  const h = CUR.h, sh = CUR.sh, d = CUR.d;
+  const bv = bp ? h * bp / 1e9 : null;
+  const mc = mp ? sh * mp / 1e3 : null;
+  const mn = (bv && mc) ? mc / bv : null;
+  document.getElementById('s-h').textContent = h.toLocaleString();
+  document.getElementById('s-bp').textContent = bp ? '$' + Math.round(bp).toLocaleString() : '…';
+  document.getElementById('s-bv').textContent = bv ? '$' + bv.toFixed(2) + 'B' : '…';
+  document.getElementById('s-d').textContent = d < 0.005 ? 'nil' : '$' + d.toFixed(2) + 'B';
+  document.getElementById('s-mc').textContent = mc ? '$' + mc.toFixed(2) + 'B' : '…';
+  document.getElementById('s-sh').textContent = sh + 'M';
+  const mnEl = document.getElementById('s-mn');
+  if (mn) {
+    mnEl.textContent = mn.toFixed(2) + 'x';
+    mnEl.className = 'sum-val ' + (mn < 1 ? 'red' : mn < 2 ? 'green' : 'teal');
+  } else {
+    mnEl.textContent = '…';
+    mnEl.className = 'sum-val';
+  }
+  const mpEl = document.getElementById('s-mp');
+  mpEl.textContent = mp ? '$' + mp.toFixed(2) : '…';
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+buildGrid();
+render();
+updateSummary();
+fetchLive();
+</script>
+</body>
+</html>

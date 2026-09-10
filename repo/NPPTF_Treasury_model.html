@@ -1,0 +1,604 @@
+import { useState, useMemo } from "react";
+
+const SHARES_OUTSTANDING = 128_281_096;
+const DEFAULT_NDA_PRICE  = 0.97;
+const DEFAULT_USD_CAD    = 1.39;
+
+// SpaceX — now public (Nasdaq: SPCX, IPO June 12 2026)
+const SPCX_IPO_PRICE     = 135;     // USD
+const SPCX_DEFAULT_PRICE = 185;     // USD — last close Jun 19
+const NDA_SPCX_SHARES    = 163_000; // Neptune's estimated SPCX share count
+
+const DIGITAL_ASSETS = [
+  { name: "Bitcoin",     ticker: "BTC",  holdings: 419,       baseFv: 38_351_719, color: "#F7931A" },
+  { name: "Solana",      ticker: "SOL",  holdings: 24_888,    baseFv:  2_864_566, color: "#9945FF" },
+  { name: "Cosmos",      ticker: "ATOM", holdings: 237_679,   baseFv:    600_173, color: "#6B7AE8" },
+  { name: "Ethereum",    ticker: "ETH",  holdings: 144,       baseFv:    386_170, color: "#627EEA" },
+  { name: "Polkadot",    ticker: "DOT",  holdings: 58_196,    baseFv:    131_867, color: "#E6007A" },
+  { name: "Dogecoin",    ticker: "DOGE", holdings: 989_977,   baseFv:    127_044, color: "#C2A633" },
+  { name: "Dash",        ticker: "DASH", holdings: 2_368,     baseFv:    106_250, color: "#008CE7" },
+  { name: "Sonic",       ticker: "S",    holdings: 1_688_894, baseFv:     92_297, color: "#00D4AA" },
+  { name: "The Graph",   ticker: "GRT",  holdings: 1_483_925, baseFv:     53_808, color: "#5942C6" },
+  { name: "Ocean",       ticker: "OCEAN",holdings: 55_452,    baseFv:      7_844, color: "#0072F0" },
+  { name: "LIF3",        ticker: "LIF3", holdings: 2_000_338, baseFv:      6_023, color: "#FF6B35" },
+  { name: "Juno",        ticker: "JUNO", holdings: 66_246,    baseFv:      2_483, color: "#E0C074" },
+  { name: "NEO",         ticker: "NEO",  holdings: 42,        baseFv:        156, color: "#00E599" },
+  { name: "OMG Network", ticker: "OMG",  holdings: 77,        baseFv:          6, color: "#FF6793" },
+];
+
+const BASE_PRICES_CAD = Object.fromEntries(
+  DIGITAL_ASSETS.map(a => [a.ticker, a.baseFv / a.holdings])
+);
+
+const SOLANA_FUND_FV = 1_139_994;
+const OTHER_ASSETS   = { cash:175_070, prepaid:85_500, deposits:340_103, subscriptions:448_889, property:3_718_677 };
+const LIABILITIES    = { payables:344_462, loan:13_178_303, deferred:2_219_124 };
+const TOTAL_LIABILITIES = Object.values(LIABILITIES).reduce((s,v)=>s+v,0);
+
+// Feb 28 book value of SpaceX holding at ~USD $1.25T implied valuation
+const SPCX_BOOK_FV_CAD = 19_756_944;
+
+const fmt    = (n, d=2) => n.toLocaleString("en-CA", { minimumFractionDigits:d, maximumFractionDigits:d });
+const fmtM   = (n) => `$${(n/1_000_000).toFixed(2)}M`;
+const fmtB   = (n) => n>=1e12 ? `$${(n/1e12).toFixed(2)}T` : `$${(n/1e9).toFixed(0)}B`;
+const fmtP   = (p) => p>=1000 ? p.toLocaleString("en-CA",{maximumFractionDigits:0}) : p>=10 ? p.toFixed(2) : p>=0.01 ? p.toFixed(4) : p.toFixed(6);
+
+export default function Dashboard() {
+  const [spcxPriceInput, setSpcxPriceInput] = useState("");
+  const [showAll,        setShowAll]        = useState(false);
+  const [priceInputs,    setPriceInputs]    = useState({});
+  const [priceEditorOpen, setPriceEditorOpen] = useState(false);
+  const [ndaPriceInput,  setNdaPriceInput]  = useState("");
+  const [usdCadInput,    setUsdCadInput]    = useState("");
+  const [priceCurrency,  setPriceCurrency]  = useState("CAD");
+
+  const usdCad   = useMemo(() => { const v = parseFloat(usdCadInput);   return (!isNaN(v) && v>0) ? v : DEFAULT_USD_CAD; }, [usdCadInput]);
+  const ndaPrice = useMemo(() => { const v = parseFloat(ndaPriceInput); return (!isNaN(v) && v>0) ? v : DEFAULT_NDA_PRICE; }, [ndaPriceInput]);
+  const spcxPrice = useMemo(() => { const v = parseFloat(spcxPriceInput); return (!isNaN(v) && v>0) ? v : SPCX_DEFAULT_PRICE; }, [spcxPriceInput]);
+
+  // SPCX holding FV in CAD
+  const spcxFvCad = useMemo(() => NDA_SPCX_SHARES * spcxPrice * usdCad, [spcxPrice, usdCad]);
+  const spcxDeltaCad = spcxFvCad - SPCX_BOOK_FV_CAD;
+  const spcxGainPct  = (spcxPrice - SPCX_IPO_PRICE) / SPCX_IPO_PRICE * 100;
+
+  const resolvedPricesCad = useMemo(() => {
+    const out = {};
+    DIGITAL_ASSETS.forEach(a => {
+      const raw = priceInputs[a.ticker];
+      const parsed = raw !== undefined && raw !== "" ? parseFloat(raw) : NaN;
+      if (!isNaN(parsed) && parsed >= 0) {
+        out[a.ticker] = priceCurrency === "USD" ? parsed * usdCad : parsed;
+      } else {
+        out[a.ticker] = BASE_PRICES_CAD[a.ticker];
+      }
+    });
+    return out;
+  }, [priceInputs, priceCurrency, usdCad]);
+
+  const computedAssets = useMemo(() =>
+    DIGITAL_ASSETS.map(a => ({
+      ...a,
+      fv: a.holdings * resolvedPricesCad[a.ticker],
+      isOverridden: priceInputs[a.ticker] !== undefined && priceInputs[a.ticker] !== "",
+    })), [resolvedPricesCad, priceInputs]);
+
+  const totalDigitalFv = useMemo(() => computedAssets.reduce((s,a)=>s+a.fv,0), [computedAssets]);
+
+  const totalAssets = useMemo(() => {
+    const otherSum = Object.values(OTHER_ASSETS).reduce((s,v)=>s+v,0);
+    return totalDigitalFv + spcxFvCad + SOLANA_FUND_FV + otherSum;
+  }, [totalDigitalFv, spcxFvCad]);
+
+  const nav         = totalAssets - TOTAL_LIABILITIES;
+  const marketCap   = SHARES_OUTSTANDING * ndaPrice;
+  const navMultiple = marketCap / nav;
+  const navPerShare = nav / SHARES_OUTSTANDING;
+
+  const overrideCount = Object.values(priceInputs).filter(v=>v!=="").length
+    + (ndaPriceInput !== "" ? 1 : 0)
+    + (usdCadInput   !== "" ? 1 : 0)
+    + (spcxPriceInput !== "" ? 1 : 0);
+
+  const setPriceInput = (ticker, val) => setPriceInputs(prev => ({...prev, [ticker]: val}));
+  const resetAll = () => { setPriceInputs({}); setNdaPriceInput(""); setUsdCadInput(""); setSpcxPriceInput(""); };
+  const displayAssets = showAll ? computedAssets : computedAssets.slice(0, 8);
+
+  const displayBasePrice = (ticker) => {
+    const cadP = BASE_PRICES_CAD[ticker];
+    return priceCurrency === "USD" ? cadP / usdCad : cadP;
+  };
+
+  return (
+    <div style={s.root}>
+      <div style={s.stars} />
+
+      {/* Header */}
+      <header style={s.header}>
+        <div style={s.headerLeft}>
+          <div style={s.logoMark}>⬡</div>
+          <div>
+            <div style={s.co}>NEPTUNE DIGITAL ASSETS</div>
+            <div style={s.sub}>TSX-V: NDA · CONDENSED FINANCIALS AS AT FEB 28, 2026</div>
+          </div>
+        </div>
+        <div style={s.headerRight}>
+          <Stat label="NDA PRICE (CAD)" value={`$${ndaPrice.toFixed(2)}`} accent={ndaPriceInput !== ""} />
+          <Stat label="MARKET CAP" value={fmtM(marketCap) + " CAD"} />
+          <Stat label="USD/CAD" value={usdCad.toFixed(4)} accent={usdCadInput !== ""} />
+        </div>
+      </header>
+
+      {/* Hero NAV strip */}
+      <div style={s.heroStrip}>
+        <HeroCard label="TOTAL ASSETS (ADJ)" value={fmtM(totalAssets)} sub="CAD" glow="#00d4aa" />
+        <HeroCard label="NET ASSET VALUE"     value={fmtM(nav)}         sub="CAD" glow="#4a9eff" />
+        <HeroCard label="NAV PER SHARE"       value={`$${navPerShare.toFixed(3)}`} sub="CAD" glow="#4a9eff" />
+        <HeroCard
+          label="MARKET / NAV"
+          value={navMultiple.toFixed(2) + "×"}
+          sub={navMultiple > 2 ? "PREMIUM" : navMultiple > 1 ? "MODEST PREMIUM" : "DISCOUNT"}
+          glow={navMultiple > 2.5 ? "#ff6b35" : navMultiple > 1.5 ? "#f7931a" : "#00d4aa"}
+          accent
+        />
+      </div>
+
+      {/* SpaceX Section — now public */}
+      <section style={s.spcxSection}>
+        <div style={s.spcxHeader}>
+          <span style={s.rocketIcon}>🚀</span>
+          <div style={{flex:1}}>
+            <div style={s.spcxTitle}>SpaceX (NASDAQ: SPCX) · NOW PUBLIC</div>
+            <div style={s.spcxSub}>
+              Neptune holds an estimated <strong style={{color:"#f7931a"}}>163,000 SPCX shares</strong>.
+              IPO priced at <strong style={{color:"#eee"}}>$135</strong> on Jun 11 → opened $150 → Day 1 close $160.95 (+19%).
+              All-time high <strong style={{color:"#eee"}}>$225.64</strong> on Jun 16. Market cap ~$2.44T (13.17B shares).
+            </div>
+            <div style={s.ipoMeta}>
+              <span style={s.ipoTag}>IPO: Jun 12, 2026</span>
+              <span style={s.ipoTag}>IPO Price: $135</span>
+              <span style={s.ipoTag}>5-for-1 split: May 22</span>
+              <span style={s.ipoTag}>Lead UW: Goldman Sachs</span>
+              <span style={s.ipoTag}>Raised: $75B</span>
+            </div>
+          </div>
+
+          {/* Live price input */}
+          <div style={s.spcxInputBox}>
+            <div style={s.spcxInputLabel}>SPCX PRICE (USD)</div>
+            <div style={s.spcxInputRow}>
+              <span style={s.spcxInputPrefix}>$</span>
+              <input
+                type="number" min="0" step="0.01"
+                placeholder={SPCX_DEFAULT_PRICE.toFixed(2)}
+                value={spcxPriceInput}
+                onChange={e => setSpcxPriceInput(e.target.value)}
+                style={s.spcxInput}
+              />
+              {spcxPriceInput && (
+                <button style={s.clearBtn} onClick={() => setSpcxPriceInput("")}>✕</button>
+              )}
+            </div>
+            <div style={s.spcxGain}>
+              <span style={{color: spcxGainPct >= 0 ? "#00d4aa" : "#ff6b6b"}}>
+                {spcxGainPct >= 0 ? "▲" : "▼"} {Math.abs(spcxGainPct).toFixed(1)}% vs IPO
+              </span>
+            </div>
+            <div style={s.spcxFvLine}>
+              <span style={s.spcxFvLabel}>NDA Holding FV</span>
+              <span style={s.spcxFvVal}>CAD {fmtM(spcxFvCad)}</span>
+            </div>
+            <div style={s.spcxDeltaLine}>
+              <span style={s.spcxFvLabel}>Δ vs Feb 28 book</span>
+              <span style={{...s.spcxFvVal, color: spcxDeltaCad >= 0 ? "#00d4aa" : "#ff6b6b"}}>
+                {spcxDeltaCad >= 0 ? "+" : ""}CAD {fmtM(spcxDeltaCad)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Price scenario quick-picks */}
+        <div style={s.spcxScenarios}>
+          <span style={s.spcxSceLabel}>QUICK PRICE:</span>
+          {[
+            {label:"IPO $135",   val:"135"},
+            {label:"Day 1 $161", val:"160.95"},
+            {label:"ATH $226",   val:"225.64"},
+            {label:"Current $185", val:"185"},
+            {label:"$200",       val:"200"},
+            {label:"$250",       val:"250"},
+            {label:"$300",       val:"300"},
+          ].map(({label,val}) => (
+            <button key={val}
+              style={{...s.spcxSceTick, ...(spcxPriceInput===val||(!spcxPriceInput&&val==="185")?s.spcxSceTickActive:{})}}
+              onClick={() => setSpcxPriceInput(spcxPriceInput===val?"":val)}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* Price Editor */}
+      <section style={s.editorSection}>
+        <div style={s.editorHeader} onClick={() => setPriceEditorOpen(o=>!o)}>
+          <div style={s.editorHeaderLeft}>
+            <span style={s.editorIcon}>✏️</span>
+            <div>
+              <div style={s.editorTitle}>MANUAL PRICE OVERRIDES — DIGITAL ASSETS & RATES</div>
+              <div style={s.editorSub}>Set custom prices for crypto assets, NDA stock, or FX. Leave blank to use Feb 28 book values.</div>
+            </div>
+          </div>
+          <div style={s.editorHeaderRight}>
+            {overrideCount > 0 && (
+              <div style={s.overrideBadge}>{overrideCount} override{overrideCount>1?"s":""} active</div>
+            )}
+            <div style={s.chevron}>{priceEditorOpen ? "▲" : "▼"}</div>
+          </div>
+        </div>
+
+        {priceEditorOpen && (
+          <div style={s.editorBody}>
+            <div style={s.globalControlsRow}>
+              <div style={s.globalControl}>
+                <div style={s.gcLabel}>NDA STOCK PRICE</div>
+                <div style={s.gcSubLabel}>Affects market cap & M/NAV · CAD</div>
+                <div style={{...s.priceInputWrap, borderColor: ndaPriceInput ? "#00d4aa88" : "#1a2040", marginTop:4}}>
+                  <span style={s.priceInputPrefix}>CAD $</span>
+                  <input type="number" min="0" step="0.01"
+                    placeholder={DEFAULT_NDA_PRICE.toFixed(2)}
+                    value={ndaPriceInput} onChange={e=>setNdaPriceInput(e.target.value)}
+                    style={{...s.priceInput, width:70, color: ndaPriceInput?"#eef":undefined}} />
+                  {ndaPriceInput && <button style={s.clearBtn} onClick={e=>{e.stopPropagation();setNdaPriceInput("");}}>✕</button>}
+                </div>
+                {ndaPriceInput && parseFloat(ndaPriceInput)>0 && (
+                  <div style={s.gcDelta}>
+                    {parseFloat(ndaPriceInput)>=DEFAULT_NDA_PRICE
+                      ? <span style={{color:"#00d4aa"}}>▲ +{(((parseFloat(ndaPriceInput)-DEFAULT_NDA_PRICE)/DEFAULT_NDA_PRICE)*100).toFixed(1)}% vs $0.97</span>
+                      : <span style={{color:"#ff6b6b"}}>▼ {(((parseFloat(ndaPriceInput)-DEFAULT_NDA_PRICE)/DEFAULT_NDA_PRICE)*100).toFixed(1)}% vs $0.97</span>}
+                  </div>
+                )}
+              </div>
+              <div style={s.gcDivider} />
+              <div style={s.globalControl}>
+                <div style={s.gcLabel}>USD / CAD RATE</div>
+                <div style={s.gcSubLabel}>Used for SPCX and USD asset prices</div>
+                <div style={{...s.priceInputWrap, borderColor: usdCadInput?"#f7931a88":"#1a2040", marginTop:4}}>
+                  <span style={s.priceInputPrefix}>1 USD =</span>
+                  <input type="number" min="0" step="0.001"
+                    placeholder={DEFAULT_USD_CAD.toFixed(4)}
+                    value={usdCadInput} onChange={e=>setUsdCadInput(e.target.value)}
+                    style={{...s.priceInput, width:70, color: usdCadInput?"#eef":undefined}} />
+                  <span style={{...s.priceInputPrefix,color:"#445"}}>CAD</span>
+                  {usdCadInput && <button style={s.clearBtn} onClick={e=>{e.stopPropagation();setUsdCadInput("");}}>✕</button>}
+                </div>
+              </div>
+              <div style={s.gcDivider} />
+              <div style={s.globalControl}>
+                <div style={s.gcLabel}>ASSET PRICE INPUT CURRENCY</div>
+                <div style={s.gcSubLabel}>Enter crypto prices in the selected currency</div>
+                <div style={s.currToggle}>
+                  {["CAD","USD"].map(c=>(
+                    <button key={c}
+                      style={{...s.currBtn,...(priceCurrency===c?s.currBtnActive:{})}}
+                      onClick={e=>{e.stopPropagation();setPriceCurrency(c);}}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div style={s.assetGridLabel}>DIGITAL ASSET PRICES</div>
+            <div style={s.priceGrid}>
+              {DIGITAL_ASSETS.map(a=>{
+                const baseDisplayP = displayBasePrice(a.ticker);
+                const raw    = priceInputs[a.ticker]??"";
+                const parsed = raw!==""?parseFloat(raw):NaN;
+                const active = raw!==""&&!isNaN(parsed)&&parsed>=0;
+                const resolvedCad = active?(priceCurrency==="USD"?parsed*usdCad:parsed):BASE_PRICES_CAD[a.ticker];
+                const newFv  = a.holdings*resolvedCad;
+                const delta  = active?((resolvedCad-BASE_PRICES_CAD[a.ticker])/BASE_PRICES_CAD[a.ticker])*100:0;
+                return (
+                  <div key={a.ticker} style={{...s.priceRow, borderColor:active?a.color+"55":"#141830"}}>
+                    <div style={{...s.priceColorDot,background:a.color}}/>
+                    <div style={s.priceAssetInfo}>
+                      <span style={s.priceAssetName}>{a.name}</span>
+                      <span style={s.priceAssetTicker}>{a.ticker}</span>
+                    </div>
+                    <div style={s.priceBaseCol}>
+                      <div style={s.priceBaseLabel}>BOOK ({priceCurrency})</div>
+                      <div style={s.priceBaseVal}>${fmtP(baseDisplayP)}</div>
+                    </div>
+                    <div style={s.priceInputWrap}>
+                      <span style={s.priceInputPrefix}>{priceCurrency} $</span>
+                      <input type="number" min="0" step="any"
+                        placeholder={fmtP(baseDisplayP)} value={raw}
+                        onChange={e=>setPriceInput(a.ticker,e.target.value)}
+                        style={{...s.priceInput,...(active?{borderColor:a.color,color:"#eef"}:{})}}/>
+                      {active&&<button style={s.clearBtn} onClick={()=>setPriceInput(a.ticker,"")}>✕</button>}
+                    </div>
+                    <div style={s.priceFvCol}>
+                      <div style={s.priceFvLabel}>FV (CAD)</div>
+                      <div style={{...s.priceFvVal,color:active?"#00d4aa":"#99aacc"}}>{fmtM(newFv)}</div>
+                    </div>
+                    <div style={{...s.priceDelta,color:delta>=0?"#00d4aa":"#ff6b6b"}}>
+                      {active?(delta>=0?"▲ ":"▼ ")+Math.abs(delta).toFixed(1)+"%":""}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {overrideCount>0&&(
+              <div style={s.resetRow}>
+                <button style={s.resetBtn} onClick={resetAll}>↺ Reset all overrides</button>
+                <span style={s.resetNote}>
+                  Digital assets total: <strong style={{color:"#00d4aa"}}>{fmtM(totalDigitalFv)}</strong>
+                  {" "}vs book <strong style={{color:"#556"}}>{fmtM(DIGITAL_ASSETS.reduce((s,a)=>s+a.baseFv,0))}</strong>
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* Asset grid */}
+      <div style={s.gridRow}>
+        <section style={s.card}>
+          <div style={s.cardHeader}>
+            <span style={s.cardLabel}>DIGITAL ASSETS</span>
+            <span style={s.cardTotal}>{fmtM(totalDigitalFv)} CAD</span>
+          </div>
+          <div style={s.barTrack}>
+            {computedAssets.map(a=>(
+              <div key={a.ticker} title={`${a.name}: $${fmt(a.fv)}`}
+                style={{...s.barSeg,width:`${(a.fv/totalDigitalFv)*100}%`,background:a.color}}/>
+            ))}
+          </div>
+          <div>
+            {displayAssets.map(a=><AssetRow key={a.ticker} asset={a} total={totalDigitalFv}/>)}
+            {!showAll&&computedAssets.length>8&&(
+              <button style={s.moreBtn} onClick={()=>setShowAll(true)}>+ {computedAssets.length-8} more assets</button>
+            )}
+            {showAll&&<button style={s.moreBtn} onClick={()=>setShowAll(false)}>Show less</button>}
+          </div>
+        </section>
+
+        <div style={s.rightCol}>
+          <section style={s.card}>
+            <div style={s.cardHeader}>
+              <span style={s.cardLabel}>EQUITY INVESTMENTS (FVTPL)</span>
+              <span style={s.cardTotal}>{fmtM(spcxFvCad+SOLANA_FUND_FV)} CAD</span>
+            </div>
+            <div style={s.eqRow}>
+              <div style={s.eqLeft}>
+                <div style={s.eqName}>SpaceX (NASDAQ: SPCX)</div>
+                <div style={s.eqSub}>163,000 shares · ${spcxPrice.toFixed(2)} USD · Jun 12 IPO</div>
+                <div style={{...s.eqSub, color:"#f7931a88", marginTop:2}}>
+                  vs book (Feb 28): CAD {fmtM(SPCX_BOOK_FV_CAD)} · {spcxDeltaCad>=0?"▲":"▼"} {fmtM(Math.abs(spcxDeltaCad))}
+                </div>
+              </div>
+              <div>
+                <div style={s.eqVal}>CAD {fmtM(spcxFvCad)}</div>
+                <div style={s.eqPct}>{((spcxFvCad/(spcxFvCad+SOLANA_FUND_FV))*100).toFixed(1)}%</div>
+              </div>
+            </div>
+            <div style={s.eqRow}>
+              <div style={s.eqLeft}>
+                <div style={s.eqName}>Solana Investment Fund</div>
+                <div style={s.eqSub}>Level 3 · 26,964 SOL from bankrupt estate · 17% DLOM</div>
+              </div>
+              <div>
+                <div style={s.eqVal}>CAD {fmtM(SOLANA_FUND_FV)}</div>
+                <div style={s.eqPct}>{((SOLANA_FUND_FV/(spcxFvCad+SOLANA_FUND_FV))*100).toFixed(1)}%</div>
+              </div>
+            </div>
+          </section>
+
+          <section style={s.card}>
+            <div style={s.cardHeader}>
+              <span style={s.cardLabel}>OTHER ASSETS</span>
+              <span style={s.cardTotal}>CAD {fmtM(Object.values(OTHER_ASSETS).reduce((a,v)=>a+v,0))}</span>
+            </div>
+            {[
+              ["Property & Equipment (NYC Real Estate + Equipment)", OTHER_ASSETS.property],
+              ["Subscriptions Receivable", OTHER_ASSETS.subscriptions],
+              ["Deposits", OTHER_ASSETS.deposits],
+              ["Prepaid Expenses", OTHER_ASSETS.prepaid],
+              ["Cash", OTHER_ASSETS.cash],
+            ].map(([label,val])=>(
+              <div key={label} style={s.otherRow}>
+                <span style={s.otherLabel}>{label}</span>
+                <span style={s.otherVal}>${fmt(val)}</span>
+              </div>
+            ))}
+          </section>
+
+          <section style={{...s.card,borderColor:"#ff4d4d33"}}>
+            <div style={s.cardHeader}>
+              <span style={s.cardLabel}>LIABILITIES</span>
+              <span style={{...s.cardTotal,color:"#ff6b6b"}}>{fmtM(TOTAL_LIABILITIES)} CAD</span>
+            </div>
+            {[
+              ["Loan Payable (Swiss Bank Lombard @ 8.5% p.a.)", LIABILITIES.loan],
+              ["Deferred Tax Liability", LIABILITIES.deferred],
+              ["Accounts Payable & Accrued", LIABILITIES.payables],
+            ].map(([label,val])=>(
+              <div key={label} style={s.otherRow}>
+                <span style={s.otherLabel}>{label}</span>
+                <span style={{...s.otherVal,color:"#ff8888"}}>${fmt(val)}</span>
+              </div>
+            ))}
+          </section>
+        </div>
+      </div>
+
+      <div style={s.note}>
+        ⚠️ 283 BTC (CAD $25.93M) + 24,888 SOL (CAD $2.86M) pledged as collateral with Swiss bank against Lombard loan facility up to USD $25M.
+        Bitcoin miners decommissioned Feb 7, 2026. Mining currently suspended pending new equipment/partnership.
+      </div>
+      <div style={s.footer}>
+        All figures in Canadian Dollars (CAD) · Unaudited interim FS for period ended Feb 28, 2026
+        · SpaceX (SPCX) IPO Jun 12, 2026 — price shown: USD ${spcxPrice.toFixed(2)} × {usdCad.toFixed(4)} CAD/USD × 163,000 shares
+        · NDA price CAD ${ndaPrice.toFixed(2)} · USD/CAD {usdCad.toFixed(4)}
+      </div>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0;}
+        input[type=number]{-moz-appearance:textfield;}
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+      `}</style>
+    </div>
+  );
+}
+
+function HeroCard({label,value,sub,glow,accent}) {
+  return (
+    <div style={{...s.heroCard,borderColor:glow+"44",boxShadow:`0 0 24px ${glow}22`,background:accent?`linear-gradient(135deg,${glow}11,#0a0d1a)`:undefined}}>
+      <div style={s.heroLabel}>{label}</div>
+      <div style={{...s.heroValue,color:glow}}>{value}</div>
+      <div style={s.heroSub}>{sub}</div>
+    </div>
+  );
+}
+
+function AssetRow({asset,total}) {
+  const pct = (asset.fv/total)*100;
+  return (
+    <div style={s.assetRow}>
+      <div style={{...s.dot,background:asset.color}}/>
+      <div style={s.assetName}>{asset.name}</div>
+      <div style={s.assetTicker}>{asset.ticker}</div>
+      <div style={s.assetHoldings}>{asset.holdings.toLocaleString()}</div>
+      <div style={{...s.assetFv,color:asset.isOverridden?"#00d4aa":"#99aacc"}}>
+        ${(asset.fv/1_000_000).toFixed(3)}M{asset.isOverridden&&<span style={s.overridePip}>✦</span>}
+      </div>
+      <div style={s.assetPctWrap}>
+        <div style={s.assetPctBar}>
+          <div style={{width:`${pct}%`,height:"100%",background:asset.color,borderRadius:2}}/>
+        </div>
+        <span style={s.assetPct}>{pct.toFixed(1)}%</span>
+      </div>
+    </div>
+  );
+}
+
+function Stat({label,value,accent}) {
+  return (
+    <div style={{textAlign:"right"}}>
+      <div style={{fontSize:"0.65rem",color:"#666",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em"}}>{label}</div>
+      <div style={{fontSize:"1rem",color:accent?"#f7931a":"#eee",fontFamily:"'JetBrains Mono',monospace",fontWeight:600}}>{value}</div>
+    </div>
+  );
+}
+
+const s = {
+  root:{background:"#050710",minHeight:"100vh",color:"#dde",fontFamily:"'Space Grotesk',sans-serif",padding:"24px",position:"relative",overflow:"hidden"},
+  stars:{position:"fixed",inset:0,background:`radial-gradient(ellipse at 20% 10%,#0d1a3a 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,#0a1529 0%,transparent 50%),#050710`,zIndex:0,pointerEvents:"none"},
+  header:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24,position:"relative",zIndex:1,borderBottom:"1px solid #1a2040",paddingBottom:16},
+  headerLeft:{display:"flex",alignItems:"center",gap:14},
+  logoMark:{fontSize:"2.2rem",color:"#4a9eff",lineHeight:1,filter:"drop-shadow(0 0 8px #4a9eff88)"},
+  co:{fontSize:"1.1rem",fontWeight:700,letterSpacing:"0.15em",color:"#eef",fontFamily:"'JetBrains Mono',monospace"},
+  sub:{fontSize:"0.65rem",color:"#5566aa",letterSpacing:"0.08em",marginTop:2,fontFamily:"'JetBrains Mono',monospace"},
+  headerRight:{display:"flex",gap:32},
+  heroStrip:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20,position:"relative",zIndex:1},
+  heroCard:{border:"1px solid #1a2040",borderRadius:8,padding:"16px 20px",background:"#080c1a"},
+  heroLabel:{fontSize:"0.6rem",color:"#5566aa",letterSpacing:"0.12em",fontFamily:"'JetBrains Mono',monospace",marginBottom:6},
+  heroValue:{fontSize:"1.6rem",fontWeight:700,fontFamily:"'JetBrains Mono',monospace",lineHeight:1},
+  heroSub:{fontSize:"0.65rem",color:"#667788",marginTop:4,letterSpacing:"0.08em",fontFamily:"'JetBrains Mono',monospace"},
+  // SpaceX
+  spcxSection:{background:"#08091a",border:"1px solid #f7931a44",borderRadius:10,padding:"20px 24px",marginBottom:16,position:"relative",zIndex:1,boxShadow:"0 0 40px #f7931a0d"},
+  spcxHeader:{display:"flex",gap:16,alignItems:"flex-start",marginBottom:14},
+  rocketIcon:{fontSize:"2rem",marginTop:2,flexShrink:0},
+  spcxTitle:{fontSize:"0.7rem",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.15em",color:"#f7931a",marginBottom:4},
+  spcxSub:{fontSize:"0.75rem",color:"#778",lineHeight:1.5},
+  ipoMeta:{display:"flex",flexWrap:"wrap",gap:6,marginTop:8},
+  ipoTag:{background:"#0d1520",border:"1px solid #1a2a3a",color:"#4a6a8a",fontSize:"0.6rem",padding:"2px 8px",borderRadius:3,fontFamily:"'JetBrains Mono',monospace"},
+  spcxInputBox:{background:"#060a14",border:"1px solid #f7931a33",borderRadius:8,padding:"14px 16px",flexShrink:0,minWidth:220},
+  spcxInputLabel:{fontSize:"0.6rem",color:"#f7931a88",letterSpacing:"0.12em",fontFamily:"'JetBrains Mono',monospace",marginBottom:6},
+  spcxInputRow:{display:"flex",alignItems:"center",background:"#0d1025",border:"1px solid #2a1a0a",borderRadius:5,overflow:"hidden",marginBottom:6},
+  spcxInputPrefix:{fontSize:"0.85rem",color:"#f7931a",fontFamily:"'JetBrains Mono',monospace",padding:"0 6px 0 10px",fontWeight:600},
+  spcxInput:{background:"transparent",border:"none",outline:"none",color:"#f7931a",fontFamily:"'JetBrains Mono',monospace",fontSize:"1.1rem",fontWeight:700,padding:"7px 4px",width:90},
+  spcxGain:{fontSize:"0.65rem",fontFamily:"'JetBrains Mono',monospace",marginBottom:8},
+  spcxFvLine:{display:"flex",justifyContent:"space-between",alignItems:"center",borderTop:"1px solid #1a1a2a",paddingTop:6,marginTop:2},
+  spcxDeltaLine:{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:4},
+  spcxFvLabel:{fontSize:"0.6rem",color:"#445",fontFamily:"'JetBrains Mono',monospace"},
+  spcxFvVal:{fontSize:"0.75rem",fontFamily:"'JetBrains Mono',monospace",fontWeight:600,color:"#f7931a"},
+  spcxScenarios:{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",borderTop:"1px solid #1a1a2a",paddingTop:12},
+  spcxSceLabel:{fontSize:"0.6rem",color:"#445",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.1em",marginRight:2},
+  spcxSceTick:{background:"transparent",border:"1px solid #2a1a0a",color:"#667",fontSize:"0.65rem",padding:"3px 9px",borderRadius:4,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace",transition:"all 0.15s"},
+  spcxSceTickActive:{borderColor:"#f7931a",color:"#f7931a",background:"#f7931a11"},
+  // Editor
+  editorSection:{background:"#07091a",border:"1px solid #00d4aa33",borderRadius:10,marginBottom:16,position:"relative",zIndex:1,overflow:"hidden"},
+  editorHeader:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 20px",cursor:"pointer",userSelect:"none"},
+  editorHeaderLeft:{display:"flex",alignItems:"center",gap:12},
+  editorIcon:{fontSize:"1.3rem",flexShrink:0},
+  editorTitle:{fontSize:"0.68rem",letterSpacing:"0.14em",color:"#00d4aa",fontFamily:"'JetBrains Mono',monospace"},
+  editorSub:{fontSize:"0.7rem",color:"#556",marginTop:2},
+  editorHeaderRight:{display:"flex",alignItems:"center",gap:12},
+  overrideBadge:{background:"#00d4aa22",border:"1px solid #00d4aa55",color:"#00d4aa",fontSize:"0.62rem",padding:"3px 10px",borderRadius:20,fontFamily:"'JetBrains Mono',monospace"},
+  chevron:{color:"#445",fontSize:"0.75rem",fontFamily:"'JetBrains Mono',monospace"},
+  editorBody:{borderTop:"1px solid #0d1a25",padding:"16px 20px 18px"},
+  globalControlsRow:{display:"flex",gap:0,background:"#080c1a",border:"1px solid #141830",borderRadius:8,marginBottom:16,overflow:"hidden"},
+  globalControl:{flex:1,padding:"14px 16px"},
+  gcDivider:{width:1,background:"#141830",flexShrink:0},
+  gcLabel:{fontSize:"0.6rem",letterSpacing:"0.12em",color:"#4a6080",fontFamily:"'JetBrains Mono',monospace",marginBottom:2},
+  gcSubLabel:{fontSize:"0.65rem",color:"#445",marginBottom:0},
+  gcDelta:{fontSize:"0.65rem",fontFamily:"'JetBrains Mono',monospace",marginTop:3},
+  currToggle:{display:"flex",gap:6,marginTop:6},
+  currBtn:{background:"transparent",border:"1px solid #1a2040",color:"#556",fontSize:"0.75rem",padding:"5px 16px",borderRadius:5,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace",fontWeight:600,transition:"all 0.15s"},
+  currBtnActive:{borderColor:"#4a9eff",color:"#4a9eff",background:"#4a9eff15"},
+  assetGridLabel:{fontSize:"0.6rem",letterSpacing:"0.12em",color:"#4a6080",fontFamily:"'JetBrains Mono',monospace",marginBottom:8},
+  priceGrid:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6},
+  priceRow:{display:"flex",alignItems:"center",gap:8,background:"#080c1a",border:"1px solid #141830",borderRadius:6,padding:"8px 10px",transition:"border-color 0.2s"},
+  priceColorDot:{width:8,height:8,borderRadius:"50%",flexShrink:0},
+  priceAssetInfo:{flex:1,minWidth:0},
+  priceAssetName:{display:"block",fontSize:"0.72rem",color:"#bbc",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},
+  priceAssetTicker:{fontSize:"0.6rem",color:"#445",fontFamily:"'JetBrains Mono',monospace"},
+  priceBaseCol:{textAlign:"right",minWidth:64},
+  priceBaseLabel:{fontSize:"0.52rem",color:"#334",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.08em"},
+  priceBaseVal:{fontSize:"0.62rem",color:"#445",fontFamily:"'JetBrains Mono',monospace"},
+  priceInputWrap:{display:"flex",alignItems:"center",background:"#0d1025",border:"1px solid #1a2040",borderRadius:5,overflow:"hidden",minWidth:120},
+  priceInputPrefix:{fontSize:"0.65rem",color:"#445",fontFamily:"'JetBrains Mono',monospace",padding:"0 4px 0 8px",flexShrink:0,whiteSpace:"nowrap"},
+  priceInput:{background:"transparent",border:"none",outline:"none",color:"#778",fontFamily:"'JetBrains Mono',monospace",fontSize:"0.75rem",padding:"5px 4px",width:80},
+  clearBtn:{background:"transparent",border:"none",color:"#445",cursor:"pointer",padding:"0 6px",fontSize:"0.7rem",flexShrink:0,lineHeight:1},
+  priceFvCol:{textAlign:"right",minWidth:58},
+  priceFvLabel:{fontSize:"0.52rem",color:"#334",fontFamily:"'JetBrains Mono',monospace",letterSpacing:"0.08em"},
+  priceFvVal:{fontSize:"0.7rem",fontFamily:"'JetBrains Mono',monospace",fontWeight:600},
+  priceDelta:{fontSize:"0.62rem",fontFamily:"'JetBrains Mono',monospace",minWidth:52,textAlign:"right"},
+  resetRow:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:12,paddingTop:10,borderTop:"1px solid #0d1025"},
+  resetBtn:{background:"transparent",border:"1px solid #2a3050",color:"#667",fontSize:"0.68rem",padding:"5px 12px",borderRadius:5,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace"},
+  resetNote:{fontSize:"0.68rem",color:"#445",fontFamily:"'JetBrains Mono',monospace"},
+  // Tables
+  gridRow:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,position:"relative",zIndex:1},
+  card:{background:"#080c1a",border:"1px solid #141830",borderRadius:8,padding:"16px 20px",marginBottom:12},
+  cardHeader:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,paddingBottom:8,borderBottom:"1px solid #141830"},
+  cardLabel:{fontSize:"0.62rem",letterSpacing:"0.12em",color:"#4a6080",fontFamily:"'JetBrains Mono',monospace"},
+  cardTotal:{fontSize:"0.85rem",color:"#00d4aa",fontWeight:600,fontFamily:"'JetBrains Mono',monospace"},
+  barTrack:{height:4,borderRadius:2,display:"flex",overflow:"hidden",marginBottom:12,gap:1},
+  barSeg:{height:"100%",borderRadius:1},
+  assetRow:{display:"flex",alignItems:"center",gap:8,padding:"5px 0",borderBottom:"1px solid #0d1025"},
+  dot:{width:8,height:8,borderRadius:"50%",flexShrink:0},
+  assetName:{flex:1,fontSize:"0.78rem",color:"#bbc"},
+  assetTicker:{width:42,fontSize:"0.65rem",color:"#4a5a7a",fontFamily:"'JetBrains Mono',monospace"},
+  assetHoldings:{width:80,fontSize:"0.65rem",color:"#556",fontFamily:"'JetBrains Mono',monospace",textAlign:"right"},
+  assetFv:{width:74,fontSize:"0.7rem",fontFamily:"'JetBrains Mono',monospace",textAlign:"right",display:"flex",alignItems:"center",justifyContent:"flex-end",gap:3},
+  overridePip:{fontSize:"0.5rem",color:"#00d4aa"},
+  assetPctWrap:{display:"flex",alignItems:"center",gap:4,width:64},
+  assetPctBar:{flex:1,height:3,background:"#151830",borderRadius:2,overflow:"hidden"},
+  assetPct:{fontSize:"0.6rem",color:"#4a5a7a",fontFamily:"'JetBrains Mono',monospace",width:26,textAlign:"right"},
+  moreBtn:{background:"transparent",border:"none",color:"#4a6aaa",fontSize:"0.72rem",cursor:"pointer",padding:"6px 0",fontFamily:"'Space Grotesk',sans-serif",letterSpacing:"0.05em"},
+  eqRow:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",padding:"8px 0",borderBottom:"1px solid #0d1025"},
+  eqLeft:{flex:1,paddingRight:12},
+  eqName:{fontSize:"0.82rem",color:"#ccd",fontWeight:600},
+  eqSub:{fontSize:"0.65rem",color:"#446",marginTop:2},
+  eqVal:{fontSize:"0.8rem",fontFamily:"'JetBrains Mono',monospace",color:"#f7931a",textAlign:"right",fontWeight:600},
+  eqPct:{fontSize:"0.65rem",color:"#556",textAlign:"right",fontFamily:"'JetBrains Mono',monospace"},
+  otherRow:{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #0d1025"},
+  otherLabel:{fontSize:"0.72rem",color:"#778"},
+  otherVal:{fontSize:"0.72rem",fontFamily:"'JetBrains Mono',monospace",color:"#99aacc"},
+  rightCol:{},
+  note:{position:"relative",zIndex:1,fontSize:"0.7rem",color:"#557",background:"#0a0c1a",border:"1px solid #f7931a22",borderRadius:6,padding:"10px 14px",marginTop:4,marginBottom:12,fontFamily:"'JetBrains Mono',monospace"},
+  footer:{position:"relative",zIndex:1,fontSize:"0.6rem",color:"#334",textAlign:"center",paddingTop:8,fontFamily:"'JetBrains Mono',monospace",lineHeight:1.7},
+};
