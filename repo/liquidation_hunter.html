@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Liquidation Hunter</title>
+<style>
+:root{
+  --bg:#0a0d12; --bg2:#0f141b; --panel:#121923; --panel2:#171f2b; --line:#232e3d;
+  --txt:#dfe7f1; --dim:#8695a8; --dim2:#5d6b7d;
+  --grn:#2ecc71; --grn2:#0f3d26; --red:#ff4d5e; --red2:#3d1218;
+  --yel:#ffc93c; --blu:#4da3ff; --pur:#a97bff; --cyan:#3fe0d0;
+  --mono:ui-monospace,"JetBrains Mono","SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:13px}
+body{padding:0 0 60px}
+a{color:var(--blu)}
+.wrap{max-width:1680px;margin:0 auto;padding:0 16px}
+
+/* ---------- top bar ---------- */
+header{position:sticky;top:0;z-index:40;background:linear-gradient(180deg,#0a0d12 70%,rgba(10,13,18,.85));border-bottom:1px solid var(--line);padding:10px 0 8px}
+.hdr{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{font-weight:700;letter-spacing:.14em;font-size:12px;color:var(--cyan);white-space:nowrap}
+.brand b{color:var(--txt)}
+.tickers{display:flex;gap:10px;flex-wrap:wrap;flex:1;min-width:280px}
+.tk{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 9px;min-width:104px}
+.tk .k{font-size:9.5px;letter-spacing:.09em;color:var(--dim2);text-transform:uppercase}
+.tk .v{font-size:14px;font-weight:600;margin-top:1px;font-variant-numeric:tabular-nums}
+.tk .s{font-size:9.5px;color:var(--dim)}
+.pos{color:var(--grn)} .neg{color:var(--red)} .neu{color:var(--yel)}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:6px 11px;font-family:var(--mono);font-size:11.5px;cursor:pointer}
+.btn:hover{border-color:var(--blu);color:#fff}
+.btn.on{background:#10304d;border-color:var(--blu);color:#fff}
+.btn.sm{padding:3px 7px;font-size:10.5px}
+
+/* ---------- layout ---------- */
+.grid{display:grid;grid-template-columns:1fr 388px;gap:14px;margin-top:14px}
+@media(max-width:1180px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.card>h3{margin:0;padding:8px 12px;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--line);background:var(--bg2);display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:600}
+.card>h3 .rt{color:var(--dim2);letter-spacing:.04em;text-transform:none;font-weight:400}
+.pad{padding:12px}
+
+/* ---------- chart ---------- */
+#chartwrap{position:relative;background:#080b10}
+#chart{display:block;width:100%;height:520px}
+#tip{position:absolute;pointer-events:none;background:rgba(8,11,16,.96);border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-size:11px;line-height:1.55;display:none;z-index:5;white-space:nowrap;box-shadow:0 6px 22px rgba(0,0,0,.6)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;padding:7px 12px;border-top:1px solid var(--line);font-size:10.5px;color:var(--dim);background:var(--bg2)}
+.sw{display:inline-block;width:20px;height:8px;border-radius:2px;vertical-align:middle;margin-right:5px}
+
+/* ---------- verdict ---------- */
+#verdict{padding:14px;border-radius:9px;border:1px solid var(--line);text-align:center;margin-bottom:12px}
+#verdict .big{font-size:30px;font-weight:800;letter-spacing:.06em;line-height:1}
+#verdict .sub{font-size:11px;color:var(--dim);margin-top:6px}
+.v-go{background:linear-gradient(180deg,#0f3d26,#0c2a1b);border-color:#1f7a4d!important}
+.v-go .big{color:var(--grn)}
+.v-wait{background:linear-gradient(180deg,#3a3010,#241e0a);border-color:#7a6320!important}
+.v-wait .big{color:var(--yel)}
+.v-no{background:linear-gradient(180deg,#3d1218,#270c10);border-color:#7a2530!important}
+.v-no .big{color:var(--red)}
+
+/* ---------- gates ---------- */
+.gate{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px dashed #1c2532;font-size:11.5px}
+.gate:last-child{border-bottom:0}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;margin-top:4px}
+.d-ok{background:var(--grn);box-shadow:0 0 7px #2ecc7188}
+.d-no{background:var(--red);box-shadow:0 0 7px #ff4d5e88}
+.d-mid{background:var(--yel);box-shadow:0 0 7px #ffc93c88}
+.gate .gt{flex:1}
+.gate .gv{color:var(--dim);font-size:10.5px;margin-top:1px}
+
+/* ---------- tables ---------- */
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim2);text-align:right;padding:5px 6px;border-bottom:1px solid var(--line);font-weight:600}
+th:first-child,td:first-child{text-align:left}
+td{padding:6px;border-bottom:1px solid #18202b;font-size:11.5px;text-align:right}
+tr:last-child td{border-bottom:0}
+tr.hl td{background:#0f1d16}
+.copy{cursor:pointer;border-bottom:1px dotted var(--dim2)}
+.copy:hover{color:var(--cyan);border-color:var(--cyan)}
+
+/* ---------- misc ---------- */
+.kv{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed #1c2532;font-size:11.5px}
+.kv:last-child{border-bottom:0}
+.kv .k{color:var(--dim)}
+.kv .v{font-weight:600;font-variant-numeric:tabular-nums}
+.note{font-size:10.5px;color:var(--dim2);line-height:1.6}
+.warn{background:#2a1a08;border:1px solid #6b4413;color:#ffcf8a;border-radius:7px;padding:9px 11px;font-size:11px;line-height:1.6;margin-bottom:12px}
+.err{background:#2a0c11;border:1px solid #7a2530;color:#ff9aa5}
+details{border-top:1px solid var(--line)}
+summary{cursor:pointer;padding:8px 12px;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);user-select:none}
+summary:hover{color:var(--txt)}
+.ctrls{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:11px;padding:4px 12px 14px}
+label.f{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim2);margin-bottom:3px}
+input[type=number],select{width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--txt);border-radius:5px;padding:5px 7px;font-family:var(--mono);font-size:12px}
+input[type=range]{width:100%;accent-color:var(--blu)}
+.rowv{display:flex;justify-content:space-between;font-size:10px;color:var(--dim)}
+.feeds{display:flex;gap:7px;flex-wrap:wrap;padding:0 12px 12px}
+.feed{font-size:10px;border:1px solid var(--line);border-radius:20px;padding:2px 9px;color:var(--dim)}
+.feed.ok{border-color:#1f7a4d;color:var(--grn)}
+.feed.bad{border-color:#7a2530;color:var(--red)}
+.clist div{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dashed #1c2532;font-size:11px;cursor:pointer}
+.clist div:hover{color:var(--cyan)}
+.clist div.sel{color:var(--cyan);font-weight:700}
+.bar{height:5px;border-radius:3px;background:#1c2532;overflow:hidden;margin-top:3px}
+.bar>i{display:block;height:100%}
+#liqtape{max-height:150px;overflow:auto;font-size:10.5px;line-height:1.75}
+#liqtape .l{color:var(--red)} #liqtape .s{color:var(--grn)}
+.mini{font-size:10px;color:var(--dim2)}
+</style>
+</head>
+<body>
+<header><div class="wrap hdr">
+  <div class="brand">LIQUIDATION&nbsp;<b>HUNTER</b></div>
+  <div class="tickers" id="tickers"></div>
+  <button class="btn" id="btnRefresh">↻ Refresh</button>
+  <button class="btn on" id="btnAuto">Auto 60s</button>
+</div></header>
+
+<div class="wrap">
+  <div id="banner"></div>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h3>Liquidation heatmap — reconstructed <span class="rt" id="chartMeta"></span></h3>
+        <div id="chartwrap"><canvas id="chart"></canvas><div id="tip"></div></div>
+        <div class="legend">
+          <span><i class="sw" style="background:linear-gradient(90deg,#1b2a3a,#2d6cae,#4da3ff)"></i>long-liq density (below price)</span>
+          <span><i class="sw" style="background:linear-gradient(90deg,#3a2a1b,#ae6c2d,#ffc93c)"></i>short-liq density (above price)</span>
+          <span><i class="sw" style="background:#2ecc71"></i>entry ladder</span>
+          <span><i class="sw" style="background:#ff4d5e"></i>stop</span>
+          <span><i class="sw" style="background:#a97bff"></i>take profit</span>
+          <span class="mini">scroll = zoom · drag = pan</span>
+        </div>
+        <details><summary>Model settings — how the map is built</summary>
+          <div class="ctrls" id="modelCtrls"></div>
+        </details>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>Cluster ladder <span class="rt">click a cluster to re-target the plan</span></h3>
+        <div class="pad" style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+          <div><div class="mini" style="margin-bottom:6px;color:var(--blu)">LONG LIQUIDATIONS BELOW — buy zones</div><div class="clist" id="clBelow"></div></div>
+          <div><div class="mini" style="margin-bottom:6px;color:var(--yel)">SHORT LIQUIDATIONS ABOVE — profit targets</div><div class="clist" id="clAbove"></div></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>Live liquidations <span class="rt" id="tapeMeta">bybit + okx websockets</span></h3>
+        <div class="pad" id="liqtape"><div class="mini">waiting for the first print…</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div id="verdict" class="v-wait"><div class="big">…</div><div class="sub">loading live data</div></div>
+
+      <div class="card" style="margin-bottom:14px">
+        <h3>The plan <span class="rt" id="planMode"></span></h3>
+        <div class="pad" id="plan"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <h3>Gates</h3>
+        <div class="pad" id="gates"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <h3>Position sizing</h3>
+        <div class="ctrls" id="riskCtrls" style="padding-top:12px"></div>
+        <div class="pad" style="padding-top:0" id="sizing"></div>
+      </div>
+
+      <div class="card">
+        <h3>Feeds</h3>
+        <div class="feeds" id="feeds"></div>
+        <div class="pad" style="padding-top:0"><div class="note" id="diag"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+"use strict";
+/* ============================================================================
+   LIQUIDATION HUNTER
+   Data: Bybit v5 (primary), OKX v5, Hyperliquid  — all CORS-open, no API key.
+   Binance is geo-blocked in NL, so it is deliberately absent.
+   Playbook: swing sniper — ladder limits into the biggest long-liquidation
+   cluster below spot, stop under the next cluster, exit into short-liq
+   liquidity above, hard time-stop after N days.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- config */
+const DEF = {
+  tf:'4h',              // model resolution
+  bars:200,             // history depth (200 x 4h = 33 days)
+  preset:'all',
+  kappa:0.06,           // volume seeding: what share of a bar's volume opens new leveraged positions when OI is flat
+  halflife:7,           // days; position turnover decay
+  bins:260,             // price bins
+  span:0.28,            // map covers spot +/- 28%
+  minDist:0.012,        // ignore clusters closer than 1.2% to spot
+  maxDist:0.20,         // ignore clusters further than 20%
+  account:10000,
+  riskPct:1.0,
+  holdDays:3,
+  tp3Pct:10,            // the .docx target
+  overshoot:0.6,        // % below cluster bottom for the deepest ladder rung
+  maxStopPct:4.0,       // hard ceiling on how far the stop may sit below the average fill
+  reach:6.0             // %; how quickly a cluster's score decays with distance from spot
+};
+const LEV_BUCKETS=[10,25,50,100];
+const PRESETS = {                       // Kingfisher "flavours"
+  all:    [0.34,0.30,0.22,0.14],
+  low:    [0.62,0.38,0.00,0.00],
+  medium: [0.12,0.46,0.42,0.00],
+  high:   [0.00,0.00,0.38,0.62]
+};
+const TF = { '1h':{bybit:'60',ms:3600e3,oi:'1h'}, '4h':{bybit:'240',ms:14400e3,oi:'4h'}, '1d':{bybit:'D',ms:86400e3,oi:'1d'} };
+
+let CFG = Object.assign({}, DEF);
+try{ const s=JSON.parse(localStorage.getItem('liqhunter.cfg')||'{}'); CFG=Object.assign(CFG,s); }catch(e){}
+const saveCfg=()=>{ try{localStorage.setItem('liqhunter.cfg',JSON.stringify(CFG));}catch(e){} };
+
+const S = {                            // runtime state
+  bars:[], oi:[], lsr:[], daily:[], mmr:0.005,
+  spot:0, mark:0, funding:{}, oiNow:{}, lsrNow:0,
+  map:null, clusters:{below:[],above:[]}, target:null, plan:null, gates:null,
+  feeds:{}, tape:[], view:null, lastErr:''
+};
+
+/* ----------------------------------------------------------------- utils */
+const $=id=>document.getElementById(id);
+const fmt=(n,d=0)=>(n==null||!isFinite(n))?'—':n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const usd=n=>(n==null||!isFinite(n))?'—':'$'+fmt(n,0);
+const big=n=>{ if(n==null||!isFinite(n))return'—'; const a=Math.abs(n);
+  if(a>=1e9)return '$'+(n/1e9).toFixed(2)+'B'; if(a>=1e6)return '$'+(n/1e6).toFixed(1)+'M';
+  if(a>=1e3)return '$'+(n/1e3).toFixed(0)+'K'; return '$'+n.toFixed(0); };
+const pct=(n,d=2)=>(n==null||!isFinite(n))?'—':(n>=0?'+':'')+n.toFixed(d)+'%';
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const sum=a=>a.reduce((x,y)=>x+y,0);
+const median=a=>{ if(!a.length)return 0; const b=[...a].sort((x,y)=>x-y); const m=b.length>>1; return b.length%2?b[m]:(b[m-1]+b[m])/2; };
+
+async function jget(url,ms=12000){
+  const c=new AbortController(); const t=setTimeout(()=>c.abort(),ms);
+  try{ const r=await fetch(url,{signal:c.signal}); if(!r.ok) throw new Error('HTTP '+r.status); return await r.json(); }
+  finally{ clearTimeout(t); }
+}
+async function jpost(url,body,ms=12000){
+  const c=new AbortController(); const t=setTimeout(()=>c.abort(),ms);
+  try{ const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:c.signal});
+       if(!r.ok) throw new Error('HTTP '+r.status); return await r.json(); }
+  finally{ clearTimeout(t); }
+}
+
+/* ------------------------------------------------------------ data layer */
+const BYBIT='https://api.bybit.com', OKX='https://www.okx.com', HL='https://api.hyperliquid.xyz/info';
+
+async function loadAll(){
+  const tf=TF[CFG.tf], n=CFG.bars;
+  const jobs = {
+    kline:   jget(`${BYBIT}/v5/market/kline?category=linear&symbol=BTCUSDT&interval=${tf.bybit}&limit=${n}`),
+    daily:   jget(`${BYBIT}/v5/market/kline?category=linear&symbol=BTCUSDT&interval=D&limit=250`),
+    oi:      jget(`${BYBIT}/v5/market/open-interest?category=linear&symbol=BTCUSDT&intervalTime=${tf.oi==='1d'?'1d':tf.oi==='4h'?'4h':'1h'}&limit=200`),
+    tick:    jget(`${BYBIT}/v5/market/tickers?category=linear&symbol=BTCUSDT`),
+    lsr:     jget(`${BYBIT}/v5/market/account-ratio?category=linear&symbol=BTCUSDT&period=${CFG.tf==='1d'?'1d':CFG.tf==='4h'?'4h':'1h'}&limit=200`),
+    risk:    jget(`${BYBIT}/v5/market/risk-limit?category=linear&symbol=BTCUSDT`),
+    okxF:    jget(`${OKX}/api/v5/public/funding-rate?instId=BTC-USDT-SWAP`),
+    okxOI:   jget(`${OKX}/api/v5/public/open-interest?instType=SWAP&instId=BTC-USDT-SWAP`),
+    hl:      jpost(HL,{type:'metaAndAssetCtxs'})
+  };
+  const res={}, feeds={};
+  await Promise.all(Object.entries(jobs).map(async ([k,p])=>{
+    try{ res[k]=await p; feeds[k]=true; }catch(e){ res[k]=null; feeds[k]=false; S.lastErr=k+': '+e.message; }
+  }));
+  S.feeds=feeds;
+
+  /* --- klines: bybit returns newest-first [start,o,h,l,c,vol,turnover] */
+  if(res.kline?.result?.list){
+    S.bars = res.kline.result.list.map(r=>({
+      t:+r[0], o:+r[1], h:+r[2], l:+r[3], c:+r[4], v:+r[5], q:+r[6]
+    })).sort((a,b)=>a.t-b.t);
+  }
+  if(res.daily?.result?.list){
+    S.daily = res.daily.result.list.map(r=>({t:+r[0],o:+r[1],h:+r[2],l:+r[3],c:+r[4]})).sort((a,b)=>a.t-b.t);
+  }
+  /* --- open interest history, in BTC */
+  if(res.oi?.result?.list){
+    S.oi = res.oi.result.list.map(r=>({t:+r.timestamp, oi:+r.openInterest})).sort((a,b)=>a.t-b.t);
+  }
+  /* --- long/short account ratio */
+  if(res.lsr?.result?.list){
+    S.lsr = res.lsr.result.list.map(r=>({t:+r.timestamp, r:(+r.buyRatio)/((+r.sellRatio)||1e-9)})).sort((a,b)=>a.t-b.t);
+    S.lsrNow = S.lsr.length? S.lsr[S.lsr.length-1].r : 0;
+  }
+  /* --- maintenance margin rate, tier 1 */
+  if(res.risk?.result?.list?.length){
+    const t1=res.risk.result.list.sort((a,b)=>(+a.riskLimitValue)-(+b.riskLimitValue))[0];
+    S.mmr = +t1.maintenanceMargin || 0.005;
+  }
+  /* --- spot / funding / OI across venues */
+  const bt = res.tick?.result?.list?.[0];
+  if(bt){
+    S.spot=+bt.lastPrice; S.mark=+bt.markPrice;
+    S.funding.bybit=+bt.fundingRate;                      // per 8h
+    S.oiNow.bybit=(+bt.openInterest)*(+bt.lastPrice);
+    S.nextFunding=+bt.nextFundingTime;
+    S.chg24=+bt.price24hPcnt*100; S.vol24=+bt.turnover24h;
+    S.high24=+bt.highPrice24h; S.low24=+bt.lowPrice24h;
+  }
+  if(res.okxF?.data?.[0]) S.funding.okx=+res.okxF.data[0].fundingRate;
+  if(res.okxOI?.data?.[0]) S.oiNow.okx=+res.okxOI.data[0].oiUsd;
+  if(Array.isArray(res.hl)&&res.hl[1]){
+    const idx=res.hl[0].universe.findIndex(u=>u.name==='BTC');
+    const c=res.hl[1][idx];
+    if(c){ S.funding.hl=(+c.funding)*8; S.oiNow.hl=(+c.openInterest)*(+c.markPx); }  // HL funding is hourly
+  }
+  if(!S.spot && S.bars.length) S.spot=S.bars[S.bars.length-1].c;
+  if(!S.bars.length) throw new Error('no price data — every venue refused. Check your connection or a blocker.');
+}
+
+/* funding aggregate, OI-weighted, expressed per 8h */
+function aggFunding(){
+  const parts=[]; let wsum=0, fsum=0;
+  for(const k of ['bybit','okx','hl']){
+    if(S.funding[k]==null) continue;
+    const w=S.oiNow[k]||1; parts.push([k,S.funding[k],w]); fsum+=S.funding[k]*w; wsum+=w;
+  }
+  return { rate: wsum? fsum/wsum : 0, parts, oi: sum(Object.values(S.oiNow)) };
+}
+
+/* ==========================================================================
+   MODEL — reconstructing the liquidation map
+   --------------------------------------------------------------------------
+   No exchange publishes open positions, so every liquidation map on the
+   market (CoinGlass, Kingfisher) is a MODEL of them. This is that model,
+   written out explicitly so you can see and change every assumption:
+
+   1. New leveraged positions opened in bar i  ~  max(ΔOpenInterest,0)
+      + kappa * volume   (kappa covers churn when OI is flat)
+   2. Their direction is split by where the bar closed inside its range.
+   3. They were opened around the bar's typical price (H+L+C)/3.
+   4. They are spread over leverage buckets 10x/25x/50x/100x by the preset.
+   5. Liquidation price:  long  = entry * (1 - 1/L + MMR)
+                          short = entry * (1 + 1/L - MMR)
+      MMR is pulled live from Bybit's tier-1 risk limit.
+   6. SURVIVAL: if price has already traded through that level since the
+      position was opened, the position is gone — it is removed from the map.
+      This is the step that makes the map mean anything.
+   7. Remaining size decays with a half-life (position turnover).
+   ========================================================================== */
+function alignOI(bars){
+  const out=new Array(bars.length).fill(null);
+  if(!S.oi.length) return out;
+  let j=0;
+  for(let i=0;i<bars.length;i++){
+    while(j+1<S.oi.length && S.oi[j+1].t<=bars[i].t) j++;
+    out[i] = (S.oi[j].t<=bars[i].t+TF[CFG.tf].ms) ? S.oi[j].oi : null;
+  }
+  return out;
+}
+
+function buildMap(){
+  const bars=S.bars, n=bars.length;
+  if(n<20) return null;
+  const spot=S.spot, bins=CFG.bins;
+  const lo=spot*(1-CFG.span), hi=spot*(1+CFG.span), binW=(hi-lo)/bins;
+  const idxOf=p=>Math.floor((p-lo)/binW);
+  const weights=PRESETS[CFG.preset]||PRESETS.all;
+  const oiAt=alignOI(bars);
+  const hlMs=CFG.halflife*86400e3;
+
+  /* running extremes, to resolve "already swept" fast */
+  const pos=[];
+  for(let i=1;i<n;i++){
+    const b=bars[i];
+    const dOI=(oiAt[i]!=null&&oiAt[i-1]!=null)?(oiAt[i]-oiAt[i-1]):0;
+    const opened=Math.max(dOI,0)+CFG.kappa*b.v;          // BTC of new positions
+    if(opened<=0) continue;
+    const rng=(b.h-b.l)||1;
+    const longShare=clamp(0.5+0.42*Math.tanh(((b.c-b.o)/rng)*2.2),0.12,0.88);
+    const entry=(b.h+b.l+b.c)/3;
+    for(let k=0;k<LEV_BUCKETS.length;k++){
+      const w=weights[k]; if(w<=0) continue;
+      const L=LEV_BUCKETS[k];
+      const notL=opened*longShare*w*entry, notS=opened*(1-longShare)*w*entry;
+      const pl=entry*(1-1/L+S.mmr), ps=entry*(1+1/L-S.mmr);
+      let dL=-1; for(let j=i+1;j<n;j++){ if(bars[j].l<=pl){dL=j;break;} }
+      let dS=-1; for(let j=i+1;j<n;j++){ if(bars[j].h>=ps){dS=j;break;} }
+      if(notL>0) pos.push({side:1,birth:i,death:dL,liq:pl,not:notL,L});
+      if(notS>0) pos.push({side:-1,birth:i,death:dS,liq:ps,not:notS,L});
+    }
+  }
+
+  const heatL=new Float64Array(n*bins), heatS=new Float64Array(n*bins);
+  let alive=0;
+  for(const p of pos){
+    const bi=idxOf(p.liq); if(bi<0||bi>=bins) continue;
+    const end=(p.death<0)?n-1:p.death-1;
+    const H=p.side===1?heatL:heatS;
+    for(let j=p.birth;j<=end;j++){
+      const age=(bars[j].t-bars[p.birth].t)/hlMs;
+      H[j*bins+bi]+=p.not*Math.pow(0.5,age);
+    }
+    if(p.death<0) alive+=p.not*Math.pow(0.5,(bars[n-1].t-bars[p.birth].t)/hlMs);
+  }
+
+  const smooth=(arr,off,w=3)=>{
+    const out=new Float64Array(bins);
+    for(let b=0;b<bins;b++){ let s=0,c=0;
+      for(let d=-w;d<=w;d++){ const q=b+d; if(q<0||q>=bins)continue; const g=Math.exp(-(d*d)/(2*(w/1.6)**2)); s+=arr[off+q]*g; c+=g; }
+      out[b]=s/c; }
+    return out;
+  };
+  const off=(n-1)*bins;
+  const densL=smooth(heatL,off), densS=smooth(heatS,off);
+  return {n,bins,lo,hi,binW,heatL,heatS,densL,densS,pos,alive,
+          priceOf:b=>lo+(b+0.5)*binW, idxOf};
+}
+
+/* ------------------------------------------------- cluster identification */
+function findClusters(dens,map,side){
+  const bins=map.bins, out=[];
+  let max=0; for(let i=0;i<bins;i++) max=Math.max(max,dens[i]);
+  if(max<=0) return out;
+  const peakMin=0.10*max;
+  for(let i=2;i<bins-2;i++){
+    if(dens[i]<peakMin) continue;
+    if(!(dens[i]>=dens[i-1]&&dens[i]>=dens[i+1]&&dens[i]>dens[i-2]&&dens[i]>dens[i+2])) continue;
+    const cut=0.32*dens[i];
+    let a=i,b=i;
+    while(a>0&&dens[a-1]>cut&&dens[a-1]<=dens[a]) a--;
+    while(b<bins-1&&dens[b+1]>cut&&dens[b+1]<=dens[b]) b++;
+    let tot=0,wsum=0;
+    for(let q=a;q<=b;q++){ tot+=dens[q]; wsum+=dens[q]*map.priceOf(q); }
+    if(tot<=0) continue;
+    const com=wsum/tot;
+    const top=map.priceOf(b), bot=map.priceOf(a);
+    const dist=(com-S.spot)/S.spot;
+    if(side===1 && dist>0) continue;
+    if(side===-1 && dist<0) continue;
+    out.push({side,peak:map.priceOf(i),com,top,bot,mass:tot,strength:dens[i]/max,dist:Math.abs(dist)});
+  }
+  /* merge overlapping */
+  out.sort((x,y)=>x.com-y.com);
+  const merged=[];
+  for(const c of out){
+    const last=merged[merged.length-1];
+    if(last && c.bot<=last.top*1.001){
+      last.top=Math.max(last.top,c.top); last.bot=Math.min(last.bot,c.bot);
+      last.mass+=c.mass;
+      if(c.strength>last.strength) last.peak=c.peak;
+      last.strength=Math.max(last.strength,c.strength);
+      last.com=(last.com+c.com)/2; last.dist=Math.abs((last.com-S.spot)/S.spot);
+    } else merged.push(Object.assign({},c));
+  }
+  const mmax=Math.max(...merged.map(c=>c.mass),1);
+  /* A fat cluster 15% away is real but untradeable on a 3-day horizon:
+     the limit never fills. Rank by size discounted for distance. */
+  merged.forEach(c=>{ c.rel=c.mass/mmax; c.score=c.mass*Math.exp(-(c.dist*100)/CFG.reach); });
+  return merged.sort((a,b)=>b.score-a.score);
+}
+
+function atr(period=14){
+  const d=S.daily; if(d.length<period+1) return S.spot*0.02;
+  let s=0;
+  for(let i=d.length-period;i<d.length;i++){
+    const p=d[i-1].c;
+    s+=Math.max(d[i].h-d[i].l,Math.abs(d[i].h-p),Math.abs(d[i].l-p));
+  }
+  return s/period;
+}
+function sma(arr,p){ if(arr.length<p) return null; let s=0; for(let i=arr.length-p;i<arr.length;i++) s+=arr[i].c; return s/p; }
+
+/* ==========================================================================
+   SIGNAL ENGINE — the swing sniper playbook
+   1 find the fattest long-liquidation cluster below spot
+   2 ladder limit buys across it, with one rung below it for the overshoot
+   3 stop below the next cluster down
+   4 take profit into short-liquidation liquidity above
+   5 hard time stop after N days
+   ========================================================================== */
+function buildPlan(target){
+  if(!target) return null;
+  const spot=S.spot, A=atr(14);
+  const rungs=[
+    {p:target.top, w:0.15, lbl:'upper edge'},
+    {p:target.com, w:0.25, lbl:'centre of mass'},
+    {p:target.bot, w:0.30, lbl:'lower edge'},
+    {p:target.bot*(1-CFG.overshoot/100), w:0.30, lbl:'overshoot'}
+  ].sort((a,b)=>b.p-a.p);
+  const avg=sum(rungs.map(r=>r.p*r.w))/sum(rungs.map(r=>r.w));
+
+  const below=S.clusters.below.filter(c=>c.com<target.bot).sort((a,b)=>b.score-a.score);
+  const next=below[0]||null;
+  /* Base stop: one ATR (or 1.2%) under the deepest limit.
+     If the next cluster down sits close enough that a cascade would run
+     us over, drop the stop under it too — but only while that still fits
+     inside the maximum risk budget. A stop dragged 7% down to clear a
+     far-away cluster destroys the R:R, which is the whole edge. */
+  const stopA=rungs[rungs.length-1].p-Math.max(A,spot*0.012);
+  const floor=avg*(1-CFG.maxStopPct/100);
+  let stop=stopA, stopSrc='ATR buffer under the lowest limit';
+  if(next){
+    const stopB=next.bot*0.997;
+    if(stopB<stopA && stopB>=floor){ stop=stopB; stopSrc='under the next cluster at '+fmt(next.com,0); }
+    else if(stopB<floor) stopSrc='ATR buffer — next cluster at '+fmt(next.com,0)+' is too far to stop under';
+  }
+  if(stop<floor) stop=floor;
+  const R=avg-stop;
+
+  const above=S.clusters.above.filter(c=>c.com>avg*1.005);
+  const nearest=[...above].sort((a,b)=>a.com-b.com)[0];
+  const fattest=[...above].sort((a,b)=>b.mass-a.mass)[0];
+  const tps=[];
+  if(nearest) tps.push({p:nearest.com,lbl:'nearest short-liq cluster',mass:nearest.mass});
+  if(fattest && (!nearest||Math.abs(fattest.com-nearest.com)/spot>0.005)) tps.push({p:fattest.com,lbl:'fattest short-liq cluster',mass:fattest.mass});
+  tps.push({p:avg*(1+CFG.tp3Pct/100),lbl:'+'+CFG.tp3Pct+'% fixed target',mass:null});
+  tps.sort((a,b)=>a.p-b.p);
+  tps.forEach((t,i)=>{ t.rr=(t.p-avg)/R; t.name='TP'+(i+1); });
+  const weights=[0.4,0.35,0.25].slice(0,tps.length);
+  const wt=sum(weights); tps.forEach((t,i)=>t.w=weights[i]/wt);
+
+  const rrMain = tps.length>1 ? tps[1].rr : tps[0].rr;
+  const expR = sum(tps.map(t=>t.rr*t.w));
+
+  return {target,rungs,avg,stop,R,tps,next,atr:A,rrMain,expR,stopSrc,
+          riskPct:((avg-stop)/avg)*100, distPct:((spot-avg)/spot)*100};
+}
+
+function buildGates(plan){
+  const f=aggFunding();
+  const fAPR=f.rate*3*365*100;
+  const oi24=(()=>{ if(S.oi.length<2) return null;
+    const perDay=Math.round(86400e3/TF[CFG.tf].ms);
+    const i=Math.max(0,S.oi.length-1-perDay);
+    return (S.oi[S.oi.length-1].oi/S.oi[i].oi-1)*100; })();
+  const sma200=sma(S.daily,200), sma50=sma(S.daily,50);
+  const masses=S.clusters.below.map(c=>c.mass);   // raw size, not the reach-discounted score
+  const med=median(masses)||1;
+  const ratio=plan? plan.target.mass/med : 0;
+  const dist=plan? plan.target.dist*100 : 0;
+
+  const g=[
+    {id:'funding', ok:f.rate>0, mid:Math.abs(fAPR)<3,
+     t:'Funding positive — longs are paying', v:`${(f.rate*100).toFixed(4)}% / 8h · ${fAPR.toFixed(1)}% APR · ${f.parts.map(p=>p[0]+' '+(p[1]*100).toFixed(4)+'%').join(' · ')}`,
+     why:'Positive funding means the crowd is leaning long and paying to stay there. That is the fuel a downside sweep burns.'},
+    {id:'lsr', ok:S.lsrNow>1.05, mid:S.lsrNow>0.98,
+     t:'Long/short account ratio above 1.05', v:`${S.lsrNow?S.lsrNow.toFixed(3):'—'} (Bybit accounts)`,
+     why:'More accounts long than short. A flush has something to flush.'},
+    {id:'oi', ok:oi24!=null&&oi24>0, mid:oi24!=null&&oi24>-2,
+     t:'Open interest building over 24h', v:`${oi24==null?'—':pct(oi24,2)} · ${big(f.oi)} total OI`,
+     why:'Rising OI into a level = positions stacking up = a bigger cascade when it goes.'},
+    {id:'cluster', ok:ratio>=1.4&&dist>=CFG.minDist*100&&dist<=CFG.maxDist*100, mid:ratio>=1.0,
+     t:'Target cluster is genuinely dominant', v:plan?`${ratio.toFixed(2)}x median cluster · ${dist.toFixed(2)}% below spot`:'no target',
+     why:'A cluster only matters if it stands out. Too close and it is noise; too far and the limit never fills inside the time stop.',
+     mandatory:true},
+    {id:'rr', ok:plan&&plan.rrMain>=2, mid:plan&&plan.rrMain>=1.5,
+     t:'Risk/reward at least 2:1', v:plan?`${plan.rrMain.toFixed(2)}:1 to ${plan.tps[1]?plan.tps[1].name:'TP1'} · expectancy ${plan.expR.toFixed(2)}R`:'—',
+     why:'Kingfisher’s point: win rate is vanity. Below 2:1 this playbook does not pay for its losers.',
+     mandatory:true},
+    {id:'regime', ok:sma200&&S.spot>sma200, mid:sma50&&S.spot>sma50,
+     t:'Price above the 200-day average', v:sma200?`spot ${usd(S.spot)} vs 200d ${usd(sma200)} (${pct((S.spot/sma200-1)*100,1)})`:'—',
+     why:'Buying flushes works in an uptrend and quietly destroys accounts in a downtrend. Below the 200d this is counter-trend — halve the size or skip.'}
+  ];
+  const pass=g.filter(x=>x.ok).length;
+  const mand=g.filter(x=>x.mandatory).every(x=>x.ok);
+  let verdict='NO TRADE', why='';
+  if(!plan){ verdict='NO TRADE'; why='no usable cluster in the distance band'; }
+  else if(!mand){ verdict='NO TRADE'; why='a mandatory gate failed (cluster quality or R:R)'; }
+  else if(pass>=5){ verdict='GO'; why=`${pass}/6 gates green`; }
+  else if(pass>=3){ verdict='WAIT'; why=`${pass}/6 gates green — setup forming, not confirmed`; }
+  else { verdict='NO TRADE'; why=`only ${pass}/6 gates green`; }
+  return {gates:g,pass,verdict,why,funding:f,fAPR,oi24,sma200,sma50};
+}
+
+function sizePosition(plan){
+  if(!plan) return null;
+  const riskUSD=CFG.account*CFG.riskPct/100;
+  const perBTC=plan.avg-plan.stop;
+  const btc=riskUSD/perBTC;
+  const notional=btc*plan.avg;
+  const denom=1+S.mmr-0.97*plan.stop/plan.avg;
+  const maxLev=denom>0?1/denom:100;
+  const recLev=clamp(Math.floor(Math.min(maxLev*0.6,10)),1,100);
+  const liqAt=plan.avg*(1-1/recLev+S.mmr);
+  const margin=notional/recLev;
+  return {riskUSD,btc,notional,maxLev,recLev,liqAt,margin,
+          levNeeded:notional/CFG.account,
+          exit:new Date(Date.now()+CFG.holdDays*86400e3)};
+}
+
+function recompute(){
+  S.map=buildMap();
+  if(!S.map) return;
+  S.clusters.below=findClusters(S.map.densL,S.map,1)
+      .filter(c=>c.dist>=CFG.minDist&&c.dist<=CFG.maxDist);
+  S.clusters.above=findClusters(S.map.densS,S.map,-1)
+      .filter(c=>c.dist>=0.004&&c.dist<=CFG.maxDist*1.6);
+  if(!S.target || !S.clusters.below.some(c=>Math.abs(c.com-S.target.com)/S.spot<0.004))
+    S.target=S.clusters.below[0]||null;
+  else S.target=S.clusters.below.find(c=>Math.abs(c.com-S.target.com)/S.spot<0.004);
+  S.plan=buildPlan(S.target);
+  S.gates=buildGates(S.plan);
+  S.size=sizePosition(S.plan);
+}
+
+/* ==========================================================================
+   CHART — candles + 2D liquidation heat + density histogram, plain canvas
+   ========================================================================== */
+const cv=$('chart'), ctx=cv.getContext('2d');
+const AXW=64, HISTW=104, BOTH=24;
+let CH={};   // chart geometry cache
+
+function heatColor(v,side){            // v in 0..1
+  const t=Math.pow(clamp(v,0,1),0.55);
+  if(side===1){ // long liq -> blue
+    const r=Math.round(20+ 57*t), g=Math.round(32+131*t), b=Math.round(48+207*t);
+    return `rgba(${r},${g},${b},${0.10+0.90*t})`;
+  }
+  const r=Math.round(48+207*t), g=Math.round(38+163*t), b=Math.round(22+38*t);
+  return `rgba(${r},${g},${b},${0.10+0.90*t})`;
+}
+
+function draw(){
+  const map=S.map; if(!map) return;
+  const dpr=window.devicePixelRatio||1;
+  const W=cv.clientWidth, H=cv.clientHeight;
+  cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+  const bars=S.bars, n=bars.length;
+  if(!S.view) S.view={i0:Math.max(0,n-120),i1:n-1};
+  const v=S.view; v.i0=clamp(v.i0,0,n-10); v.i1=clamp(v.i1,v.i0+9,n-1);
+  const vis=v.i1-v.i0+1;
+
+  const cw=W-AXW-HISTW, ch=H-BOTH;
+  CH={W,H,cw,ch};
+
+  /* price range */
+  let lo=Infinity,hi=-Infinity;
+  for(let i=v.i0;i<=v.i1;i++){ lo=Math.min(lo,bars[i].l); hi=Math.max(hi,bars[i].h); }
+  if(S.plan){ lo=Math.min(lo,S.plan.stop*0.995); hi=Math.max(hi,S.plan.tps[S.plan.tps.length-1].p*1.01); }
+  const padp=(hi-lo)*0.05; lo-=padp; hi+=padp;
+  lo=Math.max(lo,map.lo); hi=Math.min(hi,map.hi);
+  CH.lo=lo; CH.hi=hi;
+  const Y=p=>ch-((p-lo)/(hi-lo))*ch;
+  const P=y=>lo+((ch-y)/ch)*(hi-lo);
+  const X=i=>((i-v.i0)/vis)*cw;
+  CH.Y=Y; CH.P=P; CH.X=X;
+
+  ctx.fillStyle='#080b10'; ctx.fillRect(0,0,W,H);
+
+  /* ---- heat normalisation over the visible window */
+  const b0=Math.max(0,map.idxOf(lo)), b1=Math.min(map.bins-1,map.idxOf(hi));
+  const vals=[];
+  for(let j=v.i0;j<=v.i1;j++) for(let b=b0;b<=b1;b++){
+    const a=map.heatL[j*map.bins+b], c=map.heatS[j*map.bins+b];
+    if(a>0)vals.push(a); if(c>0)vals.push(c);
+  }
+  vals.sort((a,b)=>a-b);
+  const norm=vals.length? vals[Math.floor(vals.length*0.985)]||vals[vals.length-1] : 1;
+  CH.norm=norm;
+
+  const colW=cw/vis, binH=Math.abs(Y(map.priceOf(1))-Y(map.priceOf(0)));
+  for(let j=v.i0;j<=v.i1;j++){
+    const x=X(j);
+    for(let b=b0;b<=b1;b++){
+      const a=map.heatL[j*map.bins+b], c=map.heatS[j*map.bins+b];
+      const val=Math.max(a,c); if(val<=0) continue;
+      ctx.fillStyle=heatColor(val/norm, a>=c?1:-1);
+      const y=Y(map.priceOf(b));
+      ctx.fillRect(x,y-binH/2-0.4,colW+0.6,binH+0.8);
+    }
+  }
+
+  /* ---- grid + price axis */
+  ctx.strokeStyle='rgba(255,255,255,.055)'; ctx.lineWidth=1;
+  ctx.fillStyle='#8695a8'; ctx.font='10px ui-monospace,monospace'; ctx.textAlign='left';
+  const step=niceStep((hi-lo)/7);
+  for(let p=Math.ceil(lo/step)*step;p<hi;p+=step){
+    const y=Math.round(Y(p))+.5;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W-AXW,y); ctx.stroke();
+    ctx.fillText(fmt(p,0),W-AXW+6,y+3);
+  }
+  /* ---- time axis */
+  ctx.textAlign='center';
+  const tstep=Math.max(1,Math.round(vis/7));
+  for(let i=v.i0;i<=v.i1;i+=tstep){
+    const x=X(i)+colW/2; const d=new Date(bars[i].t);
+    ctx.strokeStyle='rgba(255,255,255,.04)';
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,ch); ctx.stroke();
+    ctx.fillStyle='#5d6b7d';
+    ctx.fillText(d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}),x,H-8);
+  }
+
+  /* ---- candles */
+  const bw=Math.max(1,Math.min(colW*0.62,14));
+  for(let i=v.i0;i<=v.i1;i++){
+    const b=bars[i], x=X(i)+colW/2, up=b.c>=b.o;
+    ctx.strokeStyle=up?'rgba(120,230,170,.85)':'rgba(255,120,135,.85)';
+    ctx.fillStyle=up?'rgba(46,204,113,.5)':'rgba(255,77,94,.5)';
+    ctx.beginPath(); ctx.moveTo(x,Y(b.h)); ctx.lineTo(x,Y(b.l)); ctx.stroke();
+    const y1=Y(Math.max(b.o,b.c)), y2=Y(Math.min(b.o,b.c));
+    ctx.fillRect(x-bw/2,y1,bw,Math.max(1,y2-y1));
+    ctx.strokeRect(x-bw/2+.5,y1+.5,bw-1,Math.max(1,y2-y1)-1);
+  }
+
+  /* ---- density histogram (Kingfisher style, rotated) */
+  const hx0=W-AXW-HISTW;
+  ctx.fillStyle='rgba(255,255,255,.02)'; ctx.fillRect(hx0,0,HISTW,ch);
+  ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.beginPath(); ctx.moveTo(hx0+.5,0); ctx.lineTo(hx0+.5,ch); ctx.stroke();
+  let dmax=0;
+  for(let b=b0;b<=b1;b++) dmax=Math.max(dmax,map.densL[b],map.densS[b]);
+  if(dmax>0) for(let b=b0;b<=b1;b++){
+    const y=Y(map.priceOf(b));
+    for(const [arr,col] of [[map.densL,'rgba(77,163,255,.80)'],[map.densS,'rgba(255,201,60,.80)']]){
+      const w=(arr[b]/dmax)*(HISTW-8); if(w<0.5) continue;
+      ctx.fillStyle=col; ctx.fillRect(hx0+3,y-Math.max(1,binH/2),w,Math.max(1.2,binH));
+    }
+  }
+
+  /* ---- plan overlays */
+  const line=(p,col,lbl,dash)=>{
+    if(!isFinite(p)||p<lo||p>hi) return;
+    const y=Math.round(Y(p))+.5;
+    ctx.save(); ctx.setLineDash(dash||[]); ctx.strokeStyle=col; ctx.lineWidth=1.3;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W-AXW,y); ctx.stroke(); ctx.restore();
+    ctx.fillStyle=col; ctx.textAlign='left'; ctx.font='10px ui-monospace,monospace';
+    const tw=ctx.measureText(lbl).width;
+    ctx.fillStyle='rgba(8,11,16,.85)'; ctx.fillRect(4,y-11,tw+8,13);
+    ctx.fillStyle=col; ctx.fillText(lbl,8,y-1);
+  };
+  if(S.plan){
+    S.plan.rungs.forEach((r,i)=>line(r.p,'rgba(46,204,113,.9)','L'+(i+1)+' '+fmt(r.p,0)+'  ('+(r.w*100).toFixed(0)+'%)',[5,4]));
+    line(S.plan.stop,'#ff4d5e','STOP '+fmt(S.plan.stop,0),[2,3]);
+    S.plan.tps.forEach(t=>line(t.p,'#a97bff',t.name+' '+fmt(t.p,0)+'  '+t.rr.toFixed(1)+'R',[7,5]));
+  }
+  line(S.spot,'rgba(255,255,255,.95)','SPOT '+fmt(S.spot,0),[]);
+
+  /* ---- crosshair */
+  if(CH.mx!=null && CH.mx<W-AXW && CH.my<ch){
+    ctx.save(); ctx.setLineDash([3,3]); ctx.strokeStyle='rgba(255,255,255,.35)';
+    ctx.beginPath(); ctx.moveTo(0,CH.my+.5); ctx.lineTo(W-AXW,CH.my+.5);
+    ctx.moveTo(CH.mx+.5,0); ctx.lineTo(CH.mx+.5,ch); ctx.stroke(); ctx.restore();
+    const p=P(CH.my);
+    ctx.fillStyle='#1b2431'; ctx.fillRect(W-AXW,CH.my-8,AXW,16);
+    ctx.fillStyle='#fff'; ctx.textAlign='left'; ctx.fillText(fmt(p,0),W-AXW+6,CH.my+4);
+  }
+  $('chartMeta').textContent=`${CFG.tf} · ${n} bars · ${PRESETS[CFG.preset]?CFG.preset:'all'} leverage mix · MMR ${(S.mmr*100).toFixed(2)}%`;
+}
+function niceStep(x){ const e=Math.pow(10,Math.floor(Math.log10(x))); const m=x/e;
+  return (m<1.5?1:m<3?2:m<7?5:10)*e; }
+
+/* chart interaction */
+cv.addEventListener('mousemove',e=>{
+  const r=cv.getBoundingClientRect(); CH.mx=e.clientX-r.left; CH.my=e.clientY-r.top;
+  if(CH.drag!=null){
+    const dx=CH.mx-CH.drag; const per=CH.cw/(S.view.i1-S.view.i0+1);
+    const sh=Math.round(-dx/per);
+    if(sh){ const n=S.bars.length;
+      let i0=S.view.i0+sh,i1=S.view.i1+sh;
+      if(i0>=0&&i1<=n-1){S.view.i0=i0;S.view.i1=i1;CH.drag=CH.mx;} }
+  }
+  draw(); tip(e);
+});
+cv.addEventListener('mouseleave',()=>{CH.mx=null;$('tip').style.display='none';draw();});
+cv.addEventListener('mousedown',e=>{const r=cv.getBoundingClientRect();CH.drag=e.clientX-r.left;});
+window.addEventListener('mouseup',()=>{CH.drag=null;});
+cv.addEventListener('wheel',e=>{
+  e.preventDefault(); const n=S.bars.length; const v=S.view;
+  const k=e.deltaY>0?1.15:0.87; const mid=(v.i0+v.i1)/2;
+  let half=((v.i1-v.i0)/2)*k; half=clamp(half,6,n/2);
+  v.i0=Math.max(0,Math.round(mid-half)); v.i1=Math.min(n-1,Math.round(mid+half));
+  draw();
+},{passive:false});
+
+function tip(e){
+  const t=$('tip'), map=S.map; if(!map||CH.mx==null||CH.mx>CH.W-AXW||CH.my>CH.ch){t.style.display='none';return;}
+  const p=CH.P(CH.my), b=map.idxOf(p);
+  const i=clamp(S.view.i0+Math.floor((CH.mx/CH.cw)*(S.view.i1-S.view.i0+1)),0,S.bars.length-1);
+  const bar=S.bars[i];
+  const dl=b>=0&&b<map.bins?map.densL[b]:0, ds=b>=0&&b<map.bins?map.densS[b]:0;
+  t.innerHTML=`<b>${fmt(p,0)}</b> <span style="color:#8695a8">(${pct((p/S.spot-1)*100,2)} from spot)</span><br>
+  <span style="color:#4da3ff">long liq here ${big(dl)}</span><br>
+  <span style="color:#ffc93c">short liq here ${big(ds)}</span><br>
+  <span style="color:#5d6b7d">${new Date(bar.t).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})} · O ${fmt(bar.o,0)} H ${fmt(bar.h,0)} L ${fmt(bar.l,0)} C ${fmt(bar.c,0)}</span>`;
+  t.style.display='block';
+  const wrap=cv.parentElement.getBoundingClientRect();
+  let x=CH.mx+16, y=CH.my+14;
+  if(x+210>wrap.width) x=CH.mx-212;
+  if(y+90>wrap.height) y=CH.my-92;
+  t.style.left=x+'px'; t.style.top=y+'px';
+}
+window.addEventListener('resize',()=>draw());
+
+/* ==========================================================================
+   PANELS
+   ========================================================================== */
+function copyable(txt,label){ return `<span class="copy" onclick="navigator.clipboard&&navigator.clipboard.writeText('${txt}')" title="click to copy">${label}</span>`; }
+
+function renderTickers(){
+  const f=S.gates?S.gates.funding:aggFunding();
+  const fAPR=f.rate*3*365*100;
+  const mins=S.nextFunding?Math.max(0,Math.round((S.nextFunding-Date.now())/60000)):null;
+  const oiT=sum(Object.values(S.oiNow));
+  const cells=[
+    ['BTC perp', usd(S.spot), pct(S.chg24,2), S.chg24>=0?'pos':'neg'],
+    ['funding 8h', (f.rate*100).toFixed(4)+'%', fAPR.toFixed(1)+'% APR'+(mins!=null?' · '+Math.floor(mins/60)+'h'+String(mins%60).padStart(2,'0'):''), f.rate>0?'neu':'pos'],
+    ['long/short', S.lsrNow?S.lsrNow.toFixed(3):'—', S.lsrNow>1?'crowd long':'crowd short', S.lsrNow>1.05?'neg':S.lsrNow<0.95?'pos':'neu'],
+    ['open interest', big(oiT), (S.gates&&S.gates.oi24!=null?pct(S.gates.oi24,2)+' / 24h':'—'), (S.gates&&S.gates.oi24>0)?'neu':''],
+    ['24h range', fmt(S.low24,0)+' – '+fmt(S.high24,0), big(S.vol24)+' vol',''],
+    ['map', S.map?big(S.map.alive):'—', 'surviving leveraged notional','']
+  ];
+  $('tickers').innerHTML=cells.map(c=>`<div class="tk"><div class="k">${c[0]}</div><div class="v ${c[3]||''}">${c[1]}</div><div class="s">${c[2]}</div></div>`).join('');
+}
+
+function renderVerdict(){
+  const g=S.gates; const el=$('verdict');
+  if(!g){ el.className='v-wait'; return; }
+  const cls=g.verdict==='GO'?'v-go':g.verdict==='WAIT'?'v-wait':'v-no';
+  el.className=cls;
+  const extra = S.plan ? `target ${usd(S.plan.target.com)} · ${S.plan.distPct.toFixed(2)}% below spot · ${S.plan.rrMain.toFixed(2)}:1` : '';
+  el.innerHTML=`<div class="big">${g.verdict}</div><div class="sub">${g.why}${extra?'<br>'+extra:''}</div>`;
+}
+
+function renderPlan(){
+  const p=S.plan, el=$('plan');
+  $('planMode').textContent='swing sniper · hold '+CFG.holdDays+'d';
+  if(!p){ el.innerHTML='<div class="note">No cluster in the '+(CFG.minDist*100).toFixed(1)+'–'+(CFG.maxDist*100).toFixed(0)+'% band below spot. Nothing to snipe — widen the band in model settings or wait.</div>'; return; }
+  const rows=p.rungs.map((r,i)=>`<tr><td>L${i+1} <span class="mini">${r.lbl}</span></td><td>${copyable(r.p.toFixed(1),fmt(r.p,0))}</td><td>${pct((r.p/S.spot-1)*100,2)}</td><td>${(r.w*100).toFixed(0)}%</td></tr>`).join('');
+  const tps=p.tps.map(t=>`<tr><td>${t.name} <span class="mini">${t.lbl}</span></td><td>${copyable(t.p.toFixed(1),fmt(t.p,0))}</td><td>${pct((t.p/p.avg-1)*100,2)}</td><td>${t.rr.toFixed(2)}R</td></tr>`).join('');
+  el.innerHTML=`
+  <table><thead><tr><th>limit buy</th><th>price</th><th>vs spot</th><th>size</th></tr></thead><tbody>${rows}
+    <tr class="hl"><td><b>average fill</b></td><td><b>${fmt(p.avg,0)}</b></td><td>${pct((p.avg/S.spot-1)*100,2)}</td><td>100%</td></tr>
+  </tbody></table>
+  <div style="height:10px"></div>
+  <div class="kv"><span class="k">Stop loss</span><span class="v neg">${copyable(p.stop.toFixed(1),fmt(p.stop,0))} &nbsp;<span class="mini">−${p.riskPct.toFixed(2)}% · 1R = ${usd(p.R)}</span></span></div>
+  <div class="kv"><span class="k">Stop placed</span><span class="v mini">${p.stopSrc} · ATR ${fmt(p.atr,0)}</span></div>
+  <div style="height:10px"></div>
+  <table><thead><tr><th>take profit</th><th>price</th><th>gain</th><th>R</th></tr></thead><tbody>${tps}</tbody></table>
+  <div style="height:10px"></div>
+  <div class="note">
+  <b>Mechanics.</b> Place all four limits now. They may not all fill — that is the point.
+  Cancel and re-place daily if the cluster moves (the banner tells you when it has).<br>
+  <b>Management.</b> Once filled and +1R, move the stop to the average fill. Scale out
+  ${p.tps.map(t=>t.name+' '+(t.w*100).toFixed(0)+'%').join(' · ')}.<br>
+  <b>Time stop.</b> If neither stop nor TP1 is hit within ${CFG.holdDays} days, close it and move on.
+  </div>`;
+}
+
+function renderGates(){
+  const g=S.gates; if(!g) return;
+  $('gates').innerHTML=g.gates.map(x=>{
+    const cls=x.ok?'d-ok':(x.mid?'d-mid':'d-no');
+    return `<div class="gate"><div class="dot ${cls}"></div><div class="gt">${x.t}${x.mandatory?' <span class="mini" style="color:#ffc93c">· required</span>':''}
+      <div class="gv">${x.v}</div><div class="gv" style="color:#4a5666">${x.why}</div></div></div>`;
+  }).join('');
+}
+
+function renderSizing(){
+  const z=S.size, p=S.plan; const el=$('sizing');
+  if(!z||!p){ el.innerHTML='<div class="note">—</div>'; return; }
+  const warn = z.levNeeded>z.maxLev;
+  el.innerHTML=`
+  <div class="kv"><span class="k">Risk on this trade</span><span class="v">${usd(z.riskUSD)} <span class="mini">(${CFG.riskPct}% of ${usd(CFG.account)})</span></span></div>
+  <div class="kv"><span class="k">Position size</span><span class="v">${z.btc.toFixed(4)} BTC · ${usd(z.notional)}</span></div>
+  <div class="kv"><span class="k">Max leverage that survives the stop</span><span class="v ${warn?'neg':'pos'}">${z.maxLev.toFixed(1)}x</span></div>
+  <div class="kv"><span class="k">Use</span><span class="v">${z.recLev}x <span class="mini">margin ${usd(z.margin)}</span></span></div>
+  <div class="kv"><span class="k">Liquidation at ${z.recLev}x</span><span class="v">${fmt(z.liqAt,0)} <span class="mini">${pct((z.liqAt/p.stop-1)*100,2)} vs stop</span></span></div>
+  <div class="kv"><span class="k">Close by</span><span class="v">${z.exit.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short'})}</span></div>
+  <div class="note" style="margin-top:8px">Leverage is capped so your liquidation price sits <b>below your stop</b>. If the stop works, the liquidation never triggers — leverage becomes a capital-efficiency choice, not a survival risk. Spot or ${z.recLev}x changes your outcome by nothing except how much cash is tied up.</div>`;
+}
+
+function renderClusters(){
+  const mk=(list,side)=>list.slice(0,7).map((c,i)=>{
+    const sel=(side===1&&S.target&&Math.abs(c.com-S.target.com)<1e-6)?'sel':'';
+    const col=side===1?'#4da3ff':'#ffc93c';
+    return `<div class="${sel}" data-side="${side}" data-i="${i}">
+      <span>${fmt(c.bot,0)}–${fmt(c.top,0)}<br><span class="mini">${pct(((c.com/S.spot)-1)*100,2)} · ${big(c.mass)}</span>
+      <span class="bar" style="display:block;width:100px"><i style="width:${(c.rel*100).toFixed(0)}%;background:${col}"></i></span></span>
+      <span style="color:${col};font-weight:700">${fmt(c.com,0)}</span></div>`;
+  }).join('')||'<div class="mini">none</div>';
+  $('clBelow').innerHTML=mk(S.clusters.below,1);
+  $('clAbove').innerHTML=mk(S.clusters.above,-1);
+  $('clBelow').querySelectorAll('div[data-i]').forEach(d=>d.onclick=()=>{
+    S.target=S.clusters.below[+d.dataset.i];
+    S.plan=buildPlan(S.target); S.gates=buildGates(S.plan); S.size=sizePosition(S.plan);
+    renderAll();
+  });
+}
+
+function renderFeeds(){
+  const names={kline:'bybit klines',oi:'bybit OI',tick:'bybit ticker',lsr:'bybit L/S',risk:'bybit MMR',daily:'bybit 1d',okxF:'okx funding',okxOI:'okx OI',hl:'hyperliquid'};
+  $('feeds').innerHTML=Object.entries(names).map(([k,v])=>
+    `<span class="feed ${S.feeds[k]===true?'ok':S.feeds[k]===false?'bad':''}">${v}</span>`).join('');
+  $('diag').innerHTML=`Binance is geo-blocked from the Netherlands, so it is not used. Everything above is key-free and CORS-open.
+    ${S.lastErr?'<br>last error: '+S.lastErr:''}`;
+}
+
+/* banner: did the target move since last visit? */
+function renderBanner(){
+  const el=$('banner'); let html='';
+  if(S.plan){
+    let prev=null; try{ prev=JSON.parse(localStorage.getItem('liqhunter.last')||'null'); }catch(e){}
+    if(prev && prev.com){
+      const drift=(S.plan.target.com/prev.com-1)*100;
+      if(Math.abs(drift)>0.5){
+        html+=`<div class="warn">Target cluster has moved ${pct(drift,2)} since you last checked
+          (${fmt(prev.com,0)} → ${fmt(S.plan.target.com,0)}). Cancel the old limits and re-place them.</div>`;
+      }
+    }
+    try{ localStorage.setItem('liqhunter.last',JSON.stringify({com:S.plan.target.com,t:Date.now()})); }catch(e){}
+  }
+  if(S.gates && S.gates.sma200 && S.spot<S.gates.sma200)
+    html+=`<div class="warn">Price is below the 200-day average. Buying liquidation flushes in a downtrend is how this playbook loses money — the cluster keeps moving down faster than you fill. Halve the size or stand aside.</div>`;
+  el.innerHTML=html;
+}
+
+function renderAll(){ renderTickers(); renderVerdict(); renderPlan(); renderGates(); renderSizing(); renderClusters(); renderFeeds(); renderBanner(); draw(); }
+
+/* ==========================================================================
+   CONTROLS
+   ========================================================================== */
+function ctrl(host,defs){
+  host.innerHTML=defs.map(d=>{
+    if(d.type==='select') return `<div><label class="f">${d.label}</label><select id="c_${d.k}">${d.opts.map(o=>`<option value="${o[0]}" ${CFG[d.k]==o[0]?'selected':''}>${o[1]}</option>`).join('')}</select><div class="mini">${d.hint||''}</div></div>`;
+    if(d.type==='range') return `<div><label class="f">${d.label}</label><input type="range" id="c_${d.k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${CFG[d.k]}"><div class="rowv"><span class="mini">${d.hint||''}</span><span id="v_${d.k}">${CFG[d.k]}</span></div></div>`;
+    return `<div><label class="f">${d.label}</label><input type="number" id="c_${d.k}" value="${CFG[d.k]}" step="${d.step||1}" min="${d.min!=null?d.min:0}"><div class="mini">${d.hint||''}</div></div>`;
+  }).join('');
+  defs.forEach(d=>{
+    const el=$('c_'+d.k); if(!el) return;
+    el.addEventListener(d.type==='range'?'input':'change',()=>{
+      CFG[d.k]=(d.type==='select'&&isNaN(+el.value))?el.value:(d.type==='select'?el.value:+el.value);
+      if(d.type==='select') CFG[d.k]=el.value;
+      const lab=$('v_'+d.k); if(lab) lab.textContent=CFG[d.k];
+      saveCfg();
+      if(d.reload) refresh(); else { recompute(); renderAll(); }
+    });
+  });
+}
+ctrl($('modelCtrls'),[
+ {k:'tf',type:'select',label:'resolution',opts:[['1h','1h — 8 days'],['4h','4h — 33 days'],['1d','1d — 200 days']],hint:'bar size the map is built from',reload:true},
+ {k:'preset',type:'select',label:'leverage mix',opts:[['all','all leverage'],['high','high 50–100x'],['medium','medium 25–50x'],['low','low 10–25x']],hint:'Kingfisher-style flavours'},
+ {k:'kappa',type:'range',label:'volume seeding κ',min:0,max:0.2,step:0.01,hint:'new positions per unit of volume when OI is flat'},
+ {k:'halflife',type:'range',label:'position half-life (days)',min:1,max:21,step:1,hint:'how fast old positions are assumed closed'},
+ {k:'span',type:'range',label:'map span ±',min:0.1,max:0.5,step:0.02,hint:'price range covered'},
+ {k:'minDist',type:'range',label:'ignore clusters closer than',min:0.002,max:0.05,step:0.002,hint:'fraction of spot'},
+ {k:'maxDist',type:'range',label:'ignore clusters beyond',min:0.05,max:0.4,step:0.01,hint:'fraction of spot'},
+ {k:'overshoot',type:'range',label:'overshoot rung (%)',min:0,max:3,step:0.1,hint:'how far under the cluster the last limit sits'},
+ {k:'maxStopPct',type:'range',label:'max stop distance (%)',min:1,max:10,step:0.5,hint:'risk ceiling — the stop never goes deeper than this'},
+ {k:'reach',type:'range',label:'reach λ (%)',min:2,max:30,step:1,hint:'how hard distant clusters are discounted — raise it to chase deeper flushes'}
+]);
+ctrl($('riskCtrls'),[
+ {k:'account',type:'number',label:'account size ($)',step:500},
+ {k:'riskPct',type:'number',label:'risk per trade (%)',step:0.25},
+ {k:'holdDays',type:'number',label:'time stop (days)',step:1},
+ {k:'tp3Pct',type:'number',label:'fixed target (%)',step:1}
+]);
+
+/* ==========================================================================
+   LIVE LIQUIDATION TAPE — Bybit + OKX websockets
+   ========================================================================== */
+function pushTape(ex,side,px,usdv,ts){
+  S.tape.unshift({ex,side,px,usdv,ts}); if(S.tape.length>120) S.tape.pop();
+  const el=$('liqtape');
+  el.innerHTML=S.tape.slice(0,60).map(t=>
+    `<div><span class="${t.side==='long'?'l':'s'}">${t.side==='long'?'▼ LONG ':'▲ SHORT'}</span>
+     ${big(t.usdv)} @ ${fmt(t.px,0)} <span class="mini">${t.ex} ${new Date(t.ts).toLocaleTimeString('en-GB')}</span></div>`).join('');
+  const w=S.tape.filter(t=>Date.now()-t.ts<3600e3);
+  $('tapeMeta').textContent=`${w.length} in the last hour · ${big(sum(w.map(t=>t.usdv)))}`;
+}
+function startTape(){
+  try{
+    const b=new WebSocket('wss://stream.bybit.com/v5/public/linear');
+    b.onopen=()=>b.send(JSON.stringify({op:'subscribe',args:['allLiquidation.BTCUSDT']}));
+    b.onmessage=e=>{ const m=JSON.parse(e.data); if(m.topic&&m.data)
+      m.data.forEach(d=>pushTape('bybit', d.S==='Buy'?'short':'long', +d.p, (+d.v)*(+d.p), +d.T||Date.now())); };
+    b.onclose=()=>setTimeout(startTape,15000);
+  }catch(e){}
+  try{
+    const o=new WebSocket('wss://ws.okx.com:8443/ws/v5/public');
+    o.onopen=()=>o.send(JSON.stringify({op:'subscribe',args:[{channel:'liquidation-orders',instType:'SWAP'}]}));
+    o.onmessage=e=>{ const m=JSON.parse(e.data); if(!m.data) return;
+      m.data.forEach(x=>{ if(!/^BTC-USD/.test(x.instId||x.instFamily||'')) return;
+        (x.details||[]).forEach(d=>pushTape('okx', d.posSide==='long'?'long':'short', +d.bkPx, (+d.sz)*0.01*(+d.bkPx), +d.ts)); }); };
+  }catch(e){}
+}
+
+/* ==========================================================================
+   BOOT
+   ========================================================================== */
+let timer=null, auto=true;
+async function refresh(){
+  $('btnRefresh').textContent='…';
+  try{
+    await loadAll(); recompute(); renderAll();
+  }catch(e){
+    $('banner').innerHTML=`<div class="warn err"><b>Data load failed.</b> ${e.message}<br>
+      If every feed is red: an ad-blocker or privacy extension is usually blocking api.bybit.com / okx.com. Whitelist them, or open this file in a clean browser profile.</div>`;
+  }
+  $('btnRefresh').textContent='↻ Refresh';
+}
+$('btnRefresh').onclick=refresh;
+$('btnAuto').onclick=()=>{ auto=!auto; $('btnAuto').classList.toggle('on',auto);
+  $('btnAuto').textContent=auto?'Auto 60s':'Auto off';
+  if(timer){clearInterval(timer);timer=null;} if(auto) timer=setInterval(refresh,60000); };
+timer=setInterval(refresh,60000);
+refresh().then(startTape);
+</script>
+</body>
+</html>
