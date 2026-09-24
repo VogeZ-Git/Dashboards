@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DCAS Planner</title>
+<meta name="description" content="DCAS allocation ledger: log the multiplier you read off the chart, and it runs the base-amount sizing, the cash bank, the shadow-DCA comparison and the cov(multiplier, price) test.">
+<style>
+:root{
+  --bg:#0d1117; --bg-2:#131a23; --bg-3:#18212c; --line:#243040; --line-2:#2f3d4f;
+  --fg:#d8e2ee; --fg-dim:#93a4b8; --fg-faint:#6b7c91;
+  --accent:#4da3ff; --accent-dim:#1f5fa8;
+  --long:#3fb950; --short:#f0883e; --warn:#d29922; --neutral:#a371f7;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --maxw:860px;
+}
+:root[data-theme="light"]{
+  --bg:#fbfcfd; --bg-2:#f2f5f8; --bg-3:#e8edf3; --line:#d5dde6; --line-2:#c2ccd8;
+  --fg:#1a2430; --fg-dim:#4d5c6e; --fg-faint:#76859a;
+  --accent:#0a5fc0; --accent-dim:#9dc4ee;
+  --long:#1a7f37; --short:#bc4c00; --warn:#8a6100; --neutral:#7c3fd0;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{
+  margin:0;background:var(--bg);color:var(--fg);
+  font-family:var(--sans);font-size:16px;line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:50;background:var(--bg);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:12px;padding:10px 16px;
+}
+.topbar .brand{font-family:var(--mono);font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .brand b{color:var(--fg)}
+.topbar .spacer{flex:1}
+.btn{
+  font-family:var(--mono);font-size:12px;background:var(--bg-2);color:var(--fg-dim);
+  border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer;white-space:nowrap;
+}
+.btn:hover{color:var(--fg);border-color:var(--line-2)}
+
+/* ---------- layout ---------- */
+.shell{display:flex;gap:0;align-items:flex-start;max-width:1240px;margin:0 auto}
+nav.toc{
+  position:sticky;top:53px;width:268px;flex:0 0 268px;max-height:calc(100vh - 53px);
+  overflow-y:auto;padding:24px 8px 60px 16px;border-right:1px solid var(--line);
+}
+nav.toc ol{list-style:none;margin:0;padding:0}
+nav.toc li{margin:0}
+nav.toc a{
+  display:block;padding:3px 8px;border-radius:5px;color:var(--fg-faint);
+  text-decoration:none;font-size:13.5px;line-height:1.45;border-left:2px solid transparent;
+}
+nav.toc a:hover{color:var(--fg);background:var(--bg-2)}
+nav.toc a.lvl2{padding-left:20px;font-size:12.5px}
+nav.toc a.active{color:var(--accent);border-left-color:var(--accent);background:var(--bg-2)}
+nav.toc .grp{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-faint);opacity:.75;padding:16px 8px 4px}
+
+main{flex:1;min-width:0;padding:28px 24px 120px;max-width:var(--maxw)}
+
+/* ---------- type ---------- */
+h1{font-size:30px;line-height:1.2;margin:0 0 10px;letter-spacing:-.02em}
+h2{font-size:22px;line-height:1.25;margin:56px 0 14px;letter-spacing:-.01em;padding-bottom:8px;border-bottom:1px solid var(--line)}
+h2:first-of-type{margin-top:34px}
+h3{font-size:16.5px;margin:30px 0 8px;color:var(--fg)}
+h4{font-size:14px;margin:20px 0 6px;font-family:var(--mono);color:var(--fg-dim);letter-spacing:.02em;text-transform:uppercase}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin:0 0 6px}
+li>ul,li>ol{margin-top:6px}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.88em;background:var(--bg-3);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+strong{color:var(--fg);font-weight:650}
+hr{border:0;border-top:1px solid var(--line);margin:40px 0}
+.sec-num{font-family:var(--mono);color:var(--fg-faint);font-weight:400;font-size:.72em;margin-right:10px;letter-spacing:.04em}
+
+.lede{font-size:17px;color:var(--fg-dim);margin-bottom:20px}
+.meta{font-family:var(--mono);font-size:12px;color:var(--fg-faint);line-height:1.8;margin-bottom:22px}
+.meta b{color:var(--fg-dim);font-weight:500}
+
+/* ---------- callouts ---------- */
+.box{border:1px solid var(--line);border-left-width:3px;background:var(--bg-2);border-radius:0 8px 8px 0;padding:14px 16px;margin:18px 0}
+.box>:last-child{margin-bottom:0}
+.box .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:7px;opacity:.95}
+.box.rule{border-left-color:var(--accent)} .box.rule .lbl{color:var(--accent)}
+.box.warn{border-left-color:var(--warn)} .box.warn .lbl{color:var(--warn)}
+.box.quote{border-left-color:var(--fg-faint);font-style:italic;color:var(--fg-dim)}
+.box.quote .lbl{color:var(--fg-faint);font-style:normal}
+.box.ex{border-left-color:var(--neutral)} .box.ex .lbl{color:var(--neutral)}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:440px}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{
+  background:var(--bg-3);font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--fg-dim);font-weight:500;white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--bg-2)}
+td.num,th.num{text-align:right;font-family:var(--mono);white-space:nowrap}
+.tick{font-family:var(--mono);color:var(--fg);white-space:nowrap}
+.good{color:var(--long)} .mid{color:var(--warn)} .bad{color:var(--short)}
+
+/* ---------- steps ---------- */
+ol.steps{list-style:none;padding:0;counter-reset:s;margin:18px 0}
+ol.steps>li{
+  counter-increment:s;position:relative;padding:0 0 0 42px;margin:0 0 16px;min-height:28px;
+}
+ol.steps>li::before{
+  content:counter(s);position:absolute;left:0;top:1px;width:26px;height:26px;border-radius:50%;
+  background:var(--bg-3);border:1px solid var(--line-2);color:var(--accent);
+  font-family:var(--mono);font-size:12px;display:flex;align-items:center;justify-content:center;
+}
+ol.steps>li b{display:block;margin-bottom:2px}
+
+/* ---------- checklist ---------- */
+ul.check{list-style:none;padding:0;margin:14px 0}
+ul.check li{position:relative;padding-left:26px;margin-bottom:8px}
+ul.check li::before{
+  content:"";position:absolute;left:0;top:6px;width:13px;height:13px;
+  border:1px solid var(--line-2);border-radius:3px;background:var(--bg-3);
+}
+
+/* ---------- calculators ---------- */
+.calc{border:1px solid var(--line-2);border-radius:10px;background:var(--bg-2);padding:16px;margin:20px 0}
+.calc h4{margin-top:0}
+.calc .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:12px;margin-bottom:14px}
+.calc label{display:block;font-size:11.5px;font-family:var(--mono);color:var(--fg-dim);margin-bottom:4px;letter-spacing:.03em}
+.calc input{
+  width:100%;background:var(--bg);border:1px solid var(--line-2);border-radius:6px;
+  color:var(--fg);font-family:var(--mono);font-size:14px;padding:7px 9px;
+}
+.calc input:focus{outline:none;border-color:var(--accent)}
+.out{background:var(--bg-3);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:13.5px;line-height:1.85}
+.out .k{color:var(--fg-faint)}
+.out .v{color:var(--fg);font-weight:600}
+.out .v.pos{color:var(--long)} .out .v.neg{color:var(--short)}
+.out .note{display:block;margin-top:8px;font-family:var(--sans);font-size:12.5px;color:var(--fg-faint);line-height:1.5}
+
+/* ---------- misc ---------- */
+.pill{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid var(--line-2);color:var(--fg-dim);background:var(--bg-3);margin-right:6px;vertical-align:2px}
+.pill.a{color:var(--accent);border-color:var(--accent-dim)}
+.pill.b{color:var(--neutral);border-color:var(--neutral)}
+.src{font-family:var(--mono);font-size:11px;color:var(--fg-faint)}
+.seq{font-family:var(--mono);font-size:13px;background:var(--bg-3);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:14px 0;overflow-x:auto;white-space:pre;line-height:1.8}
+dl.gloss{margin:16px 0}
+dl.gloss dt{font-family:var(--mono);font-size:13.5px;color:var(--accent);margin-top:14px}
+dl.gloss dd{margin:2px 0 0;padding-left:0;color:var(--fg-dim);font-size:14.5px}
+footer{border-top:1px solid var(--line);margin-top:70px;padding-top:20px;font-size:12.5px;color:var(--fg-faint)}
+
+/* ---------- responsive ---------- */
+@media (max-width:980px){
+  nav.toc{display:none}
+  main{padding:22px 16px 90px;max-width:100%}
+  h1{font-size:25px}
+  h2{font-size:20px;margin-top:44px}
+}
+@media print{
+  .topbar,nav.toc,.btn{display:none}
+  body{background:#fff;color:#000;font-size:10.5pt}
+  main{max-width:100%;padding:0}
+  h2{page-break-after:avoid} .tw,.box,.calc{page-break-inside:avoid}
+  a{color:#000;text-decoration:none}
+}
+</style>
+<style>
+a.btn{text-decoration:none;display:inline-block}
+main{max-width:1100px}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin:0 0 22px;flex-wrap:wrap}
+.tab{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+  background:none;border:1px solid transparent;border-bottom:none;color:var(--fg-faint);
+  padding:8px 14px;cursor:pointer;border-radius:7px 7px 0 0;margin-bottom:-1px}
+.tab:hover{color:var(--fg)}
+.tab.on{color:var(--accent);background:var(--bg-2);border-color:var(--line);border-bottom-color:var(--bg-2)}
+.pane{display:none} .pane.on{display:block}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:16px 0}
+.card{background:var(--bg-2);border:1px solid var(--line);border-radius:9px;padding:11px 13px}
+.card .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-faint);display:block;margin-bottom:5px}
+.card .v{font-family:var(--mono);font-size:19px;color:var(--fg);line-height:1.2}
+.card .v.pos{color:var(--long)} .card .v.neg{color:var(--short)} .card .v.warnc{color:var(--warn)}
+.card .sub{font-family:var(--mono);font-size:11px;color:var(--fg-faint);margin-top:4px;display:block}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:12px}
+label.f{display:block;font-size:11.5px;font-family:var(--mono);color:var(--fg-dim);margin-bottom:4px;letter-spacing:.03em}
+input.f,select.f,textarea.f{width:100%;background:var(--bg);border:1px solid var(--line-2);border-radius:6px;
+  color:var(--fg);font-family:var(--mono);font-size:14px;padding:7px 9px}
+input.f:focus,select.f:focus{outline:none;border-color:var(--accent)}
+.btn.primary{background:var(--accent-dim);border-color:var(--accent);color:#fff}
+.btn.danger{border-color:var(--short);color:var(--short)}
+.btn.sm{font-size:11px;padding:3px 7px}
+.flag{font-family:var(--mono);font-size:12px;color:var(--warn);margin-top:8px;display:block}
+.flag.ok{color:var(--long)}
+.chartwrap{background:var(--bg-2);border:1px solid var(--line);border-radius:9px;padding:12px;margin:16px 0}
+.chartwrap h4{margin:0 0 8px;font-size:13px;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--fg-dim);font-weight:500}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.legend{font-family:var(--mono);font-size:11px;color:var(--fg-faint);margin-top:6px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 4px 0 12px;vertical-align:0}
+.empty{color:var(--fg-faint);font-style:italic;padding:14px 0}
+.mini{font-family:var(--mono);font-size:11.5px;color:var(--fg-faint)}
+td .btn{margin-right:4px}
+.badge{font-family:var(--mono);font-size:10.5px;padding:1px 6px;border-radius:4px;border:1px solid var(--line-2);color:var(--fg-dim)}
+.badge.below{color:var(--long);border-color:var(--long)}
+.badge.above{color:var(--warn);border-color:var(--warn)}
+.badge.red{color:var(--short);border-color:var(--short)}
+.badge.none{opacity:.7}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand"><b>DCAS</b> &nbsp;/&nbsp; PLANNER</span>
+  <span class="spacer"></span>
+  <a class="btn" href="dcas_guide.html">→ field manual</a>
+  <button class="btn" onclick="toggleTheme()" id="themeBtn">☾ dark</button>
+</div>
+
+<div class="shell">
+<main>
+
+<h1>DCAS Planner</h1>
+<p class="lede">You read the multiplier off the chart. This does the money: base-amount sizing, the cash bank that funds the &gt;1× buys, the shadow-DCA comparison, and the one statistic that says whether the model is earning its keep — cov(multiplier, price).</p>
+
+<div class="box warn">
+<span class="lbl">What this is not</span>
+It does not compute or approximate the DCAS multiplier — that lives in a closed TradingView indicator and nothing here reconstructs it. Every multiplier is a number you typed in after reading the chart. See the <a href="dcas_guide.html">field manual</a> §07 for what the model does not disclose.
+</div>
+
+<div class="tabs">
+  <button class="tab on" data-p="plan">Plan</button>
+  <button class="tab" data-p="ledger">Ledger</button>
+  <button class="tab" data-p="sleeves">Sleeves</button>
+  <button class="tab" data-p="data">Settings &amp; data</button>
+</div>
+
+<!-- ================= PLAN ================= -->
+<section class="pane on" id="p-plan">
+
+  <div class="row" style="max-width:420px">
+    <div>
+      <label class="f" for="pl_sleeve">Sleeve</label>
+      <select class="f" id="pl_sleeve"></select>
+    </div>
+  </div>
+
+  <div class="cards" id="pl_cards"></div>
+
+  <div class="calc">
+    <h4>Log this period</h4>
+    <div class="row">
+      <div><label class="f" for="e_date">Date</label><input class="f" type="date" id="e_date"></div>
+      <div><label class="f" for="e_side">Oscillator</label>
+        <select class="f" id="e_side">
+          <option value="below">below baseline</option>
+          <option value="above">above baseline</option>
+        </select></div>
+      <div><label class="f" for="e_color">Signal</label>
+        <select class="f" id="e_color">
+          <option value="green">green triangle</option>
+          <option value="red">red</option>
+          <option value="none">no triangle</option>
+        </select></div>
+      <div><label class="f" for="e_mult">Multiplier</label><input class="f" type="number" step="0.01" min="0" id="e_mult" placeholder="1.79"></div>
+      <div><label class="f" for="e_price">Price</label><input class="f" type="number" step="any" min="0" id="e_price" placeholder="required"></div>
+      <div><label class="f" for="e_z">z / band (optional)</label><input class="f" type="number" step="any" id="e_z" placeholder="from MR scan"></div>
+    </div>
+    <div class="row">
+      <div style="grid-column:1/-1"><label class="f" for="e_note">Note (optional)</label><input class="f" type="text" id="e_note" placeholder="e.g. first sub-baseline print since Jan-24"></div>
+    </div>
+    <div class="out" id="e_out">Pick a sleeve and fill the row.</div>
+    <div style="margin-top:12px">
+      <button class="btn primary" id="e_add">add entry</button>
+      <button class="btn" id="e_skip">log a skip (0×)</button>
+      <span class="mini" style="margin-left:10px">Log every period, including skips — the DCA comparison is undefined without them.</span>
+    </div>
+  </div>
+
+  <div class="tw">
+  <table>
+  <thead><tr><th>Oscillator</th><th>Signal</th><th class="num">Multiplier</th><th>Action</th></tr></thead>
+  <tbody>
+  <tr><td class="tick">below</td><td><span class="good">green</span></td><td class="num tick">&gt; 1</td><td>Stack hard — draw on the bank</td></tr>
+  <tr><td class="tick">above</td><td><span class="good">green</span></td><td class="num tick">0.5 max</td><td>Trickle — bank the other half</td></tr>
+  <tr><td class="tick">either</td><td><span class="bad">red</span></td><td class="num tick">0</td><td>No buy — bank the lot</td></tr>
+  <tr><td class="tick">either</td><td>none</td><td class="num tick">0</td><td>No buy — bank the lot</td></tr>
+  </tbody>
+  </table>
+  </div>
+
+</section>
+
+<!-- ================= LEDGER ================= -->
+<section class="pane" id="p-ledger">
+  <div class="row" style="max-width:420px">
+    <div><label class="f" for="lg_sleeve">Filter</label><select class="f" id="lg_sleeve"></select></div>
+  </div>
+  <div id="lg_body"></div>
+</section>
+
+<!-- ================= SLEEVES ================= -->
+<section class="pane" id="p-sleeves">
+  <div class="calc">
+    <h4 id="sv_title">Add a sleeve</h4>
+    <div class="row">
+      <div><label class="f" for="sv_ticker">Ticker</label><input class="f" type="text" id="sv_ticker" placeholder="BTC"></div>
+      <div><label class="f" for="sv_base">Base per period</label><input class="f" type="number" step="any" min="0" id="sv_base" placeholder="100"></div>
+      <div><label class="f" for="sv_freq">Frequency</label>
+        <select class="f" id="sv_freq">
+          <option>weekly</option><option>bi-weekly</option><option>monthly</option><option>daily</option>
+        </select></div>
+      <div><label class="f" for="sv_bank">Opening bank</label><input class="f" type="number" step="any" id="sv_bank" placeholder="0"></div>
+      <div><label class="f" for="sv_ceiling">Bank ceiling (optional)</label><input class="f" type="number" step="any" id="sv_ceiling" placeholder="no ceiling"></div>
+    </div>
+    <div style="margin-top:4px">
+      <button class="btn primary" id="sv_save">save sleeve</button>
+      <button class="btn" id="sv_reset" style="display:none">cancel edit</button>
+    </div>
+  </div>
+  <div id="sv_body"></div>
+</section>
+
+<!-- ================= DATA ================= -->
+<section class="pane" id="p-data">
+  <div class="calc">
+    <h4>Settings</h4>
+    <div class="row">
+      <div><label class="f" for="st_cur">Currency symbol</label><input class="f" type="text" id="st_cur" maxlength="3"></div>
+      <div><label class="f" for="st_yield">Bank yield, annual %</label><input class="f" type="number" step="0.01" id="st_yield" placeholder="0"></div>
+    </div>
+    <span class="mini">The bank yield is credited on the time-weighted bank balance between logged periods, so the DCAS-vs-DCA comparison charges DCA for having deployed capital earlier. Set it to your actual cash rate, or 0 to ignore it.</span>
+    <div style="margin-top:12px"><button class="btn primary" id="st_save">save settings</button></div>
+  </div>
+
+  <div class="calc">
+    <h4>Data</h4>
+    <p class="mini">Everything lives in this browser's local storage for this page's address only. It does not sync between your PC and laptop, and it is not backed up — export the JSON into <span class="tick">L:\Sync 2\Investor\Trading Brain\DCAS\</span> whenever you have logged something you would not want to retype.</p>
+    <div style="margin-top:10px">
+      <button class="btn primary" id="d_exp">export json</button>
+      <button class="btn" id="d_csv">export csv</button>
+      <button class="btn" id="d_imp">import json</button>
+      <button class="btn" id="d_demo">load example data</button>
+      <button class="btn danger" id="d_clr">clear everything</button>
+      <input type="file" id="d_file" accept=".json,application/json" style="display:none">
+    </div>
+    <div class="out" id="d_out" style="margin-top:12px">—</div>
+  </div>
+</section>
+
+<footer>
+DCAS Planner · built 2026-09-24 · companion to the <a href="dcas_guide.html">DCAS Field Manual</a> · the multiplier is read from a closed third-party indicator; everything else here is arithmetic on numbers you entered.
+</footer>
+
+</main>
+</div>
+<script>
+/* ---------------- theme ---------------- */
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  var b=document.getElementById('themeBtn');
+  if(b) b.textContent = t==='dark' ? '☾ dark' : '☀ light';
+  try{localStorage.setItem('dcas-theme',t)}catch(e){}
+}
+function toggleTheme(){
+  applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
+}
+(function(){
+  var t=null; try{t=localStorage.getItem('dcas-theme')}catch(e){}
+  if(!t) t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';
+  applyTheme(t);
+})();
+
+/*==CORE==*/
+/* ---- pure maths: no DOM, no storage ---- */
+function days(a,b){ return (new Date(b)-new Date(a))/86400000; }
+
+function ruleFlags(e){
+  var out=[];
+  var m=+e.mult||0;
+  if(e.color==='red' && m>0) out.push('red signal with a non-zero multiplier — the rule says no buy');
+  if(e.color==='none' && m>0) out.push('no triangle but a non-zero multiplier — the rule says no buy');
+  if(e.color==='green' && e.side==='above' && m>0.5+1e-9) out.push('above baseline caps the multiplier at 0.5 — '+m+' is out of spec');
+  if(e.color==='green' && m===0) out.push('green triangle logged with a 0 multiplier — check the label');
+  if(!(+e.price>0)) out.push('no price — this entry cannot enter the average-cost or covariance maths');
+  return out;
+}
+
+function stats(sleeve, entries, opts){
+  opts = opts||{};
+  var base=+sleeve.base||0, bank=+sleeve.bank||0, y=(+opts.yield||0)/100;
+  var es = entries.slice().sort(function(a,b){ return a.date<b.date?-1:a.date>b.date?1:0; });
+  var budget=0, deployed=0, units=0, dcaUnits=0, interest=0, prev=null, maxBank=bank, minBank=bank;
+  var series=[], overdraft=0;
+  es.forEach(function(e){
+    var m=+e.mult||0, p=+e.price||0, spend=base*m;
+    if(prev && y) interest += bank * y * days(prev,e.date)/365;
+    budget += base;
+    bank = bank + base - spend;
+    deployed += spend;
+    if(p>0){ units += spend/p; dcaUnits += base/p; }
+    if(bank<minBank) minBank=bank;
+    if(bank>maxBank) maxBank=bank;
+    if(bank<0) overdraft++;
+    series.push({date:e.date, price:p, mult:m, spend:spend, bank:bank, units:units, deployed:deployed});
+    prev=e.date;
+  });
+  var mark = (+sleeve.mark>0) ? +sleeve.mark : (series.length ? series[series.length-1].price : 0);
+  var priced = es.filter(function(e){ return +e.price>0; });
+  var cv = cov(priced.map(function(e){return +e.mult||0}), priced.map(function(e){return +e.price}));
+  var cash = bank + interest;
+  var unitsEq = mark>0 ? units + cash/mark : units;
+  var dcasVal = units*mark + cash;
+  var dcaVal  = dcaUnits*mark;
+  return {
+    n:es.length, base:base, budget:budget, deployed:deployed, bank:bank, interest:interest,
+    minBank:minBank, maxBank:maxBank, overdraft:overdraft,
+    units:units, dcaUnits:dcaUnits,
+    dcasAvg: units>0 ? deployed/units : 0,
+    dcaAvg:  dcaUnits>0 ? budget/dcaUnits : 0,
+    unitEdge: dcaUnits>0 ? units/dcaUnits-1 : 0,
+    unitsEq: unitsEq,
+    unitEdgeEq: dcaUnits>0 ? unitsEq/dcaUnits-1 : 0,
+    costEdge: (units>0&&dcaUnits>0) ? (budget/dcaUnits)/(deployed/units)-1 : 0,
+    mark:mark, dcasVal:dcasVal, dcaVal:dcaVal,
+    dcasRoi: budget>0 ? (dcasVal-budget)/budget : 0,
+    dcaRoi:  budget>0 ? (dcaVal-budget)/budget : 0,
+    dcasRoiOnDeployed: deployed>0 ? (units*mark-deployed)/deployed : 0,
+    cov:cv.cov, corr:cv.corr, covN:priced.length,
+    series:series, entries:es
+  };
+}
+
+function cov(x,y){
+  var n=x.length;
+  if(n<2) return {cov:NaN, corr:NaN};
+  var mx=0,my=0;
+  for(var i=0;i<n;i++){ mx+=x[i]; my+=y[i]; }
+  mx/=n; my/=n;
+  var sxy=0,sxx=0,syy=0;
+  for(var j=0;j<n;j++){
+    var dx=x[j]-mx, dy=y[j]-my;
+    sxy+=dx*dy; sxx+=dx*dx; syy+=dy*dy;
+  }
+  var c=sxy/n;
+  var d=Math.sqrt((sxx/n)*(syy/n));
+  return {cov:c, corr: d>0 ? c/d : NaN};
+}
+/*==/CORE==*/
+
+/* ---------------- state ---------------- */
+var KEY='dcas-planner-v1';
+var DB={settings:{cur:'$', yield:0}, sleeves:[], entries:[]};
+var editSleeve=null;
+
+function load(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(raw){
+      var o=JSON.parse(raw);
+      if(o && typeof o==='object'){
+        DB.settings=Object.assign({cur:'$',yield:0}, o.settings||{});
+        DB.sleeves=Array.isArray(o.sleeves)?o.sleeves:[];
+        DB.entries=Array.isArray(o.entries)?o.entries:[];
+      }
+    }
+  }catch(e){ note('Could not read local storage — running in memory only for this visit.'); }
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(DB)); }
+  catch(e){ note('Could not write to local storage. Export the JSON before closing this tab.'); }
+}
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function note(m){ var o=document.getElementById('d_out'); if(o) o.textContent=m; }
+
+/* ---------------- formatting ---------------- */
+function cur(x){
+  if(!isFinite(x)) return '—';
+  var s=DB.settings.cur||'$';
+  return (x<0?'-':'')+s+Math.abs(x).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function num(x,d){
+  if(!isFinite(x)) return '—';
+  return x.toLocaleString(undefined,{maximumFractionDigits:(d===undefined?4:d)});
+}
+function pct(x,d){ return isFinite(x) ? (x>=0?'+':'')+(x*100).toFixed(d===undefined?1:d)+'%' : '—'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]}); }
+
+/* ---------------- tabs ---------------- */
+document.querySelectorAll('.tab').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('on',x===b)});
+    document.querySelectorAll('.pane').forEach(function(p){p.classList.toggle('on',p.id==='p-'+b.dataset.p)});
+    render();
+  });
+});
+
+/* ---------------- sleeve select ---------------- */
+function fillSelects(){
+  var cur=document.getElementById('pl_sleeve').value;
+  var opts=DB.sleeves.map(function(s){return '<option value="'+s.id+'">'+esc(s.ticker)+'</option>'}).join('');
+  document.getElementById('pl_sleeve').innerHTML = opts || '<option value="">— add a sleeve first —</option>';
+  if(cur && DB.sleeves.some(function(s){return s.id===cur})) document.getElementById('pl_sleeve').value=cur;
+  var lg=document.getElementById('lg_sleeve'), lcur=lg.value;
+  lg.innerHTML='<option value="">all sleeves</option>'+opts;
+  if(lcur) lg.value=lcur;
+}
+function currentSleeve(){
+  var id=document.getElementById('pl_sleeve').value;
+  return DB.sleeves.find(function(s){return s.id===id})||null;
+}
+function entriesOf(id){ return DB.entries.filter(function(e){return e.sleeve===id}); }
+
+/* ---------------- PLAN ---------------- */
+function renderPlan(){
+  var s=currentSleeve(), box=document.getElementById('pl_cards');
+  if(!s){ box.innerHTML='<div class="empty">No sleeve selected. Create one on the Sleeves tab.</div>'; previewEntry(); return; }
+  var st=stats(s, entriesOf(s.id), {yield:DB.settings.yield});
+  var ceil=+s.ceiling||0;
+  var ceilHit = ceil>0 && st.bank>=ceil;
+  box.innerHTML=[
+    card('bank available', cur(st.bank), st.bank<0?'neg':(ceilHit?'warnc':''),
+         ceil>0 ? ('ceiling '+cur(ceil)+(ceilHit?' — reached':'')) : 'no ceiling set'),
+    card('base per period', cur(st.base), '', s.freq||''),
+    card('periods logged', String(st.n), '', st.n?('last '+st.series[st.n-1].date):'nothing yet'),
+    card('deployed / budget', cur(st.deployed), '', 'of '+cur(st.budget)+' set aside'),
+    card('units held', num(st.units), '', 'avg '+cur(st.dcasAvg)),
+    card('vs shadow DCA', pct(st.unitEdgeEq), st.unitEdgeEq>=0?'pos':'neg', 'units incl. bank at mark')
+  ].join('');
+  previewEntry();
+}
+function card(k,v,cls,sub){
+  return '<div class="card"><span class="k">'+esc(k)+'</span><span class="v '+(cls||'')+'">'+v+'</span>'+
+         (sub?'<span class="sub">'+esc(sub)+'</span>':'')+'</div>';
+}
+
+function readForm(){
+  return {
+    date: document.getElementById('e_date').value,
+    side: document.getElementById('e_side').value,
+    color: document.getElementById('e_color').value,
+    mult: document.getElementById('e_mult').value===''?NaN:+document.getElementById('e_mult').value,
+    price: document.getElementById('e_price').value===''?NaN:+document.getElementById('e_price').value,
+    z: document.getElementById('e_z').value===''?null:+document.getElementById('e_z').value,
+    note: document.getElementById('e_note').value
+  };
+}
+function previewEntry(){
+  var out=document.getElementById('e_out'), s=currentSleeve();
+  if(!s){ out.innerHTML='<span class="k">Add a sleeve first.</span>'; return; }
+  var f=readForm();
+  if(!f.date || !isFinite(f.mult)){ out.innerHTML='<span class="k">Enter a date and a multiplier (0 for a skip).</span>'; return; }
+  var st=stats(s, entriesOf(s.id), {yield:DB.settings.yield});
+  var spend=st.base*f.mult, delta=st.base-spend, bankAfter=st.bank+delta;
+  var units=isFinite(f.price)&&f.price>0 ? spend/f.price : NaN;
+  var flags=ruleFlags(f);
+  out.innerHTML=
+    '<span class="k">Buy</span> <span class="v">'+cur(spend)+'</span>'+
+    (isFinite(units)?'  <span class="k">≈</span> <span class="v">'+num(units)+'</span> <span class="k">units</span>':'')+'<br>'+
+    '<span class="k">Bank</span> <span class="v">'+cur(st.bank)+'</span> <span class="k">→</span> <span class="v'+(bankAfter<0?' neg':'')+'">'+cur(bankAfter)+'</span>'+
+    ' <span class="k">('+(delta>=0?'+':'')+cur(delta).replace('-','')+(delta>=0?' banked':' drawn')+')</span>'+
+    (bankAfter<0?'<span class="note">Bank goes negative: this buy needs '+cur(-bankAfter)+' of capital you have not set aside yet. Fund it, or fill the order smaller and log what you actually bought.</span>':'')+
+    (flags.length?'<span class="note">'+flags.map(function(x){return '⚠ '+esc(x)}).join('<br>')+'</span>':'');
+}
+['e_date','e_mult','e_price','e_side','e_color'].forEach(function(id){
+  document.getElementById(id).addEventListener('input',previewEntry);
+  document.getElementById(id).addEventListener('change',previewEntry);
+});
+document.getElementById('pl_sleeve').addEventListener('change',render);
+
+document.getElementById('e_add').addEventListener('click',function(){
+  var s=currentSleeve(); if(!s){ alert('Add a sleeve first.'); return; }
+  var f=readForm();
+  if(!f.date){ alert('Date is required.'); return; }
+  if(!isFinite(f.mult)||f.mult<0){ alert('Multiplier must be 0 or more.'); return; }
+  if(f.mult>0 && !(f.price>0)){ alert('A buy needs a price.'); return; }
+  DB.entries.push({id:uid(), sleeve:s.id, date:f.date, side:f.side, color:f.color,
+                   mult:f.mult, price:isFinite(f.price)?f.price:null, z:f.z, note:f.note});
+  save();
+  document.getElementById('e_mult').value='';
+  document.getElementById('e_note').value='';
+  render();
+});
+document.getElementById('e_skip').addEventListener('click',function(){
+  document.getElementById('e_mult').value='0';
+  document.getElementById('e_color').value='none';
+  previewEntry();
+});
+
+/* ---------------- LEDGER ---------------- */
+function renderLedger(){
+  var f=document.getElementById('lg_sleeve').value;
+  var rows=DB.entries.filter(function(e){return !f||e.sleeve===f})
+    .sort(function(a,b){ return a.date<b.date?1:a.date>b.date?-1:0; });
+  var body=document.getElementById('lg_body');
+  if(!rows.length){ body.innerHTML='<div class="empty">Nothing logged yet.</div>'; return; }
+  var html='<div class="tw"><table><thead><tr><th>Date</th><th>Sleeve</th><th>State</th><th class="num">Mult</th>'+
+           '<th class="num">Price</th><th class="num">Spend</th><th class="num">Units</th><th class="num">z</th><th>Note</th><th></th></tr></thead><tbody>';
+  rows.forEach(function(e){
+    var s=DB.sleeves.find(function(x){return x.id===e.sleeve})||{ticker:'?',base:0};
+    var spend=(+s.base||0)*(+e.mult||0);
+    var u=(+e.price>0)?spend/e.price:NaN;
+    var bad=ruleFlags(e).length;
+    html+='<tr><td class="tick">'+esc(e.date)+'</td><td class="tick">'+esc(s.ticker)+'</td><td>'+
+      '<span class="badge '+(e.side==='below'?'below':'above')+'">'+esc(e.side)+'</span> '+
+      '<span class="badge '+(e.color==='red'?'red':e.color==='none'?'none':'')+'">'+esc(e.color)+'</span>'+
+      (bad?' <span class="badge red" title="breaks the rule table">!</span>':'')+'</td>'+
+      '<td class="num">'+num(e.mult,2)+'</td><td class="num">'+(e.price?num(e.price,4):'—')+'</td>'+
+      '<td class="num">'+cur(spend)+'</td><td class="num">'+(isFinite(u)?num(u):'—')+'</td>'+
+      '<td class="num">'+(e.z==null?'—':num(e.z,2))+'</td><td class="mini">'+esc(e.note||'')+'</td>'+
+      '<td><button class="btn sm danger" data-del="'+e.id+'">del</button></td></tr>';
+  });
+  html+='</tbody></table></div>';
+  body.innerHTML=html;
+  body.querySelectorAll('[data-del]').forEach(function(b){
+    b.addEventListener('click',function(){
+      if(!confirm('Delete this entry?')) return;
+      DB.entries=DB.entries.filter(function(x){return x.id!==b.dataset.del});
+      save(); render();
+    });
+  });
+}
+document.getElementById('lg_sleeve').addEventListener('change',renderLedger);
+
+/* ---------------- SLEEVES ---------------- */
+function renderSleeves(){
+  var body=document.getElementById('sv_body');
+  if(!DB.sleeves.length){ body.innerHTML='<div class="empty">No sleeves yet. A sleeve is one asset with one base allocation and its own bank.</div>'; return; }
+  body.innerHTML=DB.sleeves.map(function(s){
+    var st=stats(s, entriesOf(s.id), {yield:DB.settings.yield});
+    var covTxt = isFinite(st.cov) ? 'cov '+num(st.cov,1)+' · n = '+st.covN+' · want < 0' : 'needs 2+ priced periods';
+    var covCls = isFinite(st.corr) ? (st.corr<-0.1?'pos':(st.corr>0.1?'neg':'warnc')) : '';
+    return '<div class="chartwrap">'+
+      '<h4>'+esc(s.ticker)+' &nbsp;<span style="color:var(--fg-faint);text-transform:none;letter-spacing:0">'+esc(s.freq||'')+' · base '+cur(+s.base||0)+'</span>'+
+      '<span style="float:right"><button class="btn sm" data-edit="'+s.id+'">edit</button>'+
+      '<button class="btn sm danger" data-delsleeve="'+s.id+'">delete</button></span></h4>'+
+
+      '<div class="row" style="max-width:260px;margin-top:10px">'+
+        '<div><label class="f">Mark price</label><input class="f" type="number" step="any" data-mark="'+s.id+'" value="'+(s.mark||'')+'" placeholder="'+(st.mark||'')+'"></div>'+
+      '</div>'+
+
+      '<div class="cards">'+
+        card('DCAS avg cost', cur(st.dcasAvg), st.dcasAvg&&st.dcaAvg?(st.dcasAvg<st.dcaAvg?'pos':'neg'):'', 'DCA '+cur(st.dcaAvg))+
+        card('units held', num(st.units), '', 'plus bank → '+num(st.unitsEq)+' vs DCA '+num(st.dcaUnits))+
+        card('unit edge vs DCA', pct(st.unitEdgeEq), st.unitEdgeEq>=0?'pos':'neg', 'bank deployed at mark')+
+        card('entry-price edge', pct(st.costEdge), st.costEdge>=0?'pos':'neg', 'avg cost, DCA ÷ DCAS')+
+        card('capital deployed', cur(st.deployed), '', 'DCA '+cur(st.budget))+
+        card('bank + interest', cur(st.bank+st.interest), st.bank<0?'neg':'', st.interest?('incl '+cur(st.interest)+' yield'):'no yield credited')+
+        card('ROI on budget', pct(st.dcasRoi), st.dcasRoi>=0?'pos':'neg', 'DCA '+pct(st.dcaRoi)+' @ '+cur(st.mark)+' · edge '+pct(st.dcasRoi-st.dcaRoi))+
+        card('corr(mult, price)', isFinite(st.corr)?num(st.corr,2):'—', covCls, covTxt)+
+      '</div>'+
+
+      (st.overdraft?'<span class="flag">⚠ the bank went negative on '+st.overdraft+' period'+(st.overdraft>1?'s':'')+' — those buys were funded from outside the plan</span>':'')+
+      (isFinite(st.corr)&&st.corr>0 ? '<span class="flag">⚠ cov(mult, price) is positive on this sleeve: the multiplier has been larger at higher prices, which is the opposite of the premise. See field manual §8.1.</span>' : '')+
+      (isFinite(st.corr)&&st.corr<-0.1 ? '<span class="flag ok">✓ negative covariance — bigger buys have landed at lower prices, which is what the model claims to do.</span>' : '')+
+
+      (st.n>1 ? chartPrice(st, s) + chartBank(st) : '<div class="empty">Two or more logged periods and the charts appear here.</div>')+
+    '</div>';
+  }).join('');
+
+  body.querySelectorAll('[data-edit]').forEach(function(b){ b.addEventListener('click',function(){ startEdit(b.dataset.edit); }); });
+  body.querySelectorAll('[data-delsleeve]').forEach(function(b){ b.addEventListener('click',function(){
+    var s=DB.sleeves.find(function(x){return x.id===b.dataset.delsleeve});
+    var n=entriesOf(b.dataset.delsleeve).length;
+    if(!confirm('Delete sleeve '+(s?s.ticker:'')+' and its '+n+' logged period(s)?')) return;
+    DB.sleeves=DB.sleeves.filter(function(x){return x.id!==b.dataset.delsleeve});
+    DB.entries=DB.entries.filter(function(x){return x.sleeve!==b.dataset.delsleeve});
+    save(); render();
+  }); });
+  body.querySelectorAll('[data-mark]').forEach(function(i){ i.addEventListener('change',function(){
+    var s=DB.sleeves.find(function(x){return x.id===i.dataset.mark});
+    if(!s) return;
+    s.mark = i.value===''?null:+i.value;
+    save(); renderSleeves();
+  }); });
+}
+
+function startEdit(id){
+  var s=DB.sleeves.find(function(x){return x.id===id}); if(!s) return;
+  editSleeve=id;
+  document.getElementById('sv_title').textContent='Edit sleeve '+s.ticker;
+  document.getElementById('sv_ticker').value=s.ticker||'';
+  document.getElementById('sv_base').value=s.base||'';
+  document.getElementById('sv_freq').value=s.freq||'weekly';
+  document.getElementById('sv_bank').value=s.bank||0;
+  document.getElementById('sv_ceiling').value=s.ceiling||'';
+  document.getElementById('sv_reset').style.display='';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.getElementById('sv_reset').addEventListener('click',function(){
+  editSleeve=null;
+  document.getElementById('sv_title').textContent='Add a sleeve';
+  ['sv_ticker','sv_base','sv_bank','sv_ceiling'].forEach(function(i){document.getElementById(i).value=''});
+  document.getElementById('sv_reset').style.display='none';
+});
+document.getElementById('sv_save').addEventListener('click',function(){
+  var t=document.getElementById('sv_ticker').value.trim().toUpperCase();
+  var b=+document.getElementById('sv_base').value;
+  if(!t){ alert('Ticker is required.'); return; }
+  if(!(b>0)){ alert('Base per period must be greater than 0.'); return; }
+  var payload={
+    ticker:t, base:b, freq:document.getElementById('sv_freq').value,
+    bank:+document.getElementById('sv_bank').value||0,
+    ceiling:document.getElementById('sv_ceiling').value===''?null:+document.getElementById('sv_ceiling').value
+  };
+  if(editSleeve){
+    var s=DB.sleeves.find(function(x){return x.id===editSleeve});
+    Object.assign(s,payload);
+  }else{
+    DB.sleeves.push(Object.assign({id:uid(), mark:null}, payload));
+  }
+  save();
+  document.getElementById('sv_reset').click();
+  render();
+});
+
+/* ---------------- charts ---------------- */
+function scale(vals){
+  var lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals);
+  if(lo===hi){ lo-=1; hi+=1; }
+  var pad=(hi-lo)*0.08;
+  return {lo:lo-pad, hi:hi+pad};
+}
+function chartPrice(st,s){
+  var W=760,H=200,L=52,R=14,T=12,B=26;
+  var pts=st.series.filter(function(p){return p.price>0});
+  if(pts.length<2) return '';
+  var ys=scale(pts.map(function(p){return p.price}));
+  var x=function(i){ return L+(W-L-R)*(pts.length===1?0:i/(pts.length-1)); };
+  var y=function(v){ return T+(H-T-B)*(1-(v-ys.lo)/(ys.hi-ys.lo)); };
+  var path=pts.map(function(p,i){ return (i?'L':'M')+x(i).toFixed(1)+' '+y(p.price).toFixed(1); }).join(' ');
+  var maxM=Math.max.apply(null,pts.map(function(p){return p.mult})) || 1;
+  var dots=pts.map(function(p,i){
+    if(!(p.mult>0)) return '<circle cx="'+x(i).toFixed(1)+'" cy="'+y(p.price).toFixed(1)+'" r="2.5" fill="none" stroke="var(--fg-faint)" stroke-width="1"/>';
+    var r=3+5*Math.sqrt(p.mult/maxM);
+    var col=p.mult>1?'var(--long)':'var(--warn)';
+    return '<circle cx="'+x(i).toFixed(1)+'" cy="'+y(p.price).toFixed(1)+'" r="'+r.toFixed(1)+'" fill="'+col+'" fill-opacity="0.55" stroke="'+col+'"/>';
+  }).join('');
+  var ticks=[ys.lo,(ys.lo+ys.hi)/2,ys.hi].map(function(v){
+    return '<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v).toFixed(1)+'" y2="'+y(v).toFixed(1)+'" stroke="var(--line)" stroke-width="1"/>'+
+           '<text x="'+(L-7)+'" y="'+(y(v)+4).toFixed(1)+'" text-anchor="end" font-size="10" font-family="monospace" fill="var(--fg-faint)">'+num(v,2)+'</text>';
+  }).join('');
+  var lbl='<text x="'+L+'" y="'+(H-8)+'" font-size="10" font-family="monospace" fill="var(--fg-faint)">'+pts[0].date+'</text>'+
+          '<text x="'+(W-R)+'" y="'+(H-8)+'" text-anchor="end" font-size="10" font-family="monospace" fill="var(--fg-faint)">'+pts[pts.length-1].date+'</text>';
+  return '<div class="chartwrap"><h4>Price and buy size</h4><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Logged price with dot size proportional to the multiplier">'+
+    ticks+'<path d="'+path+'" fill="none" stroke="var(--accent)" stroke-width="1.6"/>'+dots+lbl+
+    '</svg><div class="legend">dot area ∝ multiplier<i style="background:var(--long)"></i>&gt;1× (below baseline)<i style="background:var(--warn)"></i>≤1×<i style="background:transparent;border:1px solid var(--fg-faint)"></i>skipped</div></div>';
+}
+function chartBank(st){
+  var W=760,H=150,L=52,R=14,T=12,B=26;
+  var pts=st.series;
+  if(pts.length<2) return '';
+  var vals=pts.map(function(p){return p.bank}).concat([0]);
+  var ys=scale(vals);
+  var x=function(i){ return L+(W-L-R)*(i/(pts.length-1)); };
+  var y=function(v){ return T+(H-T-B)*(1-(v-ys.lo)/(ys.hi-ys.lo)); };
+  var path=pts.map(function(p,i){ return (i?'L':'M')+x(i).toFixed(1)+' '+y(p.bank).toFixed(1); }).join(' ');
+  var area=path+' L'+x(pts.length-1).toFixed(1)+' '+y(Math.max(ys.lo,0)).toFixed(1)+' L'+x(0).toFixed(1)+' '+y(Math.max(ys.lo,0)).toFixed(1)+' Z';
+  var zero='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(0).toFixed(1)+'" y2="'+y(0).toFixed(1)+'" stroke="var(--line-2)" stroke-dasharray="3 3"/>';
+  var bs=pts.map(function(p){return p.bank});
+  var hi=Math.max.apply(null,bs), lo=Math.min.apply(null,bs);
+  var ticks=[lo,hi].map(function(v){
+    return '<text x="'+(L-7)+'" y="'+(y(v)+4).toFixed(1)+'" text-anchor="end" font-size="10" font-family="monospace" fill="var(--fg-faint)">'+num(v,0)+'</text>';
+  }).join('');
+  return '<div class="chartwrap"><h4>Bank balance</h4><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Cash bank balance over the logged periods">'+
+    zero+'<path d="'+area+'" fill="var(--accent)" fill-opacity="0.13"/><path d="'+path+'" fill="none" stroke="var(--accent)" stroke-width="1.6"/>'+ticks+
+    '</svg><div class="legend">unspent allocation carried forward; below the dashed line the plan is funding buys from outside the budget</div></div>';
+}
+
+/* ---------------- data tab ---------------- */
+document.getElementById('st_save').addEventListener('click',function(){
+  DB.settings.cur=document.getElementById('st_cur').value.trim()||'$';
+  DB.settings.yield=+document.getElementById('st_yield').value||0;
+  save(); render(); note('Settings saved.');
+});
+document.getElementById('d_exp').addEventListener('click',function(){
+  dl('dcas-planner-'+new Date().toISOString().slice(0,10)+'.json', JSON.stringify(DB,null,2), 'application/json');
+  note('Exported. Put it in Trading Brain\\DCAS\\ .');
+});
+document.getElementById('d_csv').addEventListener('click',function(){
+  var rows=[['sleeve','date','side','color','mult','price','base','spend','z','note']];
+  DB.entries.slice().sort(function(a,b){return a.date<b.date?-1:1}).forEach(function(e){
+    var s=DB.sleeves.find(function(x){return x.id===e.sleeve})||{ticker:'?',base:0};
+    rows.push([s.ticker,e.date,e.side,e.color,e.mult,e.price==null?'':e.price,s.base,(+s.base||0)*(+e.mult||0),e.z==null?'':e.z,(e.note||'').replace(/"/g,"'")]);
+  });
+  dl('dcas-ledger-'+new Date().toISOString().slice(0,10)+'.csv',
+     rows.map(function(r){return r.map(function(c){return '"'+String(c)+'"'}).join(',')}).join('\n'), 'text/csv');
+  note('CSV exported.');
+});
+document.getElementById('d_imp').addEventListener('click',function(){ document.getElementById('d_file').click(); });
+document.getElementById('d_file').addEventListener('change',function(ev){
+  var f=ev.target.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var o=JSON.parse(r.result);
+      if(!o.sleeves||!o.entries) throw new Error('not a planner export');
+      DB.settings=Object.assign({cur:'$',yield:0},o.settings||{});
+      DB.sleeves=o.sleeves; DB.entries=o.entries;
+      save(); boot(); note('Imported '+DB.sleeves.length+' sleeve(s), '+DB.entries.length+' period(s).');
+    }catch(e){ note('Import failed: '+e.message); }
+  };
+  r.readAsText(f);
+  ev.target.value='';
+});
+document.getElementById('d_clr').addEventListener('click',function(){
+  if(!confirm('Delete every sleeve and every logged period? Export first if you want a copy.')) return;
+  DB={settings:{cur:'$',yield:0}, sleeves:[], entries:[]};
+  save(); boot(); note('Cleared.');
+});
+document.getElementById('d_demo').addEventListener('click',function(){
+  if(DB.sleeves.length && !confirm('This replaces what is there now. Continue?')) return;
+  DB={settings:{cur:'$',yield:4},sleeves:[],entries:[]};
+  var id=uid();
+  DB.sleeves.push({id:id, ticker:'BTC', base:100, freq:'weekly', bank:0, ceiling:2000, mark:null});
+  var demo=[
+    ['2026-07-06','above','green',0.5,108000],['2026-07-13','above','green',0.5,111500],
+    ['2026-07-20','above','red',0,115200],['2026-07-27','above','none',0,113800],
+    ['2026-08-03','above','green',0.5,105400],['2026-08-10','below','green',1.59,96100],
+    ['2026-08-17','below','green',1.70,91250],['2026-08-24','below','green',2.20,84900],
+    ['2026-08-31','below','green',1.85,88300],['2026-09-07','above','green',0.5,99400],
+    ['2026-09-14','above','none',0,104100],['2026-09-21','above','green',0.5,102750]
+  ];
+  demo.forEach(function(d){
+    DB.entries.push({id:uid(), sleeve:id, date:d[0], side:d[1], color:d[2], mult:d[3], price:d[4], z:null, note:''});
+  });
+  save(); boot(); note('Example data loaded — invented numbers, for seeing the shape of the output only.');
+});
+function dl(name,txt,mime){
+  var b=new Blob([txt],{type:mime});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download=name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },0);
+}
+
+/* ---------------- boot ---------------- */
+function render(){
+  renderPlan(); renderLedger(); renderSleeves();
+}
+function boot(){
+  document.getElementById('st_cur').value=DB.settings.cur||'$';
+  document.getElementById('st_yield').value=DB.settings.yield||0;
+  fillSelects();
+  if(!document.getElementById('e_date').value) document.getElementById('e_date').value=new Date().toISOString().slice(0,10);
+  render();
+}
+load(); boot();
+</script>
+</body>
+</html>

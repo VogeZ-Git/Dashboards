@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DCAS Field Manual</title>
+<meta name="description" content="Working manual for the InvestAnswers DCAS accumulation model: setup, the read, the rule set, the stated backtests, what is not disclosed, and how it fits the scanner stack.">
+<style>
+:root{
+  --bg:#0d1117; --bg-2:#131a23; --bg-3:#18212c; --line:#243040; --line-2:#2f3d4f;
+  --fg:#d8e2ee; --fg-dim:#93a4b8; --fg-faint:#6b7c91;
+  --accent:#4da3ff; --accent-dim:#1f5fa8;
+  --long:#3fb950; --short:#f0883e; --warn:#d29922; --neutral:#a371f7;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --maxw:860px;
+}
+:root[data-theme="light"]{
+  --bg:#fbfcfd; --bg-2:#f2f5f8; --bg-3:#e8edf3; --line:#d5dde6; --line-2:#c2ccd8;
+  --fg:#1a2430; --fg-dim:#4d5c6e; --fg-faint:#76859a;
+  --accent:#0a5fc0; --accent-dim:#9dc4ee;
+  --long:#1a7f37; --short:#bc4c00; --warn:#8a6100; --neutral:#7c3fd0;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{
+  margin:0;background:var(--bg);color:var(--fg);
+  font-family:var(--sans);font-size:16px;line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:50;background:var(--bg);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:12px;padding:10px 16px;
+}
+.topbar .brand{font-family:var(--mono);font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .brand b{color:var(--fg)}
+.topbar .spacer{flex:1}
+.btn{
+  font-family:var(--mono);font-size:12px;background:var(--bg-2);color:var(--fg-dim);
+  border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer;white-space:nowrap;
+}
+.btn:hover{color:var(--fg);border-color:var(--line-2)}
+
+/* ---------- layout ---------- */
+.shell{display:flex;gap:0;align-items:flex-start;max-width:1240px;margin:0 auto}
+nav.toc{
+  position:sticky;top:53px;width:268px;flex:0 0 268px;max-height:calc(100vh - 53px);
+  overflow-y:auto;padding:24px 8px 60px 16px;border-right:1px solid var(--line);
+}
+nav.toc ol{list-style:none;margin:0;padding:0}
+nav.toc li{margin:0}
+nav.toc a{
+  display:block;padding:3px 8px;border-radius:5px;color:var(--fg-faint);
+  text-decoration:none;font-size:13.5px;line-height:1.45;border-left:2px solid transparent;
+}
+nav.toc a:hover{color:var(--fg);background:var(--bg-2)}
+nav.toc a.lvl2{padding-left:20px;font-size:12.5px}
+nav.toc a.active{color:var(--accent);border-left-color:var(--accent);background:var(--bg-2)}
+nav.toc .grp{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-faint);opacity:.75;padding:16px 8px 4px}
+
+main{flex:1;min-width:0;padding:28px 24px 120px;max-width:var(--maxw)}
+
+/* ---------- type ---------- */
+h1{font-size:30px;line-height:1.2;margin:0 0 10px;letter-spacing:-.02em}
+h2{font-size:22px;line-height:1.25;margin:56px 0 14px;letter-spacing:-.01em;padding-bottom:8px;border-bottom:1px solid var(--line)}
+h2:first-of-type{margin-top:34px}
+h3{font-size:16.5px;margin:30px 0 8px;color:var(--fg)}
+h4{font-size:14px;margin:20px 0 6px;font-family:var(--mono);color:var(--fg-dim);letter-spacing:.02em;text-transform:uppercase}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin:0 0 6px}
+li>ul,li>ol{margin-top:6px}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.88em;background:var(--bg-3);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+strong{color:var(--fg);font-weight:650}
+hr{border:0;border-top:1px solid var(--line);margin:40px 0}
+.sec-num{font-family:var(--mono);color:var(--fg-faint);font-weight:400;font-size:.72em;margin-right:10px;letter-spacing:.04em}
+
+.lede{font-size:17px;color:var(--fg-dim);margin-bottom:20px}
+.meta{font-family:var(--mono);font-size:12px;color:var(--fg-faint);line-height:1.8;margin-bottom:22px}
+.meta b{color:var(--fg-dim);font-weight:500}
+
+/* ---------- callouts ---------- */
+.box{border:1px solid var(--line);border-left-width:3px;background:var(--bg-2);border-radius:0 8px 8px 0;padding:14px 16px;margin:18px 0}
+.box>:last-child{margin-bottom:0}
+.box .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:7px;opacity:.95}
+.box.rule{border-left-color:var(--accent)} .box.rule .lbl{color:var(--accent)}
+.box.warn{border-left-color:var(--warn)} .box.warn .lbl{color:var(--warn)}
+.box.quote{border-left-color:var(--fg-faint);font-style:italic;color:var(--fg-dim)}
+.box.quote .lbl{color:var(--fg-faint);font-style:normal}
+.box.ex{border-left-color:var(--neutral)} .box.ex .lbl{color:var(--neutral)}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:440px}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{
+  background:var(--bg-3);font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--fg-dim);font-weight:500;white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--bg-2)}
+td.num,th.num{text-align:right;font-family:var(--mono);white-space:nowrap}
+.tick{font-family:var(--mono);color:var(--fg);white-space:nowrap}
+.good{color:var(--long)} .mid{color:var(--warn)} .bad{color:var(--short)}
+
+/* ---------- steps ---------- */
+ol.steps{list-style:none;padding:0;counter-reset:s;margin:18px 0}
+ol.steps>li{
+  counter-increment:s;position:relative;padding:0 0 0 42px;margin:0 0 16px;min-height:28px;
+}
+ol.steps>li::before{
+  content:counter(s);position:absolute;left:0;top:1px;width:26px;height:26px;border-radius:50%;
+  background:var(--bg-3);border:1px solid var(--line-2);color:var(--accent);
+  font-family:var(--mono);font-size:12px;display:flex;align-items:center;justify-content:center;
+}
+ol.steps>li b{display:block;margin-bottom:2px}
+
+/* ---------- checklist ---------- */
+ul.check{list-style:none;padding:0;margin:14px 0}
+ul.check li{position:relative;padding-left:26px;margin-bottom:8px}
+ul.check li::before{
+  content:"";position:absolute;left:0;top:6px;width:13px;height:13px;
+  border:1px solid var(--line-2);border-radius:3px;background:var(--bg-3);
+}
+
+/* ---------- calculators ---------- */
+.calc{border:1px solid var(--line-2);border-radius:10px;background:var(--bg-2);padding:16px;margin:20px 0}
+.calc h4{margin-top:0}
+.calc .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:12px;margin-bottom:14px}
+.calc label{display:block;font-size:11.5px;font-family:var(--mono);color:var(--fg-dim);margin-bottom:4px;letter-spacing:.03em}
+.calc input{
+  width:100%;background:var(--bg);border:1px solid var(--line-2);border-radius:6px;
+  color:var(--fg);font-family:var(--mono);font-size:14px;padding:7px 9px;
+}
+.calc input:focus{outline:none;border-color:var(--accent)}
+.out{background:var(--bg-3);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:13.5px;line-height:1.85}
+.out .k{color:var(--fg-faint)}
+.out .v{color:var(--fg);font-weight:600}
+.out .v.pos{color:var(--long)} .out .v.neg{color:var(--short)}
+.out .note{display:block;margin-top:8px;font-family:var(--sans);font-size:12.5px;color:var(--fg-faint);line-height:1.5}
+
+/* ---------- misc ---------- */
+.pill{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid var(--line-2);color:var(--fg-dim);background:var(--bg-3);margin-right:6px;vertical-align:2px}
+.pill.a{color:var(--accent);border-color:var(--accent-dim)}
+.pill.b{color:var(--neutral);border-color:var(--neutral)}
+.src{font-family:var(--mono);font-size:11px;color:var(--fg-faint)}
+.seq{font-family:var(--mono);font-size:13px;background:var(--bg-3);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:14px 0;overflow-x:auto;white-space:pre;line-height:1.8}
+dl.gloss{margin:16px 0}
+dl.gloss dt{font-family:var(--mono);font-size:13.5px;color:var(--accent);margin-top:14px}
+dl.gloss dd{margin:2px 0 0;padding-left:0;color:var(--fg-dim);font-size:14.5px}
+footer{border-top:1px solid var(--line);margin-top:70px;padding-top:20px;font-size:12.5px;color:var(--fg-faint)}
+
+/* ---------- responsive ---------- */
+@media (max-width:980px){
+  nav.toc{display:none}
+  main{padding:22px 16px 90px;max-width:100%}
+  h1{font-size:25px}
+  h2{font-size:20px;margin-top:44px}
+}
+@media print{
+  .topbar,nav.toc,.btn{display:none}
+  body{background:#fff;color:#000;font-size:10.5pt}
+  main{max-width:100%;padding:0}
+  h2{page-break-after:avoid} .tw,.box,.calc{page-break-inside:avoid}
+  a{color:#000;text-decoration:none}
+}
+</style>
+<style>
+a.btn{text-decoration:none;display:inline-block}
+.sec-num{font-family:var(--mono);font-size:13px;color:var(--fg-faint);margin-right:10px;letter-spacing:.04em}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand"><b>DCAS</b> &nbsp;/&nbsp; FIELD MANUAL</span>
+  <span class="spacer"></span>
+  <a class="btn" href="dcas_planner.html">→ planner</a>
+  <button class="btn" onclick="toggleTheme()" id="themeBtn">☾ dark</button>
+  <button class="btn" onclick="window.print()">print</button>
+</div>
+
+<div class="shell">
+<nav class="toc" id="toc"></nav>
+
+<main>
+
+<h1>DCAS Field Manual</h1>
+<p class="lede">Dollar Cost Averaging Strategically — the InvestAnswers accumulation model that replaces a fixed periodic buy with a variable-size buy. Everything the two source videos state, separated from everything they don't, plus the arithmetic that decides whether it actually beats plain DCA.</p>
+
+<p class="meta">
+<b>SOURCES</b> &nbsp;2 transcripts · InvestAnswers (retrieved 2026-09-24)<br>
+<b>SCOPE</b> &nbsp;Setup, the read, the sizing rule, the stated backtests, the unknowns<br>
+<b>NOTE</b> &nbsp;Figures in §05 and §06 are as stated by the presenter on his charts on the dates he recorded. Sections marked <span class="pill b">own framing</span> are mine, not his.
+</p>
+
+<div class="box warn">
+<span class="lbl">The one thing to be clear about before anything else</span>
+DCAS is a <b>closed-source TradingView indicator pair</b> (DCAS Model + DCAS Calculator) distributed to InvestAnswers members. The multiplier it prints cannot be reproduced from outside it — the baseline formula is never disclosed in either video. This manual teaches you to <i>read and act on</i> that output; the companion <a href="dcas_planner.html">planner</a> does the money accounting around it. Neither reconstructs the signal.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s0"><span class="sec-num">00</span>How to use this manual</h2>
+
+<p>The two videos are short — about twelve minutes and roughly 2,200 words combined — and they overlap heavily. There is not much hidden depth: the model outputs one number, and the discipline is entirely in how you size to it and what you do with the cash you didn't spend. So sections 01–06 are the source material, compressed and de-duplicated. Sections 07–09 are where the real work is: what the videos leave undefined, and the arithmetic that tells you whether this helps or hurts on <i>your</i> assets.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Section</th><th>Use it when</th></tr></thead>
+<tbody>
+<tr><td><a href="#s1">01 What DCAS is</a></td><td>Once, to fix the concept</td></tr>
+<tr><td><a href="#s2">02 Chart setup</a></td><td>First time on a new chart, or after a settings reset</td></tr>
+<tr><td><a href="#s3">03 Reading the output</a></td><td>Every time you look — this is the whole read</td></tr>
+<tr><td><a href="#s4">04 The rule set</a></td><td>At the moment of allocating</td></tr>
+<tr><td><a href="#s5">05 Stated results</a></td><td>Calibrating how much to believe</td></tr>
+<tr><td><a href="#s6">06 Worked examples</a></td><td>Learning what a real read looks like</td></tr>
+<tr><td><a href="#s7">07 Unknowns</a></td><td>Before you trust it with size</td></tr>
+<tr><td><a href="#s8">08 The mechanics underneath</a></td><td>To know when DCAS beats DCA and when it loses</td></tr>
+<tr><td><a href="#s9">09 Fitting it to the stack</a></td><td>Deciding where this sits next to confluence / trend / overseer</td></tr>
+<tr><td><a href="#s10">10 The ritual</a></td><td>Weekly, at the desk</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="sec-num">01</span>What DCAS is</h2>
+
+<p>Plain DCA: a fixed amount, on a fixed schedule, price-blind. The presenter is explicit that this remains a good strategy — DCAS is not pitched as a replacement for the <i>habit</i>, only for the <i>fixed size</i>.</p>
+
+<div class="box quote">
+<span class="lbl">The premise</span>
+"DCA traditionally is a great strategy and it still continues to be a great strategy… I'm just going to buy $100 every single Monday, I don't care what the price is, and over time my average price will be good. DCAS aims to try and time those buys better so that you can hopefully one, spend less and come out with more shares, but also you'll have a better ROI on regular DCA."
+</div>
+
+<p>So the mechanism is a <b>multiplier on your normal buy</b>. You keep the schedule. You keep the base amount. The model tells you, each period, to buy <span class="tick">0×</span>, <span class="tick">0.5×</span> or some number above <span class="tick">1×</span> of that base amount. Two stated design goals follow from that:</p>
+
+<ol class="steps">
+<li><b>Keep you out of uptrends.</b> "DCAS will keep you out of uptrends and will try and time the buys for where there's a bottom or where price is lower to add."</li>
+<li><b>Get you in hard and early at the lows.</b> "It tries to time these buys and gets you in harder and gets you in earlier."</li>
+</ol>
+
+<p>The framing in both videos is a <b>bear-market tool</b> — the first video's title is literally about taking advantage of a bear market, and the stated purpose is stacking bags "preparing for the next bull." There is no sell side. DCAS never tells you to reduce. It is an accumulation model only.</p>
+
+<div class="box ex">
+<span class="lbl">Own framing — the name</span>
+"DCAS" is never expanded in either transcript, and the auto-transcription renders it as "dcas", "DCS" and "DC" interchangeably. Read it as <i>DCA Strategic</i> / <i>strategically weighted DCA</i>. Nothing in the videos hangs on the expansion.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="sec-num">02</span>Chart setup</h2>
+
+<h3 id="s2a">2.1 &nbsp;Add both indicators</h3>
+<p>The model ships as <b>two</b> indicators and both are required. Adding one gives you half the picture.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Indicator</th><th>Where it sits</th><th>What it gives you</th></tr></thead>
+<tbody>
+<tr><td><span class="tick">DCAS Calculator</span></td><td>On the price pane</td><td>The buy triangles with the multiplier label on each, plus the DCA-vs-DCAS backtest panel (units accumulated, capital spent, ROI for both)</td></tr>
+<tr><td><span class="tick">DCAS Model</span></td><td>Separate pane below</td><td>The oscillator with the zero baseline — the regime read that says whether you are stacking or trickling</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="box rule">
+<span class="lbl">Stated setup sequence</span>
+Indicators → add <b>DCAS Calculator</b> → add <b>DCAS Model</b>. "The DCAS model comes with two indicators, the calculator and the model — so don't forget to add both."
+</div>
+
+<h3 id="s2b">2.2 &nbsp;The two settings you must change</h3>
+<p>Out of the box the calculator is in plain-DCA mode with hidden labels. Both defaults are wrong for this use.</p>
+
+<ol class="steps">
+<li><b>Strategy: DCA → DCAS.</b> On the default, every label reads <span class="tick">1.0</span> — correctly, because that <i>is</i> plain DCA. Switch to DCAS and the numbers spread out and the triangle count drops.</li>
+<li><b>Label style: hover → display.</b> Otherwise you have to mouse over each triangle to see its multiplier. With display on, the numbers are printed on the chart.</li>
+</ol>
+
+<h3 id="s2c">2.3 &nbsp;Settings you can leave, and one trap</h3>
+<div class="tw">
+<table>
+<thead><tr><th>Setting</th><th>Options named</th><th>Guidance given</th></tr></thead>
+<tbody>
+<tr><td>Buy amount</td><td>Any; $100 used throughout</td><td>Set it to your real per-period allocation — every multiplier is read against it</td></tr>
+<tr><td>Frequency</td><td>daily · weekly · bi-weekly · monthly</td><td>Left at default in both videos; switched to <b>daily</b> once, deliberately, to raise signal count on a name with too few buys (META)</td></tr>
+<tr><td>Start date</td><td>Any</td><td>"For when you want this back test to calculate off of" — this is the backtest window, not a signal setting</td></tr>
+<tr><td>Trading style</td><td>conservative · neutral · aggressive</td><td>Neutral in both videos. Aggressive framed as "how much of a bag you want to build… if you want to get into something like MicroStrategy and you might have missed the train"</td></tr>
+<tr><td>Bull market behaviour</td><td>named option: "buy more"</td><td>Mentioned alongside aggressive; left alone otherwise</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="box warn">
+<span class="lbl">The trap — stated explicitly</span>
+"Under the DCAS model, if you do change anything, make sure you change the trading style here as well." <b>Trading style is set in both indicators independently.</b> Change it in the calculator only and the oscillator you are reading the regime from is still on the old setting — the triangles and the baseline will disagree with each other and you will not be told.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="sec-num">03</span>Reading the output</h2>
+
+<p>Two panes, and the read is a two-by-two. The oscillator gives you <b>where</b> (above or below baseline zero); the triangle colour gives you <b>whether</b>; the label gives you <b>how much</b>.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Oscillator</th><th>Signal</th><th>Multiplier</th><th>What you do</th></tr></thead>
+<tbody>
+<tr><td class="tick">below baseline</td><td><span class="good">green</span></td><td class="num tick">&gt; 1 &nbsp;(1.5 – 2.6 observed)</td><td><b class="good">Stack hard.</b> Buy the base amount times the label. Bear-market accumulation zone.</td></tr>
+<tr><td class="tick">above baseline</td><td><span class="good">green</span></td><td class="num tick">0.5 (capped)</td><td>Trickle. Half the base amount. "Anytime it's above, you're only going to get a 0.5 multiplier."</td></tr>
+<tr><td class="tick">either</td><td><span class="bad">red</span></td><td class="num tick">—</td><td><b class="bad">Do not buy.</b> "Anywhere it's red, we don't want to be buying either."</td></tr>
+<tr><td class="tick">above, uptrending</td><td>no triangle</td><td class="num tick">0</td><td>Nothing. Long stretches with no signal at all are normal and intended.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="box rule">
+<span class="lbl">The arithmetic, stated</span>
+Base allocation × label = what you buy. "If it's 1.79 and you've said you can allocate $100 per week, you should actually buy $179 worth." At 0.5 on a $100 base: $50. At 2.26: $226.
+</div>
+
+<p>The two things worth internalising about the output, both stressed repeatedly:</p>
+
+<ul class="check">
+<li><b>Silence is a signal.</b> On BTC there are multi-month stretches with no triangle at all — "when the bull market started we didn't have a buy for months and months and months." On one name, no buys through all of 2024 into a large recent run-up. If you feel the absence of signals as the tool being broken, you are using it wrong.</li>
+<li><b>Below-baseline is rare and matters.</b> On MSTR the read was "the first time that we have had a multiplier greater than 0.5 … since all the way back here, which would have been January 2024." A flip below baseline after a year and a half above it is the whole event.</li>
+</ul>
+
+<div class="box ex">
+<span class="lbl">Own framing — what the 0.5 cap actually is</span>
+The cap is the mechanism, not a detail. Above baseline your <i>maximum</i> deployment is half your budget, so above-baseline periods are structurally cash-accumulating: every one of them banks at least 50% of that period's allocation. "You're saving up for when price does drop lower." That means the model only works if you actually hold the unspent half — see <a href="#s8">§08</a>. If you spend it elsewhere, you have not run DCAS, you have run DCA at half size.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="sec-num">04</span>The rule set</h2>
+
+<ol class="steps">
+<li><b>Fix your base allocation and frequency first.</b> And put the same number in the indicator's buy-amount field, or every label you read is against the wrong base.</li>
+<li><b>Read the oscillator before the triangles.</b> Above or below zero. That is the regime and it sets your ceiling.</li>
+<li><b>No green triangle this period → no buy.</b> Not a smaller buy. Nothing. Bank the full allocation.</li>
+<li><b>Red → no buy</b>, regardless of where the oscillator sits.</li>
+<li><b>Green above baseline → 0.5× the base.</b> Bank the rest.</li>
+<li><b>Green below baseline → label × base</b>, drawing on the bank to fund the amount above 1×.</li>
+<li><b>Never change the base amount to chase a signal.</b> The multiplier is the position sizing. Re-basing mid-run breaks the comparison and the bank accounting.</li>
+<li><b>Same trading style in both indicators.</b> Every time you touch it.</li>
+</ol>
+
+<div class="box quote">
+<span class="lbl">The intended use, in his words</span>
+"A lot of people have questions — you know, I sold a house, I have money now, I have cash, what should I do, is now a good time to buy? This is a great model to reference." And: "This can help you exercise patience as well."
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="sec-num">05</span>Stated results</h2>
+
+<p>Every figure below is read off his screen in the videos. The backtest window is never stated numerically — only "over the past, however many years." Treat the table as a record of what was claimed, not as a measured result you can verify.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Asset</th><th class="num">DCA</th><th class="num">DCAS</th><th>Stated delta</th></tr></thead>
+<tbody>
+<tr><td><span class="tick">BTC</span></td><td class="num">1.96 BTC · $31k spent · ROI 500%</td><td class="num">2.3 BTC · ~$27k spent</td><td class="good">+0.34 BTC on $4,000 <b>less</b> capital, higher ROI</td></tr>
+<tr><td><span class="tick">MSTR</span></td><td class="num">—</td><td class="num">—</td><td class="good">"almost 600 more shares", ROI "over 200% higher", on <b>more</b> capital spent</td></tr>
+<tr><td><span class="tick">TSLA</span></td><td class="num">—</td><td class="num">—</td><td class="mid">+140 shares, "ROI is better", on slightly more capital</td></tr>
+<tr><td>unnamed 4th chart</td><td class="num">—</td><td class="num">—</td><td class="good">"4.4x" — no buys through 2024, heavy signals at the low</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="box warn">
+<span class="lbl">Read this before quoting those numbers</span>
+The BTC case is the only one where DCAS wins on <i>both</i> axes (more units, less capital). MSTR and TSLA both spent <b>more</b> than DCA — which is the model drawing down the bank at the lows, exactly as designed, but it means "spend less and come out with more" is the best case, not the general case. And all four examples are assets that had a large drawdown inside the window. See <a href="#s8b">§8.2</a> for what that selection does to the comparison.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="sec-num">06</span>Worked examples</h2>
+
+<h3 id="s6a">6.1 &nbsp;TSLA — the "no" read</h3>
+<p>"Should I be allocating to Tesla right now? And I would say probably not. We're red. We're above the baseline. So I'm not interested in allocating." Two independent reasons to stand down, either of which is sufficient.</p>
+
+<h3 id="s6b">6.2 &nbsp;MSTR — the flip</h3>
+<p>"MicroStrategy flipped to the downside, and this is typically when we want to be stacking… Is this the exact bottom? I don't know, I'm not sure. However, this is the first time that we have had a multiplier greater than 0.5 since all the way back here, which would have been January 2024." The claim being made is explicitly <b>not</b> "this is the low" — it is "this is the first time in ~20 months the model has permitted more than a trickle."</p>
+
+<h3 id="s6c">6.3 &nbsp;BTC — two below-baseline buys</h3>
+<p>Two green prints below the baseline at <span class="tick">1.7</span> and <span class="tick">1.59</span>. "Is this the bottom? I hope so. I'm not sure. But either way, we are starting to get DCAS telling us that these are good levels to be buying at."</p>
+
+<h3 id="s6d">6.4 &nbsp;META — raising the frequency</h3>
+<p>The one deliberate settings intervention in either video. META had crashed but the weekly signal count was too thin to act on: "there's actually not very many buys." Switching frequency to <b>daily</b> produced <span class="tick">1.5</span> multipliers at the low where the surrounding periods were 0.5. He also notes the price had already run ~$100 off the low by the time he was looking — i.e. the daily read did not catch the exact bottom either, and he says so.</p>
+
+<div class="box ex">
+<span class="lbl">Own framing — what the frequency switch really does</span>
+Raising frequency raises the number of periods, so it raises your <b>total</b> committed capital for the same base amount, not just the resolution. Going weekly→daily on a $100 base is a 5× increase in gross budget. If you switch frequency to get more signals, divide the base amount by the same factor or you have silently upsized the whole sleeve.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="sec-num">07</span>What the videos do not disclose</h2>
+
+<p>Listed because each one is load-bearing and none of them is answered.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Unknown</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td><b>The baseline formula.</b> What the oscillator measures, and what "zero" is.</td><td>You cannot sanity-check the regime read, reproduce it, or know what data it needs. It is a black box you are sizing against.</td></tr>
+<tr><td><b>What red vs green encodes.</b> Colour and position are treated as independent inputs but the driver of colour is never named.</td><td>Red above baseline and red below baseline may be very different states. The rule flattens both to "don't buy."</td></tr>
+<tr><td><b>Whether it repaints.</b> Never mentioned.</td><td>If the multiplier on a historical bar can change once later bars print, every backtest figure in §05 is inflated and the live read is less reliable than the chart suggests. <b>Testable:</b> screenshot a live chart's last three triangles, re-check in two weeks.</td></tr>
+<tr><td><b>What conservative / aggressive change numerically.</b></td><td>Unknown whether they scale the multiplier, shift the baseline, or loosen the signal gate. You cannot reason about the risk you are adding.</td></tr>
+<tr><td><b>The multiplier ceiling.</b> Highest observed in the videos is 2.64.</td><td>You need to know your worst-case single-period draw on the bank to size the bank.</td></tr>
+<tr><td><b>Backtest window and cost assumptions.</b> Neither stated.</td><td>ROI figures without a window are not comparable to anything, and fees/slippage on a 5× higher trade count are not free.</td></tr>
+<tr><td><b>What to do with the unspent cash.</b> "You're saving up" is the whole instruction.</td><td>The bank's yield is part of the return. A model that banks 50%+ for years is materially affected by whether that sits at 0% or in T-bills.</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s8"><span class="sec-num">08</span><span class="pill b">own framing</span>The mechanics underneath</h2>
+
+<h3 id="s8a">8.1 &nbsp;The one condition DCAS has to satisfy</h3>
+<p>Strip the indicator away and DCAS is a weighted average. Over <i>N</i> periods with prices <i>P<sub>i</sub></i> and multipliers <i>m<sub>i</sub></i>:</p>
+
+<div class="seq">DCA  average cost  =  ( Σ Pᵢ ) / N                    ... equal weights
+DCAS average cost  =  ( Σ mᵢPᵢ ) / ( Σ mᵢ )            ... multiplier weights
+
+DCAS beats DCA on entry price   ⟺   cov( mᵢ , Pᵢ ) &lt; 0</div>
+
+<p>That is the entire proposition. Not "does the oscillator look clever" — <b>is the multiplier negatively correlated with price over your holding window.</b> Everything else (units accumulated, ROI, capital spent) follows from that covariance plus how much total capital you deployed.</p>
+
+<p>It also tells you the honest test. You do not need the source code to validate DCAS: log the multiplier and the price every period for a year on five names and compute that covariance. If it is reliably negative, the model earns its place. If it hovers near zero, you are paying attention for nothing and adding execution complexity to a strategy whose main virtue was that it required none.</p>
+
+<h3 id="s8b">8.2 &nbsp;Where it loses — and why you won't see it in the videos</h3>
+<div class="box warn">
+<span class="lbl">The failure case</span>
+An asset that grinds up for years without going below baseline. Every period is capped at 0.5×, so you accumulate at half speed while the bank grows and the price runs away from you. DCA, which deployed everything, wins outright. <b>DCAS is structurally short trend-persistence and long mean-reversion</b> — the same bet as your MR scan, just applied to accumulation instead of trading.
+</div>
+<p>All four examples shown (BTC, MSTR, TSLA, META) are names with a violent drawdown inside the window. That is the environment the model is built for and the videos say so — the first is framed explicitly as a bear-market tool. It is not a criticism of the model that it was demonstrated on its home turf; it is a reason not to generalise the §05 table to an asset in a durable uptrend.</p>
+
+<h3 id="s8c">8.3 &nbsp;The bank is the strategy</h3>
+<p>The multiplier is the visible half. The invisible half is a cash account with a rule:</p>
+<div class="seq">bank(t)  =  bank(t-1)  +  base  −  base × mₜ
+         =  bank(t-1)  +  base × (1 − mₜ)
+
+mₜ = 0     → bank grows by the full allocation
+mₜ = 0.5   → bank grows by half
+mₜ = 1     → bank flat
+mₜ = 2.2   → bank falls by 1.2 × base</div>
+<p>Three consequences the videos never mention:</p>
+<ul class="check">
+<li><b>The bank can go empty.</b> If you start DCAS <i>at</i> a low, the model asks for 2× on your first prints and there is nothing banked to fund it. A cold start needs either a pre-funded bank or an acceptance that early below-baseline signals get under-filled. Say which, in advance.</li>
+<li><b>The bank has no release valve.</b> Nothing in the rule set ever forces the cash out. On an asset that stays above baseline for two years you will be sitting on 50–100% of two years of allocation. Decide now: is there a date or a bank-size ceiling at which you deploy anyway, or do you genuinely hold indefinitely? An honest answer of "indefinitely" is fine — an unexamined one becomes a capitulation buy at the worst moment.</li>
+<li><b>The bank's yield belongs in the comparison.</b> DCAS spending $4k less than DCA is only a win if that $4k was earning something. Park it where it earns, and count that when you compare.</li>
+</ul>
+
+<h3 id="s8d">8.4 &nbsp;Frequency, fees and the trade-count tax</h3>
+<p>DCAS trades less often than DCA (skips), but each trade is a different size, and the frequency lever multiplies periods. On a small base amount with per-order commissions, a 0.5× buy can be materially more expensive in percentage terms than a 1× buy. If your base is small relative to your broker's minimum commission, aggregate: hold the 0.5× periods in the bank and deploy them on the next below-baseline print. That changes the strategy — it also may be the only sane execution on a €50 base at DEGIRO/Saxo costs. Decide it deliberately, log which one you're running.</p>
+
+<!-- ============================================================ -->
+<h2 id="s9"><span class="sec-num">09</span><span class="pill b">own framing</span>Fitting it to the stack</h2>
+
+<p>You already run four models over one watchlist: confluence (Bollinger extension), IA-MR (z-score mean reversion), trend scan (MA flip), and overseer (trend sets regime, MR times entry). DCAS is a fifth read and it is worth being precise about what it adds, because it may add nothing.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th></th><th>DCAS</th><th>Overseer / confluence / MR</th></tr></thead>
+<tbody>
+<tr><td><b>Layer</b></td><td>Accumulation — growing a bag you intend to keep</td><td>Trading — entries and exits with a defined round trip</td></tr>
+<tr><td><b>Sell side</b></td><td>None. Never reduces.</td><td>Overseer exits on regime flip; MR sell side deliberately discarded</td></tr>
+<tr><td><b>Output</b></td><td>A size (0 / 0.5 / &gt;1)</td><td>A binary signal plus a trigger price</td></tr>
+<tr><td><b>Source</b></td><td>Closed indicator, manual read</td><td>Your own Python, reproducible, backtested with EDGE vs buy-and-hold</td></tr>
+<tr><td><b>Cadence</b></td><td>Weekly by construction</td><td>1d and 4h, scanned automatically</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="box rule">
+<span class="lbl">Proposed division of labour</span>
+<b>DCAS sizes the bag adds. Overseer sizes the trades.</b> They are different pots of money and should be logged separately. A below-baseline DCAS print on BTC does not authorise a leveraged entry; an overseer LONG flip does not authorise spending the DCAS bank. Keeping them apart is what stops "I'm stacking" from quietly becoming "I'm averaging down on a trade."
+</div>
+
+<p><b>The measurement that decides whether DCAS stays.</b> Your own confluence tracker already tells you, per ticker, how far outside the Bollinger band price is, and the MR scan gives a z-score. Both are cheap proxies for "cheap." Log the DCAS multiplier alongside those two numbers each week in the <a href="dcas_planner.html">planner</a>. After ~30 observations you can answer the only question that matters: does the DCAS multiplier carry information your own z-score doesn't? If the multiplier is just a monotone function of something you already compute, keep the concept and drop the dependency — you can implement a z-score-weighted DCA yourself, reproducibly, and backtest it honestly, which you can never do with a black box.</p>
+
+<div class="box ex">
+<span class="lbl">Own framing — the thing DCAS genuinely fixes</span>
+Your stack is entry-timing rich and allocation-discipline poor. Nothing in confluence / MR / trend / overseer answers "how much of this month's money goes in this week." DCAS is the first piece that addresses sizing over time rather than timing, and that is why it is worth running even if the signal turns out to be redundant — the <i>bank discipline</i> is the transferable part, not the indicator.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s10"><span class="sec-num">10</span>The ritual</h2>
+
+<h3 id="s10a">Once, at setup</h3>
+<ul class="check">
+<li>Decide base allocation per period, per sleeve, and the frequency. Write it in the planner.</li>
+<li>Decide where the bank sits and what it earns.</li>
+<li>Decide the cold-start rule: pre-funded bank, or under-fill early below-baseline prints.</li>
+<li>Decide the bank ceiling / release rule, or write down explicitly that there is none.</li>
+<li>Add both indicators, set strategy = DCAS, label style = display, buy amount = your real base, trading style identical in both.</li>
+</ul>
+
+<h3 id="s10b">Every period</h3>
+<ul class="check">
+<li>Oscillator: above or below zero?</li>
+<li>Triangle this period: none / red / green?</li>
+<li>Read the label. Multiply by base. Check it against the rule table in <a href="#s3">§03</a> — above baseline should never exceed 0.5.</li>
+<li>Log it in the planner <b>even when the answer is zero.</b> Skipped periods with their price are what make the DCA comparison honest; without them you cannot compute it at all.</li>
+<li>Log price, and the confluence / MR z-score for the same name while you're there.</li>
+<li>Place the order. Update the bank.</li>
+</ul>
+
+<h3 id="s10c">Quarterly</h3>
+<ul class="check">
+<li>Compute cov(multiplier, price) per sleeve — the planner does this. Negative and stable, or not?</li>
+<li>Compare DCAS average cost to shadow DCA average cost. Include the bank's yield.</li>
+<li>Re-check the repaint question against your screenshots.</li>
+<li>Bank size vs your ceiling. Act or restate that there is no ceiling.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="s11"><span class="sec-num">11</span>Glossary</h2>
+<dl class="gloss">
+<dt>DCAS</dt><dd>The InvestAnswers indicator pair, and the strategy of scaling each periodic buy by the multiplier it prints. Never expanded in the source videos.</dd>
+<dt>Multiplier</dt><dd>The number on the buy triangle. Your base allocation × this = the amount to buy. Capped at 0.5 above the baseline; observed up to 2.64 below it.</dd>
+<dt>Baseline</dt><dd>Zero line on the DCAS Model oscillator. Above = bull-ish regime, trickle buys. Below = stacking regime. Formula undisclosed.</dd>
+<dt>Bank</dt><dd>Not a term from the videos. The cumulative unspent allocation from skipped and 0.5× periods, which funds the &gt;1× buys later. See <a href="#s8c">§8.3</a>.</dd>
+<dt>Shadow DCA</dt><dd>The plain-DCA outcome over the same periods and prices, computed for comparison. Requires that you logged the skipped periods too.</dd>
+<dt>Cold start</dt><dd>Beginning DCAS with an empty bank, so early large multipliers cannot be funded at full size.</dd>
+</dl>
+
+<!-- ============================================================ -->
+<h2 id="s12"><span class="sec-num">12</span>Sources</h2>
+<div class="tw">
+<table>
+<thead><tr><th>#</th><th>Title</th><th>Channel</th><th class="num">Length</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><a href="https://www.youtube.com/watch?v=i14C45rJDAs">Take Advantage of the Bear Market using DCAS</a></td><td>InvestAnswers</td><td class="num">7:20</td></tr>
+<tr><td>2</td><td><a href="https://www.youtube.com/watch?v=65vahRrDxHg">Using DCAS to Know When to Buy</a></td><td>InvestAnswers</td><td class="num">5:07</td></tr>
+</tbody>
+</table>
+</div>
+<p class="src">Transcripts retrieved 2026-09-24, stored alongside this file in <span class="tick">Trading Brain\DCAS\</span>. Auto-captions; the token "DCAS" appears variously as dcas / DCS / DC in the raw text. Quotes above are cleaned for capitalisation and filler only.</p>
+
+<footer>
+DCAS Field Manual · built 2026-09-24 · companion to <a href="dcas_planner.html">DCAS Planner</a> · sections marked <i>own framing</i> are not from the source videos · not financial advice, and the presenter's own disclaimer applies to every figure quoted here.
+</footer>
+
+</main>
+</div>
+<script>
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  var b=document.getElementById('themeBtn');
+  if(b) b.textContent = t==='dark' ? '☾ dark' : '☀ light';
+  try{localStorage.setItem('dcas-theme',t)}catch(e){}
+}
+function toggleTheme(){
+  var cur=document.documentElement.getAttribute('data-theme');
+  applyTheme(cur==='dark'?'light':'dark');
+}
+(function(){
+  var t=null;
+  try{t=localStorage.getItem('dcas-theme')}catch(e){}
+  if(!t) t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+  applyTheme(t);
+})();
+
+(function(){
+  var groups=[
+    {label:'Orientation', ids:['s0','s1']},
+    {label:'Operating',   ids:['s2','s3','s4']},
+    {label:'Evidence',    ids:['s5','s6','s7']},
+    {label:'Analysis',    ids:['s8','s9']},
+    {label:'At the desk', ids:['s10','s11','s12']}
+  ];
+  var toc=document.getElementById('toc');
+  if(!toc) return;
+  var html='';
+  groups.forEach(function(g){
+    html+='<div class="grp">'+g.label+'</div><ol>';
+    g.ids.forEach(function(id){
+      var h=document.getElementById(id);
+      if(!h) return;
+      var txt=h.textContent.replace(/^\s*\d+\s*/,'').replace(/own framing/i,'').trim();
+      html+='<li><a href="#'+id+'">'+txt+'</a></li>';
+      var el=h.nextElementSibling;
+      while(el && el.tagName!=='H2'){
+        if(el.tagName==='H3' && el.id){
+          html+='<li><a class="lvl2" href="#'+el.id+'">'+el.textContent.replace(/\s+/g,' ').trim()+'</a></li>';
+        }
+        el=el.nextElementSibling;
+      }
+    });
+    html+='</ol>';
+  });
+  toc.innerHTML=html;
+
+  var links=[].slice.call(toc.querySelectorAll('a'));
+  var targets=links.map(function(a){return document.getElementById(a.getAttribute('href').slice(1))});
+  function spy(){
+    var best=0;
+    for(var i=0;i<targets.length;i++){
+      if(targets[i] && targets[i].getBoundingClientRect().top<120) best=i;
+    }
+    links.forEach(function(a,i){a.classList.toggle('active',i===best)});
+  }
+  window.addEventListener('scroll',spy,{passive:true});
+  spy();
+})();
+</script>
+</body>
+</html>
