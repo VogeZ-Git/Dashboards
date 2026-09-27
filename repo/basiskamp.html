@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Basiskamp Handboek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#e9ebed; --paper:#fff; --deep:#1f4e5f; --signal:#b4531f;
+  --ink:#1a2226; --ink-2:#4a5964; --ink-3:#7d8b95;
+  --line:#ccd3d8; --line-2:#dde2e6; --wash:#f3f5f6; --band:#e3eaed;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#12181b; --paper:#181f23; --deep:#7fc0d4; --signal:#e08a55;
+    --ink:#e6ebee; --ink-2:#a9b7c0; --ink-3:#77868f;
+    --line:#2c363c; --line-2:#232c31; --wash:#1d252a; --band:#1c272c;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#12181b; --paper:#181f23; --deep:#7fc0d4; --signal:#e08a55;
+  --ink:#e6ebee; --ink-2:#a9b7c0; --ink-3:#77868f;
+  --line:#2c363c; --line-2:#232c31; --wash:#1d252a; --band:#1c272c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--ground);color:var(--ink);font-family:"Source Serif 4",Georgia,serif;font-size:15px;line-height:1.38;-webkit-font-smoothing:antialiased}
+.vel{max-width:900px;margin:0 auto;padding:26px 16px 52px}
+
+.kop{border-bottom:2px solid var(--deep);padding-bottom:11px;margin-bottom:8px}
+.merk{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--signal);margin:0 0 5px}
+.kop h1{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:clamp(28px,7vw,42px);line-height:1;letter-spacing:-.025em;margin:0;color:var(--deep)}
+.kop .sub{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-2);margin:9px 0 0}
+.deel{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 16px}
+section{margin:0 0 20px}
+h2{font-family:"Archivo",system-ui,sans-serif;font-weight:600;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--signal);margin:0 0 9px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+.voet{margin-top:8px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-3);line-height:1.5}
+.pagina{break-before:page}
+
+/* ritmestrip */
+.ritme{display:flex;flex-wrap:wrap;gap:6px}
+.slot{flex:1 1 128px;background:var(--paper);border:1px solid var(--line-2);border-top:3px solid var(--deep);padding:8px 10px 9px}
+.slot.vrij{border-top-color:var(--line)}
+.slot b{display:block;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--signal);letter-spacing:.04em}
+.slot span{display:block;font-size:13.5px;margin-top:2px;line-height:1.3}
+.slot.vrij b{color:var(--ink-3)} .slot.vrij span{color:var(--ink-2)}
+
+/* standaarddag */
+.dagtab{background:var(--paper);border:1.5px solid var(--deep)}
+.blok{display:grid;grid-template-columns:54px 1fr 56px;gap:8px;padding:7px 12px;border-bottom:1px solid var(--line-2);align-items:baseline}
+.blok:last-of-type{border-bottom:0}
+.blok .t{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--signal)}
+.blok b{font-weight:600;font-size:14.5px}
+.blok small{display:block;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-2);line-height:1.45;margin-top:2px}
+.blok .k{font-family:"IBM Plex Mono",monospace;font-size:12.5px;text-align:right;color:var(--ink-2)}
+.blok.vrij .t,.blok.vrij b{color:var(--ink-3);font-weight:400}
+.som{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:baseline;padding:8px 12px;background:var(--band);border-top:1.5px solid var(--deep)}
+.som .l{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.som .k{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:17px;color:var(--deep)}
+
+/* scenario's */
+.scen{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:9px}
+.s{background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--signal);padding:8px 11px 9px;display:flex;flex-direction:column}
+.s h3{font-family:"Archivo",sans-serif;font-weight:600;font-size:14px;margin:0 0 3px;color:var(--deep)}
+.s p{margin:0;font-size:13px;line-height:1.34}
+.s .w{margin-top:4px;font-size:12px;color:var(--ink-2)}
+.s .n{margin-top:6px;padding-top:5px;border-top:1px solid var(--line-2);font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-3)}
+.s .n b{color:var(--deep);font-size:13.5px}
+
+/* dagkaarten */
+.dagen{display:grid;grid-template-columns:repeat(auto-fit,minmax(288px,1fr));gap:9px}
+.dag{background:var(--paper);border:1px solid var(--line);display:flex;flex-direction:column}
+.dag.kern{border-color:var(--deep);border-width:1.5px}
+.dag .dk{padding:8px 11px 7px;border-bottom:1px solid var(--line-2);background:var(--wash)}
+.dag.kern .dk{background:var(--band)}
+.dag .dk h3{font-family:"Archivo",sans-serif;font-weight:600;font-size:14px;margin:0;color:var(--deep)}
+.dag .dk p{margin:2px 0 0;font-size:11.8px;color:var(--ink-2);line-height:1.3}
+.r{display:grid;grid-template-columns:48px 1fr;gap:8px;padding:3px 11px;font-size:12.8px;align-items:baseline}
+.r .t{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3)}
+.r.eet .t{color:var(--signal)}
+.r.sport{background:var(--band)} .r.sport .t{color:var(--deep);font-weight:600} .r.sport span{font-weight:600}
+.r small{color:var(--ink-3);font-size:11px}
+.dag .som2{margin-top:auto;padding:5px 11px;border-top:1px solid var(--line-2);font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-3);background:var(--wash)}
+.dag .som2 b{color:var(--deep);font-size:13px}
+
+/* A/B */
+.ab{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px}
+.k2{background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--signal);padding:9px 12px 10px}
+.k2 h3{font-family:"Archivo",sans-serif;font-weight:600;font-size:14.5px;margin:0 0 2px;color:var(--deep)}
+.k2 .w{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);margin:0 0 6px}
+.k2 ol{margin:0;padding-left:17px;font-size:13.5px}
+.k2 li{padding:1.5px 0}
+.k2 li em{font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-3)}
+
+/* tabellen */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--paper)}
+th{font-family:"IBM Plex Mono",monospace;font-size:9.4px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);text-align:left;font-weight:500;padding:5px 6px;border-bottom:1.5px solid var(--deep);white-space:nowrap}
+th.c{text-align:center} th.r{text-align:right}
+td{padding:4px 6px;border-bottom:1px solid var(--line-2);vertical-align:baseline;font-size:13px}
+td.n{font-family:"IBM Plex Mono",monospace;font-size:11.4px;color:var(--ink-2);line-height:1.5}
+td.b{background:var(--wash)}
+td.r{text-align:right;font-family:"IBM Plex Mono",monospace;font-size:12.2px;color:var(--deep);white-space:nowrap}
+td.l{font-size:13.2px;white-space:nowrap}
+td.l em{font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:10.2px;color:var(--ink-3);display:block;white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+
+/* kalender */
+#kal td.p{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-2);white-space:nowrap}
+#kal td.nr{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;color:var(--deep);text-align:right}
+#kal td.k{font-family:"IBM Plex Mono",monospace;font-size:11.8px;text-align:center;white-space:nowrap}
+#kal td.sch{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--ink-3);text-align:right;white-space:nowrap}
+#kal td em{font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--signal)}
+#kal tr.uit td{color:var(--ink-3)} #kal tr.uit td.nr{color:var(--ink-3);font-weight:400}
+#kal tr.bs td{border-top:1.5px solid var(--deep)}
+#kal tr.test td{background:var(--band)}
+
+.regels{margin:0;padding:0;list-style:none;counter-reset:r;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0 20px}
+.regels li{counter-increment:r;position:relative;padding:5px 0 5px 27px;border-bottom:1px solid var(--line-2);font-size:13.5px}
+.regels li::before{content:counter(r);position:absolute;left:0;top:5px;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;width:18px;height:18px;line-height:18px;text-align:center;background:var(--band);color:var(--deep);border-radius:2px}
+
+@page{size:A4;margin:11mm}
+@media print{
+  :root{--ground:#fff;--paper:#fff;--ink:#111;--ink-2:#444;--ink-3:#777;--line:#999;--line-2:#ccc;--wash:#f4f4f4;--band:#e6ecef}
+  body{background:#fff;font-size:9.6pt;line-height:1.26}
+  .vel{max-width:none;padding:0}
+  .kop{margin-bottom:6px;padding-bottom:7px} .kop h1{font-size:26pt} .deel{margin-bottom:11px}
+  section{margin-bottom:11px;break-inside:avoid}
+  h2{font-size:8.2pt;margin-bottom:5px}
+  .ritme{gap:4px} .slot{padding:5px 8px} .slot span{font-size:8.8pt}
+  .blok{padding:4px 10px} .blok b{font-size:9.6pt} .blok small{font-size:7.6pt}
+  .scen{grid-template-columns:repeat(2,1fr);gap:6px} .s{padding:6px 9px 7px}
+  .dagen{grid-template-columns:repeat(2,1fr);gap:6px}
+  .dag{break-inside:avoid} .dag .dk{padding:5px 9px} .dag .dk h3{font-size:10pt} .dag .dk p{font-size:8pt}
+  .r{padding:1.8px 9px;font-size:8.6pt;grid-template-columns:42px 1fr} .r .t{font-size:7.8pt} .r small{font-size:7.8pt}
+  .dag .som2{padding:3px 9px;font-size:8pt}
+  .ab{gap:6px} .k2{padding:7px 10px 8px}
+  table{font-size:8.6pt} td{padding:2.2px 5px;font-size:8.6pt} th{font-size:7pt;padding:3px 5px}
+  td.n{font-size:7.7pt;line-height:1.45} td.l{font-size:8.8pt} td.r{font-size:8.4pt}
+  #kal td.p{font-size:7.6pt} #kal td.k{font-size:8.2pt} #kal td.sch{font-size:6.8pt} #kal td em{font-size:6.8pt}
+  .regels li{padding:3px 0 3px 24px;font-size:8.8pt}
+}
+</style>
+</head>
+<body>
+<div class="vel">
+
+  <header class="kop">
+    <p class="merk">Basiskamp</p>
+    <h1>Handboek</h1>
+    <p class="sub">28 september 2026 t/m 31 januari 2027 &middot; 17 trainingsweken</p>
+  </header>
+  <p class="deel">Persoonlijk trainings- en eetschema &middot; StrongLifts 5&times;5 met plantaardige voeding &middot; Deel 1 &mdash; het eten</p>
+
+  <section>
+    <h2>De week</h2>
+    <div class="ritme">
+      <div class="slot"><b>di 18:00</b><span>Kracht A</span></div>
+      <div class="slot"><b>do 10:00 of 19:00</b><span>Kracht B</span></div>
+      <div class="slot"><b>zo 10:30</b><span>HYROX</span></div>
+      <div class="slot"><b>wo of do avond</b><span>Volleybal</span></div>
+      <div class="slot vrij"><b>do ochtend</b><span>Wegen, &eacute;&eacute;n getal</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>De standaarddag &mdash; maandag t/m vrijdag</h2>
+    <div class="dagtab">
+      <div class="blok"><span class="t">09:30</span><span><b>Fruit + shake</b><small>banaan en 150 g fruit &middot; 500 ml sojadrink + 25 g eiwitpoeder</small></span><span class="k">465</span></div>
+      <div class="blok"><span class="t">12:15</span><span><b>Brood</b><small>2 sneden volkoren + 30 g hummus per snee</small></span><span class="k">290</span></div>
+      <div class="blok"><span class="t">15:00</span><span><b>De yoghurtbak</b><small>250 g sojayoghurt + 100 g fruit + 40 g granola + 15 g noten</small></span><span class="k">435</span></div>
+      <div class="blok"><span class="t">18:30</span><span><b>Avondeten</b><small>normale portie, &eacute;&eacute;n keer opscheppen</small></span><span class="k">800</span></div>
+      <div class="blok vrij"><span class="t">daarna</span><span><b>Vrij</b><small>eet je toch iets: 200 g gedopte edamame</small></span><span class="k">+240</span></div>
+      <div class="som"><span class="l">totaal</span><span class="k">1.990 kcal</span></div>
+    </div>
+    <p class="voet">Twee dingen wegen: de 40 g granola en de 30 g hummus. De rest zit in vaste verpakkingen en komt vanzelf goed.</p>
+  </section>
+
+  <section>
+    <h2>Als het anders loopt</h2>
+    <div class="scen">
+      <article class="s">
+        <h3>Smoothiebowl &rsquo;s ochtends</h3>
+        <p>De bowl vervangt het fruit &eacute;n de yoghurtbak.</p>
+        <p class="w">Shake schuift naar 12:15 naast het brood. Bowl met 70 g granola = 755.</p>
+        <p class="n"><b>2.110</b> kcal</p>
+      </article>
+      <article class="s">
+        <h3>Avondeten mee als lunch</h3>
+        <p>Twee warme maaltijden: de yoghurtbak vervalt.</p>
+        <p class="w">Om 15:00 alleen 250 g sojayoghurt, zodat dat moment niet leeg is.</p>
+        <p class="n"><b>2.170</b> kcal</p>
+      </article>
+      <article class="s">
+        <h3>Geen shake voorbereid</h3>
+        <p>200 g edamame uit de vriezer op werk.</p>
+        <p class="w">Vervangen, niet overslaan. Niet twee dagen achter elkaar.</p>
+        <p class="n"><b>1.965</b> kcal</p>
+      </article>
+      <article class="s">
+        <h3>Uit eten of gesnackt</h3>
+        <p>Reken de avond als 1.400, laat de yoghurtbak vallen.</p>
+        <p class="w">Vooraf besluiten, niet ter plekke.</p>
+        <p class="n"><b>2.155</b> kcal</p>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Regels voor het eten</h2>
+    <ol class="regels">
+      <li>Het avondeten telt als <b>800</b>. Niet wegen, niet onderhandelen.</li>
+      <li>Elke dag <b>&eacute;&eacute;n shake</b>. Die zorgt dat je vet kwijtraakt en geen spier.</li>
+      <li>Om <b>15:00 staat er altijd iets</b>. Leeg betekent pindakaas.</li>
+      <li>Boven de 2.200? <b>Dan was het een vrije dag.</b> Afstrepen, niet corrigeren.</li>
+      <li>Zaterdag en zondag vrij. <b>Donderdagochtend &eacute;&eacute;n keer op de weegschaal.</b></li>
+    </ol>
+    <p class="voet">Boodschappen &mdash; 3 pakken sojadrink &middot; 1 brood &middot; 400 g hummus &middot; fruit &middot; 1,25 kg sojayoghurt &middot; granola &middot; noten &middot; zak diepvries-edamame &middot; reep pure chocolade</p>
+  </section>
+
+  <p class="deel pagina">Deel 2 &mdash; het dagritme</p>
+
+  <section>
+    <h2>Waar je bent, wanneer je traint, wanneer je eet</h2>
+    <div class="dagen">
+
+      <article class="dag kern">
+        <div class="dk"><h3>Werkdag &mdash; ma, wo, vr</h3><p>Geen training. De standaarddag.</p></div>
+        <div class="r eet"><span class="t">09:30</span><span>Fruit + shake <small>&middot; op werk</small></span></div>
+        <div class="r eet"><span class="t">12:15</span><span>Brood met hummus</span></div>
+        <div class="r eet"><span class="t">15:00</span><span>De yoghurtbak</span></div>
+        <div class="r eet"><span class="t">18:30</span><span>Avondeten</span></div>
+        <div class="som2">totaal <b>1.990</b></div>
+      </article>
+
+      <article class="dag kern">
+        <div class="dk"><h3>Dinsdag &mdash; Kracht A</h3><p>Je gaat eerder weg van werk.</p></div>
+        <div class="r eet"><span class="t">09:30</span><span>Fruit + shake</span></div>
+        <div class="r eet"><span class="t">12:15</span><span>Brood met hummus</span></div>
+        <div class="r eet"><span class="t">15:30</span><span>De yoghurtbak <small>&middot; half uur later</small></span></div>
+        <div class="r sport"><span class="t">18:00</span><span>Kracht A <small>&middot; tot 19:15</small></span></div>
+        <div class="r eet"><span class="t">19:45</span><span>Avondeten</span></div>
+        <div class="som2">totaal <b>1.990</b></div>
+      </article>
+
+      <article class="dag">
+        <div class="dk"><h3>Donderdag &mdash; trainingsweek</h3><p>Vrije dag. Kracht &rsquo;s ochtends, volleybal laat.</p></div>
+        <div class="r eet"><span class="t">07:30</span><span>Wegen <small>&middot; voor het ontbijt</small></span></div>
+        <div class="r eet"><span class="t">08:00</span><span>Fruit + shake</span></div>
+        <div class="r sport"><span class="t">10:00</span><span>Kracht B <small>&middot; open gym, tot 11:15</small></span></div>
+        <div class="r eet"><span class="t">12:30</span><span>Brood met hummus</span></div>
+        <div class="r eet"><span class="t">15:00</span><span>De yoghurtbak</span></div>
+        <div class="r eet"><span class="t">18:00</span><span>Avondeten</span></div>
+        <div class="r eet"><span class="t">20:15</span><span>Banaan <small>&middot; voor het volleybal</small></span></div>
+        <div class="r sport"><span class="t">21:00</span><span>Volleybaltraining <small>&middot; tot 22:30</small></span></div>
+        <div class="som2">totaal <b>2.090</b> &middot; dubbele dag</div>
+      </article>
+
+      <article class="dag">
+        <div class="dk"><h3>Donderdag &mdash; wedstrijdweek</h3><p>Late avond gehad. Uitslapen.</p></div>
+        <div class="r eet"><span class="t">09:00</span><span>Wegen <small>&middot; voor het ontbijt</small></span></div>
+        <div class="r eet"><span class="t">09:30</span><span>Smoothiebowl <small>&middot; yoghurtbak vervalt</small></span></div>
+        <div class="r eet"><span class="t">12:30</span><span>Shake</span></div>
+        <div class="r eet"><span class="t">15:00</span><span>200 g edamame</span></div>
+        <div class="r eet"><span class="t">17:30</span><span>Avondeten <small>&middot; vroeg, je moet zo weg</small></span></div>
+        <div class="r sport"><span class="t">19:00</span><span>Kracht B <small>&middot; bij de box, tot 20:15</small></span></div>
+        <div class="som2">totaal <b>2.060</b></div>
+      </article>
+
+      <article class="dag">
+        <div class="dk"><h3>Woensdag &mdash; wedstrijddag</h3><p>Werkdag met een late avond erachteraan.</p></div>
+        <div class="r eet"><span class="t">09:30</span><span>Fruit + shake</span></div>
+        <div class="r eet"><span class="t">12:15</span><span>Brood met hummus</span></div>
+        <div class="r eet"><span class="t">15:00</span><span>De yoghurtbak</span></div>
+        <div class="r eet"><span class="t">18:00</span><span>Avondeten <small>&middot; direct na thuiskomst</small></span></div>
+        <div class="r sport"><span class="t">19:30</span><span>Volleybal speeldag <small>&middot; tot 23:00</small></span></div>
+        <div class="r eet"><span class="t">23:00</span><span>200 g edamame <small>&middot; alleen bij honger</small></span></div>
+        <div class="som2">totaal <b>2.230</b></div>
+      </article>
+
+      <article class="dag">
+        <div class="dk"><h3>Zondag &mdash; HYROX</h3><p>Weekend, dus geen eetregels. Alleen de timing.</p></div>
+        <div class="r eet"><span class="t">08:30</span><span>Iets lichts <small>&middot; twee uur van tevoren</small></span></div>
+        <div class="r sport"><span class="t">10:30</span><span>HYROX <small>&middot; tot 11:45</small></span></div>
+        <div class="r eet"><span class="t">12:30</span><span>Eten <small>&middot; binnen een uur na afloop</small></span></div>
+        <div class="som2">vrij &mdash; geen telling</div>
+      </article>
+
+      <article class="dag">
+        <div class="dk"><h3>Zaterdag</h3><p>Niets. Geen training, geen eetregels.</p></div>
+        <div class="r"><span class="t">&mdash;</span><span><small>Met opzet leeg. Het weekend is de marge die het plan overeind houdt.</small></span></div>
+        <div class="som2">vrij</div>
+      </article>
+
+    </div>
+    <p class="voet">Dinsdag 18:00 en donderdag 19:00 draai je je eigen programma tijdens een lesuur; donderdag 10:00 is open gym.<br>
+    In een wedstrijdweek sla je de volleybaltraining op donderdag over &mdash; dan is donderdagavond voor kracht B.</p>
+  </section>
+
+  <p class="deel pagina">Deel 3 &mdash; het krachtblok</p>
+
+  <section>
+    <h2>Wat je doet &mdash; StrongLifts 5&times;5</h2>
+    <div class="ab">
+      <article class="k2">
+        <h3>Kracht A</h3>
+        <p class="w">dinsdag 18:00 &middot; ruim een uur</p>
+        <ol>
+          <li>Back Squat <em>5&times;5</em></li>
+          <li>Bench Press <em>5&times;5</em></li>
+          <li>Barbell Row <em>5&times;5</em></li>
+        </ol>
+      </article>
+      <article class="k2">
+        <h3>Kracht B</h3>
+        <p class="w">donderdag 10:00, of 19:00 in een wedstrijdweek</p>
+        <ol>
+          <li>Back Squat <em>5&times;5 &middot; zelfde gewicht als dinsdag</em></li>
+          <li>Overhead Press <em>5&times;5</em></li>
+          <li>Deadlift <em>2&times;5</em></li>
+        </ol>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gewichten per blok</h2>
+    <div class="tw">
+    <table>
+      <colgroup><col style="width:20%"><col style="width:7%"><col style="width:26%"><col style="width:22%"><col style="width:14%"><col style="width:11%"></colgroup>
+      <thead><tr><th>Oefening</th><th class="r">nu</th><th>Blok 1 &middot; tw 1&ndash;6</th><th>Blok 2 &middot; tw 7&ndash;12</th><th>Blok 3 &middot; tw 13&ndash;16</th><th class="r">eind jan</th></tr></thead>
+      <tbody>
+        <tr><td class="l">Back Squat<em>5&times;5 &middot; 5&times;3 &middot; 4&times;2</em></td><td class="r">90</td><td class="n">60 &middot; 62,5 &middot; 65 &middot; 67,5 &middot; 70 &middot; 72,5</td><td class="n b">77,5 &middot; 80 &middot; 82,5 &middot; 85 &middot; 87,5 &middot; 90</td><td class="n">92,5 &middot; 95 &middot; 97,5 &middot; 100</td><td class="r">~107</td></tr>
+        <tr><td class="l">Bench Press<em>5&times;5 &middot; 5&times;3 &middot; 4&times;2</em></td><td class="r">67,5</td><td class="n">45 &middot; 47,5 &middot; 50 &middot; 50 &middot; 52,5 &middot; 52,5</td><td class="n b">55 &middot; 57,5 &middot; 57,5 &middot; 60 &middot; 60 &middot; 62,5</td><td class="n">62,5 &middot; 65 &middot; 65 &middot; 67,5</td><td class="r">~72</td></tr>
+        <tr><td class="l">Barbell Row<em>5&times;5 hele blok</em></td><td class="r">&mdash;</td><td class="n">40 &middot; 42,5 &middot; 45 &middot; 47,5 &middot; 50 &middot; 50</td><td class="n b">52,5 &middot; 52,5 &middot; 55 &middot; 55 &middot; 57,5 &middot; 57,5</td><td class="n">60 &middot; 60 &middot; 62,5 &middot; 62,5</td><td class="r">62,5&times;5</td></tr>
+        <tr><td class="l">Overhead Press<em>5&times;5 &middot; 5&times;3 &middot; 4&times;2</em></td><td class="r">42,5</td><td class="n">27,5 &middot; 30 &middot; 32,5 &middot; 32,5 &middot; 35 &middot; 35</td><td class="n b">37,5 &middot; 37,5 &middot; 40 &middot; 40 &middot; 42,5 &middot; 42,5</td><td class="n">45 &middot; 45 &middot; 47,5 &middot; 47,5</td><td class="r">~51</td></tr>
+        <tr><td class="l">Deadlift<em>2&times;5 &middot; 2&times;3 &middot; 2&times;2</em></td><td class="r">107,5</td><td class="n">80 &middot; 82,5 &middot; 85 &middot; 87,5 &middot; 90 &middot; 92,5</td><td class="n b">95 &middot; 97,5 &middot; 100 &middot; 102,5 &middot; 105 &middot; 107,5</td><td class="n">110 &middot; 112,5 &middot; 115 &middot; 117,5</td><td class="r">~125</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="voet">De squat staat op beide dagen op hetzelfde gewicht &mdash; twee keer het volume, niet twee keer de sprong.<br>
+    De 1RM voor de press is niet getest maar komt uit je Lift Log: 37,5 kg &times; 4 op 21 juli.</p>
+  </section>
+
+  <section>
+    <h2>Regels voor het trainen</h2>
+    <ol class="regels">
+      <li>Twee keer op rij niet alle reps gehaald? <b>10% eraf</b> en opnieuw opbouwen.</li>
+      <li><b>Twee van de drie</b> box-momenten is een geslaagde week. Drie is bonus.</li>
+      <li>Een gemiste week schuift het nummer op. <b>Niet inhalen, niet doorpakken.</b></li>
+      <li>De gewichten vanaf blok 2 gaan ervan uit dat blok 1 gelukt is. Zo niet, dan volgt de tabel jou.</li>
+      <li>Conditie is volleybal plus HYROX. <b>Geen losse hardloopdagen erbij.</b></li>
+      <li>Je logt alleen het topgewicht per oefening in je Lift Log.</li>
+    </ol>
+  </section>
+
+  <p class="deel pagina">Deel 4 &mdash; de kalender</p>
+
+  <section>
+    <h2>Alle weken, met de gewichten van die week</h2>
+    <div class="tw">
+    <table id="kal">
+      <thead><tr>
+        <th>Periode</th><th class="r">tw</th><th>Week</th>
+        <th class="c">Squat</th><th class="c">Bench</th><th class="c">Row</th><th class="c">Press</th><th class="c">Deadlift</th><th class="r">schema</th>
+      </tr></thead>
+      <tbody>
+<tr class="bs"><td class="p">28-09 &ndash; 04-10</td><td class="nr">1</td><td>Wedstrijd</td><td class="k">60</td><td class="k">45</td><td class="k">40</td><td class="k">27,5</td><td class="k">80</td><td class="sch">5&times;5 &middot; 2&times;5</td></tr>
+<tr><td class="p">05-10 &ndash; 11-10</td><td class="nr">2</td><td>Wedstrijd</td><td class="k">62,5</td><td class="k">47,5</td><td class="k">42,5</td><td class="k">30</td><td class="k">82,5</td><td class="sch">5&times;5 &middot; 2&times;5</td></tr>
+<tr><td class="p">12-10 &ndash; 18-10</td><td class="nr">3</td><td>Training</td><td class="k">65</td><td class="k">50</td><td class="k">45</td><td class="k">32,5</td><td class="k">85</td><td class="sch">5&times;5 &middot; 2&times;5</td></tr>
+<tr class="uit"><td class="p">19-10 &ndash; 25-10</td><td class="nr">&mdash;</td><td>Vrije week</td><td class="k" colspan="5">vrij</td><td class="sch">&mdash;</td></tr>
+<tr><td class="p">26-10 &ndash; 01-11</td><td class="nr">4</td><td>Wedstrijd</td><td class="k">67,5</td><td class="k">50</td><td class="k">47,5</td><td class="k">32,5</td><td class="k">87,5</td><td class="sch">5&times;5 &middot; 2&times;5</td></tr>
+<tr><td class="p">02-11 &ndash; 08-11</td><td class="nr">5</td><td>Training</td><td class="k">70</td><td class="k">52,5</td><td class="k">50</td><td class="k">35</td><td class="k">90</td><td class="sch">5&times;5 &middot; 2&times;5</td></tr>
+<tr><td class="p">09-11 &ndash; 15-11</td><td class="nr">6</td><td>Wedstrijd</td><td class="k">72,5</td><td class="k">52,5</td><td class="k">50</td><td class="k">35</td><td class="k">92,5</td><td class="sch">5&times;5 &middot; 2&times;5</td></tr>
+<tr class="bs"><td class="p">16-11 &ndash; 22-11</td><td class="nr">7</td><td>Training</td><td class="k">77,5</td><td class="k">55</td><td class="k">52,5</td><td class="k">37,5</td><td class="k">95</td><td class="sch">5&times;3 &middot; 2&times;3</td></tr>
+<tr><td class="p">23-11 &ndash; 29-11</td><td class="nr">8</td><td>Wedstrijd</td><td class="k">80</td><td class="k">57,5</td><td class="k">52,5</td><td class="k">37,5</td><td class="k">97,5</td><td class="sch">5&times;3 &middot; 2&times;3</td></tr>
+<tr><td class="p">30-11 &ndash; 06-12</td><td class="nr">9</td><td>Training</td><td class="k">82,5</td><td class="k">57,5</td><td class="k">55</td><td class="k">40</td><td class="k">100</td><td class="sch">5&times;3 &middot; 2&times;3</td></tr>
+<tr><td class="p">07-12 &ndash; 13-12</td><td class="nr">10</td><td>Wedstrijd</td><td class="k">85</td><td class="k">60</td><td class="k">55</td><td class="k">40</td><td class="k">102,5</td><td class="sch">5&times;3 &middot; 2&times;3</td></tr>
+<tr><td class="p">14-12 &ndash; 20-12</td><td class="nr">11</td><td>Training</td><td class="k">87,5</td><td class="k">60</td><td class="k">57,5</td><td class="k">42,5</td><td class="k">105</td><td class="sch">5&times;3 &middot; 2&times;3</td></tr>
+<tr><td class="p">21-12 &ndash; 27-12</td><td class="nr">12</td><td>Training</td><td class="k">90</td><td class="k">62,5</td><td class="k">57,5</td><td class="k">42,5</td><td class="k">107,5</td><td class="sch">5&times;3 &middot; 2&times;3</td></tr>
+<tr class="bs"><td class="p">28-12 &ndash; 03-01</td><td class="nr">13</td><td>Training</td><td class="k">92,5</td><td class="k">62,5</td><td class="k">60</td><td class="k">45</td><td class="k">110</td><td class="sch">4&times;2 &middot; 2&times;2</td></tr>
+<tr><td class="p">04-01 &ndash; 10-01</td><td class="nr">14</td><td>Training</td><td class="k">95</td><td class="k">65</td><td class="k">60</td><td class="k">45</td><td class="k">112,5</td><td class="sch">4&times;2 &middot; 2&times;2</td></tr>
+<tr><td class="p">11-01 &ndash; 17-01</td><td class="nr">15</td><td>Training</td><td class="k">97,5</td><td class="k">65</td><td class="k">62,5</td><td class="k">47,5</td><td class="k">115</td><td class="sch">4&times;2 &middot; 2&times;2</td></tr>
+<tr><td class="p">18-01 &ndash; 24-01</td><td class="nr">16</td><td>Training</td><td class="k">100</td><td class="k">67,5</td><td class="k">62,5</td><td class="k">47,5</td><td class="k">117,5</td><td class="sch">4&times;2 &middot; 2&times;2</td></tr>
+<tr class="test"><td class="p">25-01 &ndash; 31-01</td><td class="nr">17</td><td>Wedstrijd</td><td class="k" colspan="5"><b>Hertest &mdash; alle vijf de 1RM&rsquo;s opnieuw meten</b></td><td class="sch">1RM</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="voet">
+      Trainingsweek = volleybal donderdag 21:00, kracht B donderdagochtend 10:00.<br>
+      Wedstrijdweek = volleybal woensdag 19:30, kracht B donderdagavond 19:00, geen volleybaltraining.<br>
+      Twee vrije weken zijn ingepland; het weeknummer schuift dan op.
+    </p>
+  </section>
+
+</div>
+</body>
+</html>
