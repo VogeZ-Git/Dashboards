@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Liquidation Lab</title>
+<style>
+:root{
+  --bg:#0a0d12; --bg2:#0f141b; --panel:#121923; --panel2:#171f2b; --line:#232e3d;
+  --txt:#dfe7f1; --dim:#8695a8; --dim2:#5d6b7d;
+  --grn:#2ecc71; --red:#ff4d5e; --yel:#ffc93c; --blu:#4da3ff; --pur:#a97bff; --cyan:#3fe0d0;
+  --mono:ui-monospace,"JetBrains Mono","SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:13px}
+body{padding:0 0 60px}
+a{color:var(--blu)}
+.wrap{max-width:1680px;margin:0 auto;padding:0 16px}
+header{position:sticky;top:0;z-index:40;background:linear-gradient(180deg,#0a0d12 70%,rgba(10,13,18,.85));border-bottom:1px solid var(--line);padding:10px 0 8px}
+.hdr{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{font-weight:700;letter-spacing:.14em;font-size:12px;color:var(--cyan);white-space:nowrap}
+.brand b{color:var(--txt)}
+.tickers{display:flex;gap:10px;flex-wrap:wrap;flex:1;min-width:280px}
+.tk{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 9px;min-width:96px}
+.tk .k{font-size:9.5px;letter-spacing:.09em;color:var(--dim2);text-transform:uppercase}
+.tk .v{font-size:14px;font-weight:600;margin-top:1px;font-variant-numeric:tabular-nums}
+.tk .s{font-size:9.5px;color:var(--dim)}
+.pos{color:var(--grn)} .neg{color:var(--red)} .neu{color:var(--yel)}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:6px 11px;font-family:var(--mono);font-size:11.5px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn:hover{border-color:var(--blu);color:#fff}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-top:14px}
+.card>h3{margin:0;padding:8px 12px;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--line);background:var(--bg2);display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:600}
+.card>h3 .rt{color:var(--dim2);letter-spacing:.04em;text-transform:none;font-weight:400}
+.pad{padding:12px}
+#banner{margin-top:14px}
+.verdict{border-radius:9px;border:1px solid var(--line);padding:14px 16px;background:linear-gradient(180deg,#2a1a08,#1d1206);border-color:#6b4413}
+.verdict .big{font-size:20px;font-weight:800;letter-spacing:.02em;color:#ffcf8a}
+.verdict .sub{font-size:12px;color:#d9b98a;margin-top:6px;line-height:1.65;max-width:95ch}
+.verdict.done{background:linear-gradient(180deg,#0f3d26,#0a2a1a);border-color:#1f7a4d}
+.verdict.done .big{color:var(--grn)}
+.verdict.done .sub{color:#9fd9bb}
+#chartwrap{position:relative;background:#080b10}
+#chart{display:block;width:100%;height:420px}
+#tip{position:absolute;pointer-events:none;background:rgba(8,11,16,.96);border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-size:11px;line-height:1.55;display:none;z-index:5;white-space:nowrap}
+.legend{display:flex;gap:12px;flex-wrap:wrap;padding:7px 12px;border-top:1px solid var(--line);font-size:10.5px;color:var(--dim);background:var(--bg2)}
+.legend span{cursor:pointer;opacity:.55;white-space:nowrap}
+.legend span.on{opacity:1;color:var(--txt)}
+.sw{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim2);text-align:right;padding:6px;border-bottom:1px solid var(--line);font-weight:600;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th.l,td.l{text-align:left}
+td{padding:6px;border-bottom:1px solid #18202b;font-size:11.5px;text-align:right;white-space:nowrap}
+tr.base td{background:#0d1a24}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:#16202c}
+.pill{display:inline-block;font-size:9.5px;padding:1px 6px;border-radius:20px;border:1px solid var(--line);color:var(--dim)}
+.pill.win{border-color:#1f7a4d;color:var(--grn)}
+.pill.lose{border-color:#7a2530;color:var(--red)}
+.pill.wait{border-color:#6b5413;color:var(--yel)}
+.note{font-size:10.5px;color:var(--dim2);line-height:1.7}
+.sub{font-size:10px;color:var(--dim2)}
+details summary{cursor:pointer;padding:8px 12px;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);user-select:none;border-top:1px solid var(--line)}
+details summary:hover{color:var(--txt)}
+.bar{display:inline-block;height:6px;border-radius:3px;background:#1c2532;overflow:hidden;width:64px;vertical-align:middle}
+.bar>i{display:block;height:100%}
+.err{background:#2a0c11;border:1px solid #7a2530;color:#ff9aa5;border-radius:7px;padding:12px;font-size:12px;line-height:1.6}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:1000px){.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap hdr">
+  <div class="brand">LIQUIDATION&nbsp;<b>LAB</b></div>
+  <div class="tickers" id="tickers"></div>
+  <a class="btn" href="liquidation_hunter.html">← Hunter</a>
+  <button class="btn" id="btnRefresh">↻</button>
+</div></header>
+
+<div class="wrap">
+  <div id="banner"></div>
+
+  <div class="card">
+    <h3>Equity curves <span class="rt">each variant paper-trades the same market with one setting changed · click the legend to isolate</span></h3>
+    <div id="chartwrap"><canvas id="chart"></canvas><div id="tip"></div></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="card">
+    <h3>Leaderboard <span class="rt" id="lbMeta"></span></h3>
+    <div style="overflow-x:auto"><table id="board"></table></div>
+    <details><summary>How to read this</summary><div class="pad note" id="howto"></div></details>
+  </div>
+
+  <div class="grid2">
+    <div class="card" style="margin-top:0">
+      <h3>Live right now</h3>
+      <div class="pad" id="live"></div>
+    </div>
+    <div class="card" style="margin-top:0">
+      <h3>Recording integrity <span class="rt">gaps, costs, assumptions</span></h3>
+      <div class="pad" id="integrity"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Trade log <span class="rt" id="tlMeta">click a row in the leaderboard</span></h3>
+    <div style="overflow-x:auto"><table id="trades"></table></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ==========================================================================
+   LIQUIDATION LAB — forward-test results viewer
+   Reads liqhunt_history.json, written by liqhunt_recorder.py on every run.
+   This page computes nothing about the strategy; it only renders what the
+   recorder booked, so the numbers here and in the record cannot disagree.
+   ========================================================================== */
+const $=id=>document.getElementById(id);
+const fmt=(n,d=0)=>(n==null||!isFinite(n))?'—':Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct=(n,d=2)=>(n==null||!isFinite(n))?'—':(n>=0?'+':'')+Number(n).toFixed(d)+'%';
+const usd=n=>(n==null||!isFinite(n))?'—':'$'+fmt(n,0);
+const cls=n=>n==null?'':(n>0?'pos':n<0?'neg':'');
+
+const COLORS=['#4da3ff','#2ecc71','#ffc93c','#a97bff','#3fe0d0','#ff7ab8','#ff9f43','#8ed1fc','#c3f584','#ff6b6b','#b39ddb'];
+let D=null, hidden=new Set(), selected=null;
+
+async function load(){
+  try{
+    const r=await fetch('liqhunt_history.json?t='+Date.now());
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    D=await r.json();
+  }catch(e){
+    const isFile = location.protocol === 'file:';
+    $('banner').innerHTML=`<div class="err">
+      <b>${isFile?'Opened as a local file.':'No record yet.'}</b>
+      ${isFile
+        ? `Browsers block pages on <code>file://</code> from reading sibling files, so this page cannot
+           load the record that way. Open it from GitHub Pages instead, or pick the file manually:`
+        : `${e.message}. <code>liqhunt_history.json</code> appears once <code>liqhunt_recorder.py</code>
+           has run at least once — until then there is nothing to show, which is the correct answer,
+           not an error.`}
+      <div style="margin-top:10px"><input type="file" id="pick" accept=".json"></div></div>`;
+    const pick=$('pick');
+    if(pick) pick.onchange=async ev=>{
+      const f=ev.target.files[0]; if(!f) return;
+      try{ D=JSON.parse(await f.text()); $('banner').innerHTML=''; render(); }
+      catch(err){ alert('That file is not a liqhunt record: '+err.message); }
+    };
+    return;
+  }
+  render();
+}
+
+/* ------------------------------------------------------------------ header */
+function renderHeader(){
+  const t0=new Date(D.started), days=(Date.now()-t0.getTime())/864e5;
+  const totTrades=D.variants.reduce((s,v)=>s+v.stats.trades,0);
+  const best=ranked()[0];
+  const cells=[
+    ['recording for', days<1?Math.round(days*24)+'h':days.toFixed(1)+'d', new Date(D.started).toLocaleDateString('en-GB')],
+    ['runs', fmt(D.runs), 'every 15 min'],
+    ['trades booked', fmt(totTrades), 'across '+D.variants.length+' variants'],
+    ['BTC', usd(D.spot), 'spot'],
+    ['buy & hold', pct(D.benchmark.return_pct), 'the bar to beat', cls(D.benchmark.return_pct)],
+    ['best variant', best?best.label:'—', best?pct(best.stats.return_pct):'', best?cls(best.stats.return_pct):'']
+  ];
+  $('tickers').innerHTML=cells.map(c=>`<div class="tk"><div class="k">${c[0]}</div>
+    <div class="v ${c[3]||''}">${c[1]}</div><div class="s">${c[2]}</div></div>`).join('');
+}
+
+/* ----------------------------------------------------------------- banner */
+function renderBanner(){
+  const alpha=D.config.alpha_adjusted??(0.05/D.variants.length);
+  const sig=D.variants.filter(v=>v.stats.edge.p!=null&&v.stats.edge.p<alpha&&v.stats.edge.mean_R>0);
+  const rawSig=D.variants.filter(v=>v.stats.edge.p!=null&&v.stats.edge.p<0.05&&v.stats.edge.mean_R>0);
+  const tot=D.variants.reduce((s,v)=>s+v.stats.trades,0);
+  // How far is the closest variant from a result that would mean something?
+  // Measured per variant against its OWN trade count and its OWN rate — mixing
+  // one variant's target with another's trade count would flatter the answer.
+  let closest=null;
+  for(const v of D.variants){
+    const e=v.stats.edge;
+    if(!e.n_needed||e.n_needed<=0) continue;
+    const remaining=Math.max(0,e.n_needed-e.n);
+    const rate=v.stats.trades_per_month;
+    const m=rate?remaining/rate:null;
+    if(!closest||remaining<closest.remaining) closest={v,remaining,months:m,need:e.n_needed};
+  }
+  const need=closest?closest.need:null;
+  const months=closest?closest.months:null;
+
+  let html;
+  if(sig.length){
+    html=`<div class="verdict done"><div class="big">${sig.length} variant${sig.length>1?'s have':' has'} a measurable edge</div>
+      <div class="sub">${sig.map(v=>v.label).join(', ')} — significant after correcting for testing
+      ${D.variants.length} variants at once (p &lt; ${alpha.toFixed(5)}). That is evidence, not proof:
+      it says the result is unlikely to be luck, not that it will persist.</div></div>`;
+  }else{
+    html=`<div class="verdict"><div class="big">No evidence yet — and that is the honest answer</div>
+      <div class="sub">
+      ${tot} trade${tot===1?'':'s'} booked so far. Nothing here is distinguishable from luck.
+      ${closest?`The closest is <b>${closest.v.label}</b>: at the effect size it is showing, it would need about
+        <b>${need} trades</b> and has ${closest.v.stats.trades}${closest.remaining>0?`, so roughly <b>${closest.remaining} more</b>`:''}${(months!=null&&isFinite(months)&&months>0.1)?` — about <b>${months<1.5?'a month':Math.round(months)+' months'}</b> at its current rate of ${closest.v.stats.trades_per_month}/month`:''}.`:''}
+      Effect sizes move around early on, so that estimate will swing wildly until the counts get real.
+      ${rawSig.length?`<br><br><b>${rawSig.length} variant${rawSig.length>1?'s look':' looks'} significant at the usual p&lt;0.05 — ignore that.</b>
+      Testing ${D.variants.length} variants means you should expect about ${(0.05*D.variants.length).toFixed(1)} of them to clear that bar by chance alone.
+      The threshold that counts here is p &lt; ${alpha.toFixed(5)}.`:''}
+      </div></div>`;
+  }
+  $('banner').innerHTML=html;
+}
+
+/* ------------------------------------------------------------------ chart */
+function ranked(){
+  return [...D.variants].sort((a,b)=>(b.stats.return_pct??-1e9)-(a.stats.return_pct??-1e9));
+}
+function series(){
+  const out=D.variants.map((v,i)=>({id:v.id,label:v.label,color:COLORS[i%COLORS.length],
+                                    pts:v.curve,base:v.id==='base'}));
+  out.push({id:'__bench',label:'Buy & hold BTC',color:'#ffffff',pts:D.benchmark.curve||[],bench:true});
+  return out;
+}
+let CH={};
+function draw(){
+  const cv=$('chart'), ctx=cv.getContext('2d');
+  const dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight;
+  cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#080b10'; ctx.fillRect(0,0,W,H);
+  const AX=62, BOT=22, cw=W-AX, ch=H-BOT;
+  const ss=series().filter(s=>!hidden.has(s.id)&&s.pts.length);
+  if(!ss.length){ctx.fillStyle='#5d6b7d';ctx.fillText('nothing selected',12,20);return;}
+  let t0=Infinity,t1=-Infinity,lo=Infinity,hi=-Infinity;
+  for(const s of ss) for(const p of s.pts){
+    t0=Math.min(t0,p.t); t1=Math.max(t1,p.t); lo=Math.min(lo,p.e); hi=Math.max(hi,p.e);
+  }
+  if(t1<=t0) t1=t0+1;
+  const pad=(hi-lo)*0.08||1; lo-=pad; hi+=pad;
+  const X=t=>((t-t0)/(t1-t0))*cw, Y=e=>ch-((e-lo)/(hi-lo))*ch;
+  CH={X,Y,t0,t1,lo,hi,cw,ch,AX,ss};
+
+  ctx.strokeStyle='rgba(255,255,255,.055)'; ctx.fillStyle='#8695a8';
+  ctx.font='10px ui-monospace,monospace'; ctx.textAlign='left';
+  const step=niceStep((hi-lo)/6);
+  for(let e=Math.ceil(lo/step)*step;e<hi;e+=step){
+    const y=Math.round(Y(e))+.5;
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(cw,y);ctx.stroke();
+    ctx.fillText(fmt(e,0),cw+6,y+3);
+  }
+  // the starting capital line — above it is profit, below it is not
+  const start=D.config.start_equity;
+  if(start>lo&&start<hi){
+    const y=Math.round(Y(start))+.5;
+    ctx.save();ctx.setLineDash([4,4]);ctx.strokeStyle='rgba(255,255,255,.28)';
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(cw,y);ctx.stroke();ctx.restore();
+  }
+  ctx.textAlign='center'; ctx.fillStyle='#5d6b7d';
+  for(let i=0;i<=5;i++){
+    const t=t0+(t1-t0)*i/5, x=X(t);
+    ctx.fillText(new Date(t).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}),
+                 Math.min(cw-18,Math.max(18,x)),H-8);
+  }
+  for(const s of ss){
+    ctx.beginPath();
+    s.pts.forEach((p,i)=>{ const x=X(p.t),y=Y(p.e); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+    ctx.strokeStyle=s.color;
+    ctx.lineWidth=s.bench?1.6:(s.base?2.2:1.2);
+    ctx.globalAlpha=(selected&&selected!==s.id&&!s.bench)?0.18:1;
+    if(s.bench){ctx.setLineDash([6,4]);}else{ctx.setLineDash([]);}
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+  }
+  if(CH.mx!=null&&CH.mx<cw){
+    ctx.save();ctx.setLineDash([3,3]);ctx.strokeStyle='rgba(255,255,255,.3)';
+    ctx.beginPath();ctx.moveTo(CH.mx+.5,0);ctx.lineTo(CH.mx+.5,ch);ctx.stroke();ctx.restore();
+  }
+}
+function niceStep(x){const e=Math.pow(10,Math.floor(Math.log10(x)));const m=x/e;
+  return (m<1.5?1:m<3?2:m<7?5:10)*e;}
+function valueAt(pts,t){
+  if(!pts.length)return null;
+  let v=pts[0].e;
+  for(const p of pts){ if(p.t<=t) v=p.e; else break; }
+  return v;
+}
+$('chart').addEventListener('mousemove',e=>{
+  const r=$('chart').getBoundingClientRect(); CH.mx=e.clientX-r.left;
+  draw();
+  if(!CH.ss)return;
+  const t=CH.t0+(CH.mx/CH.cw)*(CH.t1-CH.t0);
+  const rows=CH.ss.map(s=>({s,v:valueAt(s.pts,t)})).filter(x=>x.v!=null)
+    .sort((a,b)=>b.v-a.v).slice(0,8);
+  const tip=$('tip');
+  tip.innerHTML=`<b>${new Date(t).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</b><br>`+
+    rows.map(x=>`<span style="color:${x.s.color}">■</span> ${x.s.label} ${usd(x.v)}`).join('<br>');
+  tip.style.display='block';
+  const wrap=$('chartwrap').getBoundingClientRect();
+  tip.style.left=Math.min(CH.mx+14,wrap.width-230)+'px';
+  tip.style.top=Math.min(e.clientY-r.top+12,wrap.height-150)+'px';
+});
+$('chart').addEventListener('mouseleave',()=>{CH.mx=null;$('tip').style.display='none';draw();});
+window.addEventListener('resize',()=>draw());
+
+function renderLegend(){
+  $('legend').innerHTML=series().map(s=>
+    `<span class="${hidden.has(s.id)?'':'on'}" data-id="${s.id}">
+      <i class="sw" style="background:${s.color}"></i>${s.label}</span>`).join('');
+  $('legend').querySelectorAll('span').forEach(el=>el.onclick=()=>{
+    const id=el.dataset.id;
+    if(hidden.has(id)) hidden.delete(id); else hidden.add(id);
+    renderLegend(); draw();
+  });
+}
+
+/* ------------------------------------------------------------- leaderboard */
+function settingsLabel(v){
+  const s=v.settings, bits=[];
+  const base=D.variants.find(x=>x.id==='base');
+  if(!base) return '';
+  for(const k of Object.keys(s)){
+    if(JSON.stringify(s[k])!==JSON.stringify(base.settings[k])) bits.push(`${k}=${s[k]}`);
+  }
+  return bits.length?bits.join(' · '):'baseline';
+}
+function renderBoard(){
+  const alpha=D.config.alpha_adjusted??(0.05/D.variants.length);
+  const bh=D.benchmark.return_pct;
+  const rows=ranked().map(v=>{
+    const s=v.stats, e=s.edge;
+    let verdict='<span class="pill wait">inconclusive</span>';
+    if(e.p!=null&&e.p<alpha) verdict=e.mean_R>0?'<span class="pill win">edge</span>':'<span class="pill lose">losing</span>';
+    else if(e.p!=null&&e.p<0.05) verdict='<span class="pill wait">luck-range</span>';
+    const vsBh=(s.return_pct!=null&&bh!=null)?s.return_pct-bh:null;
+    const maxT=Math.max(...D.variants.map(x=>x.stats.trades),1);
+    return `<tr class="clickable ${v.id==='base'?'base':''}" data-id="${v.id}">
+      <td class="l"><b>${v.label}</b><div class="sub">${settingsLabel(v)}</div></td>
+      <td>${s.trades}<div class="bar"><i style="width:${s.trades/maxT*100}%;background:${COLORS[D.variants.indexOf(v)%COLORS.length]}"></i></div></td>
+      <td>${s.trades_per_month??'—'}</td>
+      <td>${s.winrate==null?'—':s.winrate.toFixed(0)+'%'}</td>
+      <td class="${cls(s.avg_R)}">${s.avg_R==null?'—':s.avg_R.toFixed(3)}</td>
+      <td>${e.p==null?'—':e.p.toFixed(4)}</td>
+      <td class="l">${verdict}<div class="sub">${e.n_needed&&e.n_needed>s.trades?'needs ~'+e.n_needed:''}</div></td>
+      <td class="${cls(s.return_pct)}">${pct(s.return_pct)}</td>
+      <td class="${cls(vsBh)}">${vsBh==null?'—':pct(vsBh)}</td>
+      <td class="neg">${s.max_dd_pct==null?'—':'-'+s.max_dd_pct.toFixed(2)+'%'}</td>
+      <td>${s.profit_factor==null?'—':(s.profit_factor===null?'—':(isFinite(s.profit_factor)?s.profit_factor.toFixed(2):'∞'))}</td>
+      <td class="sub">${s.state}</td>
+    </tr>`;
+  }).join('');
+  $('board').innerHTML=`<thead><tr>
+      <th class="l">variant</th><th>trades</th><th>/mo</th><th>win</th><th>avg R</th>
+      <th>p</th><th class="l">verdict</th><th>return</th><th>vs B&amp;H</th><th>max DD</th><th>PF</th><th class="l">now</th>
+    </tr></thead><tbody>${rows}</tbody>`;
+  $('board').querySelectorAll('tr[data-id]').forEach(tr=>tr.onclick=()=>{
+    selected=(selected===tr.dataset.id)?null:tr.dataset.id;
+    renderTrades(); draw();
+  });
+  $('lbMeta').textContent=`significance threshold p < ${alpha.toFixed(5)} (0.05 ÷ ${D.variants.length} variants)`;
+
+  $('howto').innerHTML=`
+  <b>avg R</b> is the average trade measured in units of its own risk. +0.4R means the average trade
+  made 0.4 times what it would have lost at its stop. It is the only return number that is comparable
+  across variants, because every variant risks the same 1% of equity per trade.<br><br>
+  <b>p</b> is the chance of seeing an average this far from zero if the true edge were zero.
+  <b>Low p is necessary, not sufficient.</b> Because ${D.variants.length} variants are being tested at once,
+  roughly ${(0.05*D.variants.length).toFixed(1)} of them should clear p&lt;0.05 by luck, which is why the
+  verdict column uses p&lt;${alpha.toFixed(5)} instead. A variant marked <span class="pill wait">luck-range</span>
+  cleared the naive bar and nothing more.<br><br>
+  <b>vs B&amp;H</b> is the one that decides whether any of this was worth doing. A strategy that makes
+  money but less than simply holding BTC has cost you money.<br><br>
+  <b>Only the baseline is a clean test.</b> The other ten were chosen by me before any data existed, so each
+  is a fair one-factor comparison against it — but comparisons <i>between</i> non-baseline variants, and any
+  rule you invent after looking at this table, are exploratory. Pre-registration is what makes the
+  difference between a test and a story.`;
+}
+
+/* -------------------------------------------------------------------- live */
+function renderLive(){
+  const open=D.variants.filter(v=>v.open||v.position);
+  if(!open.length){ $('live').innerHTML='<div class="note">No variant has working orders or an open position right now.</div>'; return; }
+  $('live').innerHTML=`<table><thead><tr><th class="l">variant</th><th class="l">state</th>
+    <th>side</th><th>level</th><th>stop</th><th>R:R</th></tr></thead><tbody>`+
+    open.map(v=>{
+      const p=v.position, o=v.open;
+      return `<tr><td class="l">${v.label}</td>
+        <td class="l">${p?'<span class="pill win">in position</span>':'<span class="pill wait">orders working</span>'}</td>
+        <td class="${(p?p.side:o.side)>0?'pos':'neg'}">${(p?p.side:o.side)>0?'LONG':'SHORT'}</td>
+        <td>${p?fmt(p.entry,0):fmt(o.target_com,0)}</td>
+        <td>${fmt((p?p.stop:o.stop),0)}</td>
+        <td>${o&&o.rr_main?o.rr_main.toFixed(2)+':1':'—'}</td></tr>`;
+    }).join('')+`</tbody></table>`;
+}
+
+/* --------------------------------------------------------------- integrity */
+function renderIntegrity(){
+  const c=D.config, g=D.gaps||[];
+  const lost=g.reduce((s,x)=>s+(x.minutes||0),0);
+  const spanMin=(Date.now()-new Date(D.started).getTime())/60000;
+  $('integrity').innerHTML=`
+  <div class="note">
+  <b>Costs charged on every trade.</b> Maker ${(c.fee_maker*100).toFixed(3)}% on limit entries and
+  take-profits, taker ${(c.fee_taker*100).toFixed(3)}% plus ${(c.slip_stop*100).toFixed(3)}% slippage on
+  stops and time-stop exits, and funding on the 8-hour marks for as long as a position is open.
+  Without these the curves would be fiction.<br><br>
+  <b>Fills are decided minute by minute.</b> Every run replays the one-minute candles since the previous
+  run, so a wick that touched a limit and reversed still counts as a fill. Snapshot polling would have
+  missed it.<br><br>
+  <b>Within a single minute, the bad outcome is assumed first.</b> If a candle touches both the stop and a
+  target, the stop is taken. That biases the record pessimistic on purpose.<br><br>
+  <b>Recorder downtime:</b> ${g.length} gap${g.length===1?'':'s'}
+  ${lost?`totalling ${(lost/60).toFixed(1)}h (${(lost/spanMin*100).toFixed(1)}% of the period)`:''}.
+  Fills during a gap are recovered from the candle history; <i>new signals</i> during a gap are not,
+  so downtime costs trades rather than corrupting them.
+  ${g.length?'<br><br>'+g.slice(-6).map(x=>`<span class="sub">${x.from.slice(0,16).replace('T',' ')} → ${x.to.slice(0,16).replace('T',' ')} · ${x.minutes}m</span>`).join('<br>'):''}
+  </div>`;
+}
+
+/* -------------------------------------------------------------- trade log */
+function renderTrades(){
+  const v=D.variants.find(x=>x.id===selected)||D.variants.find(x=>x.id==='base')||D.variants[0];
+  if(!v){$('trades').innerHTML='';return;}
+  $('tlMeta').textContent=v.label+' — '+v.trades.length+' trade'+(v.trades.length===1?'':'s')+
+    (selected?'':' (baseline; click any leaderboard row to switch)');
+  if(!v.trades.length){ $('trades').innerHTML='<tbody><tr><td class="l note" style="padding:12px">No trades booked yet.</td></tr></tbody>'; return; }
+  const rows=[...v.trades].reverse().map(t=>`<tr>
+    <td class="l">${new Date(t.opened).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+    <td class="${t.side>0?'pos':'neg'}">${t.side>0?'LONG':'SHORT'}</td>
+    <td>${fmt(t.entry,0)}</td><td>${fmt(t.stop,0)}</td>
+    <td>${t.fills.length}</td>
+    <td>${((t.closed-t.opened)/36e5).toFixed(1)}h</td>
+    <td class="l"><span class="pill ${t.pnl>0?'win':'lose'}">${t.why}</span></td>
+    <td class="${cls(t.pnl)}">${t.pnl>=0?'+':''}${fmt(t.pnl,2)}</td>
+    <td class="${cls(t.R)}">${t.R>=0?'+':''}${t.R.toFixed(2)}R</td>
+    <td class="sub">${fmt(t.fees,2)}</td>
+    <td class="sub">${t.funding>=0?'+':''}${fmt(t.funding,2)}</td>
+    <td>${usd(t.equity_after)}</td></tr>`).join('');
+  $('trades').innerHTML=`<thead><tr><th class="l">opened</th><th>side</th><th>entry</th><th>stop</th>
+    <th>fills</th><th>held</th><th class="l">closed by</th><th>P&amp;L</th><th>R</th><th>fees</th><th>funding</th><th>equity</th>
+    </tr></thead><tbody>${rows}</tbody>`;
+}
+
+function render(){
+  renderHeader(); renderBanner(); renderLegend(); renderBoard();
+  renderLive(); renderIntegrity(); renderTrades(); draw();
+}
+$('btnRefresh').onclick=load;
+setInterval(load, 300000);
+load();
+</script>
+</body>
+</html>
