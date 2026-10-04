@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Signal workflow — user guide</title>
+<meta name="description" content="How to run the signal workflow step by step: what to do with the digest mail each day, the Saturday review, the Sunday orders, and when to act on a signal or skip it.">
+<style>
+:root{
+ --bg:#ffffff; --fg:#1a1a1a; --dim:#666; --line:#e2e2e2; --card:#fafafa;
+ --go:#1a7f37; --wait:#9a6700; --stop:#b42318; --accent:#0969da;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --bg:#14171a; --fg:#e8e8e8; --dim:#9aa0a6; --line:#2c3238; --card:#1b1f24;
+ --go:#3fb950; --wait:#d29922; --stop:#f85149; --accent:#58a6ff;
+}}
+:root[data-theme="dark"]{
+ --bg:#14171a; --fg:#e8e8e8; --dim:#9aa0a6; --line:#2c3238; --card:#1b1f24;
+ --go:#3fb950; --wait:#d29922; --stop:#f85149; --accent:#58a6ff;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);margin:0;padding:28px 16px 80px;
+ font:16px/1.6 -apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:780px;margin:0 auto}
+h1{font-size:27px;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--dim);margin:0 0 30px}
+h2{font-size:20px;margin:38px 0 6px;padding-top:18px;border-top:1px solid var(--line)}
+h2:first-of-type{border-top:0;padding-top:0}
+h3{font-size:16px;margin:22px 0 6px}
+p{margin:8px 0}
+ol,ul{margin:8px 0 8px 22px;padding:0}
+li{margin:5px 0}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:15px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--dim);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.04em}
+code{background:var(--card);border:1px solid var(--line);border-radius:4px;
+ padding:1px 5px;font:13px/1.4 ui-monospace,Menlo,Consolas,monospace}
+.box{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px 16px;margin:14px 0}
+.box.go{border-left:4px solid var(--go)}
+.box.wait{border-left:4px solid var(--wait)}
+.box.stop{border-left:4px solid var(--stop)}
+.tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.04em;
+ padding:2px 7px;border-radius:4px;color:#fff}
+.t-act{background:var(--go)} .t-watch{background:var(--wait)} .t-rest{background:var(--dim)}
+.lead{font-size:17px}
+.big{font-size:15px;font-weight:600;margin:0 0 2px}
+a{color:var(--accent)}
+.time{color:var(--dim);font-size:14px;font-weight:400}
+.sched td:first-child{white-space:nowrap;font-weight:600}
+.sched td:nth-child(2){white-space:nowrap;color:var(--dim)}
+.q{color:var(--dim);font-size:15px;margin:2px 0 14px}
+hr{border:0;border-top:1px solid var(--line);margin:30px 0}
+</style>
+</head><body><div class="wrap">
+
+<h1>Signal workflow</h1>
+<p class="sub">How to use it, step by step. Three pages and one email — nothing else needs opening.</p>
+
+<h2>The only four things</h2>
+<table>
+<tr><th>What</th><th>Where</th><th>When</th></tr>
+<tr><td><b>The digest mail</b></td><td>Your inbox, subject starts <code>[signals]</code></td><td>Whenever it arrives</td></tr>
+<tr><td><b>Signals inbox</b></td><td><a href="https://vogez-git.github.io/Dashboards/repo/signals.html">signals.html</a></td><td>Saturday</td></tr>
+<tr><td><b>Overseer</b></td><td><a href="https://vogez-git.github.io/Dashboards/repo/overseer.html">overseer.html</a></td><td>Saturday</td></tr>
+<tr><td><b>Monitor</b></td><td><code>Orders\Monitor - week of ….html</code></td><td>Saturday + Sunday</td></tr>
+</table>
+<p class="q">Every other scanner page is reference. Open them when you are curious, never as a task.</p>
+
+<h2>1. The mail — your daily step</h2>
+<p class="lead">Takes under two minutes. Most days it takes ten seconds.</p>
+<ol>
+<li><b>Read the subject line only.</b> It looks like <code>[signals] 1 ACT · 15 regime — APLD</code>.</li>
+<li><b>If it says 0 ACT or "nothing new" — close it. You are done.</b> No mail at all also means nothing to do.</li>
+<li><b>If it says N ACT, open it and read only the green cards at the top.</b> Those are the ones with a decision in them.</li>
+<li><b>Skip the "Watch" and "Regime changes" tables during the week.</b> They are there for Saturday.</li>
+<li><b>Decide act or skip using the rules below.</b> Then close the mail.</li>
+</ol>
+<div class="box stop"><p class="big">If you see a red STALE FEED banner</p>
+<p>The scanner has not published recently, so every state in the mail is from an older close. Ignore the whole mail and check that the PC ran <code>confluence.bat</code>.</p></div>
+
+<h3>What the lines on a green card mean</h3>
+<table>
+<tr><th>Line</th><th>Read it as</th></tr>
+<tr><td><b>zone (weekly)</b></td><td>Is the slow timeframe pointing up. <code>LONG</code> is with you, <code>FLAT</code> is against. Extra information only — it never blocks a buy on its own.</td></tr>
+<tr><td><b>regime (daily)</b></td><td><b>This is the one that decides.</b> Must say <code>LONG</code>. Also tells you how many days since it flipped.</td></tr>
+<tr><td><b>level</b></td><td>Where price is on the ATR ladder. <b>"entry from underneath" is good. "pushing into resistance" means you are paying up.</b></td></tr>
+<tr><td><b>edge</b></td><td>Two different measurements of the model on that ticker. If the card flags <b>THESE DISAGREE</b>, treat the model as unproven on that name and decide on the thesis instead.</td></tr>
+<tr><td><b>book</b></td><td>What you already own in it, or "not held — candidate".</td></tr>
+<tr><td><b>call</b></td><td>Your own standing call from that ticker's <code>Synopsis.md</code>. If it says there is no Synopsis, you have no written thesis behind this line.</td></tr>
+<tr><td><b>bucket</b></td><td>How often this kind of signal has actually worked. A <b>THIN</b> warning means too few samples to trust the number.</td></tr>
+</table>
+
+<h3>Act or skip</h3>
+<div class="box go"><p class="big">Act when all four are true</p>
+<ul>
+<li>regime (daily) says <b>LONG</b></li>
+<li>level says <b>entry from underneath</b>, or at least not "into resistance"</li>
+<li>the <b>call</b> does not forbid adding, and the position is not already at its ceiling</li>
+<li>you have a thesis — a Synopsis exists, or you are happy to open a small starter line</li>
+</ul>
+<p>First layer is <b>0.25–0.5% of the book</b>. You are not trying to fill a position in one go.</p></div>
+
+<div class="box stop"><p class="big">Skip — no thinking required</p>
+<ul>
+<li><b>"pushing into resistance"</b> — wait for a pullback</li>
+<li><b>"ladder void"</b> or <b>"proxy row"</b> — the price levels on that ticker are not reliable, so there is no level to buy at</li>
+<li><b>"no Synopsis behind this line"</b> and it is not held — that is a research task, not a trade</li>
+<li><b>edges disagree</b> — information, not an instruction</li>
+<li>anything in <span class="tag t-watch">WATCH</span> or <span class="tag t-rest">REST</span></li>
+</ul></div>
+
+<p><b>A sell signal will never appear in this mail.</b> Sells were measured to have no edge, so they are filtered out. If you want to exit, that is a Saturday decision from the Monitor and the Synopsis — not a signal.</p>
+
+<h2>2. Saturday — the review <span class="time">about 30 minutes</span></h2>
+<ol>
+<li><b>Open the Weekly Asset Review</b> in <code>L:\Sync 2\Investor\Orders\</code> — newest date. It was generated overnight and opens with a scorecard against last week's calls.</li>
+<li><b>Open the Task list</b> beside it. Work top-down: urgent, then short term. Leave background alone.</li>
+<li><b>Open <a href="https://vogez-git.github.io/Dashboards/repo/signals.html">signals.html</a> → SIGNALS tab.</b> Skim what fired this week. You are looking for patterns, not entries.</li>
+<li><b>Open <a href="https://vogez-git.github.io/Dashboards/repo/overseer.html">overseer.html</a> → ACTIONS tab.</b> Click the <b>WEEKLY CONFIRMS</b> filter. That is your shortlist: names where the weekly and daily both point up.</li>
+<li><b>Open the Monitor</b> for the per-asset chapters — prices in play, your conditions, the ATR rails.</li>
+<li><b>Write the orders down.</b> Ticker, limit price, size. Do not place them yet.</li>
+</ol>
+<div class="box wait"><p class="big">Two honesty rules on the overseer page</p>
+<p>A <b>▼ count means "stretched, do not buy here"</b> — it is not a sell signal. And <b>agreement is not edge</b>: nothing says 5/5 beats 2/5. The AGREE column ranks a shortlist, it does not predict.</p></div>
+
+<h2>3. Sunday — place the orders <span class="time">about 20 minutes</span></h2>
+<ol>
+<li>Open the order list you wrote on Saturday.</li>
+<li>Place the limits at Saxo and DEGIRO.</li>
+<li>Check free margin before the last one, not after.</li>
+<li>Done for the week. Monday needs nothing from you.</li>
+</ol>
+
+<h2>4. Monthly <span class="time">about an hour, first Sunday</span></h2>
+<ol>
+<li>Run <code>optimize_monthly.bat</code>.</li>
+<li>Run <code>python build_pine_alerts.py</code> afterwards so the TradingView alert matches the new presets.</li>
+<li>Write or refresh two or three <code>Synopsis.md</code> files — start with held lines that have none.</li>
+<li>Close three items off the task list.</li>
+</ol>
+
+<h2>5. Quarterly <span class="time">half a day</span></h2>
+<ol>
+<li>Re-underwrite the big positions against the earnings diary.</li>
+<li>Check every held line still has a case folder and a Synopsis.</li>
+<li>Decide the cash level for the next quarter.</li>
+</ol>
+
+<hr>
+
+<h2>The schedule, on one screen</h2>
+<table class="sched">
+<tr><th>When</th><th>Time</th><th>What</th></tr>
+<tr><td>Every day</td><td>0–2 min</td><td>Read the mail subject. Act only on green cards. Usually nothing.</td></tr>
+<tr><td>Mon–Fri evening</td><td>0</td><td><b>Nothing.</b> No pages, no charts.</td></tr>
+<tr><td>Saturday morning</td><td>30 min</td><td>Weekly Asset Review → task list → signals → overseer shortlist → write orders.</td></tr>
+<tr><td>Sunday morning</td><td>20 min</td><td>Place the orders. Week closed.</td></tr>
+<tr><td>First Sunday of the month</td><td>60 min</td><td>Optimiser, rebuild Pine alerts, 2–3 Synopsis files, close 3 tasks.</td></tr>
+<tr><td>Quarterly</td><td>half a day</td><td>Re-underwrite the book. Cash level for the quarter.</td></tr>
+</table>
+<p class="q">Expect roughly <b>one actionable signal a week</b>. A week with none is the normal case, not a failure.</p>
+
+<h2>If something looks wrong</h2>
+<table>
+<tr><th>Symptom</th><th>Do this</th></tr>
+<tr><td>No mail for several days</td><td>Normal if nothing fired. A Saturday heartbeat mail always arrives — if that is missing too, the scanner or the script is down.</td></tr>
+<tr><td>Red STALE FEED banner</td><td>The PC has not run <code>confluence.bat</code>. Run it.</td></tr>
+<tr><td>"feed unreachable" mail</td><td>The published feed is missing. Check the push log, then re-run <code>confluence.bat</code>. Only one such mail a day will arrive.</td></tr>
+<tr><td>"Verdict layer failed" banner</td><td>The scanner is fine but the decision context is missing. The signals are still real; treat them as bare rows until it is fixed.</td></tr>
+<tr><td>A price looks obviously wrong</td><td>Check whether the line is tagged <b>proxy</b> or <b>ladder void</b> — those are deliberately unreliable and the card says so.</td></tr>
+<tr><td>Want the current feed re-sent</td><td>In the Apps Script editor run <code>digestResetMemory</code>, then <code>digestTest</code>.</td></tr>
+</table>
+
+<p class="q" style="margin-top:34px">Not financial advice.</p>
+</div></body></html>
