@@ -1,0 +1,21 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>Plans</title><style>:root{--bg:#0d1117;--panel:#161b22;--line:#30363d;--fg:#e6edf3;--dim:#8b949e;--pos:#3fb950;--neg:#f85149;--amb:#d29922;--blue:#58a6ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.wrap{max-width:1100px;margin:0 auto;padding:16px 16px 50px}h1{font-size:17px;margin:0 0 4px;letter-spacing:.05em}
+h2{font-size:12px;margin:24px 0 8px;color:var(--dim);letter-spacing:.09em;text-transform:uppercase}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 13px;margin:8px 0}
+.dim{color:var(--dim)}table{border-collapse:collapse;width:100%;font-size:12px}
+th,td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--dim);font-weight:500}
+.k{display:inline-block;padding:1px 7px;border-radius:9px;font-size:11px;font-weight:600;border:1px solid var(--line)}
+.k.BUILD{background:#0f2f1a;color:#9ae6b4;border-color:#1f6f3d}.k.EXIT{background:#3d1114;color:#ffb4ab;border-color:#7d2027}
+.k.DE-RISK{background:#3d2a00;color:#f2cc60;border-color:#6b4f12}.k.RE-ARM{background:#0c2d4a;color:#a5d6ff;border-color:#1f6feb}
+.k.REMINDER{background:#21262d}.k.CALL{background:#2a1f3d;color:#d2a8ff;border-color:#6e40c9}
+.scroll{overflow-x:auto}code{background:#0b0f14;padding:1px 5px;border-radius:4px}
+@media(max-width:700px){.wrap{padding:10px 10px 30px}}</style></head><body><div class=wrap><h1>PLANS &middot; builds, exits, de-risk</h1><div class=dim>built 2026-10-14 17:19 UTC &middot; 0 active plans &middot; 0 actions due</div><h2>due now</h2><div class=card><span class='k CALL'>CALL WINDOW</span> <b>CALL WINDOW AMD: daily CONFL 90/1.7 hard sell 2026-10-12 @ 594.24</b><div class=dim style='margin-top:4px'>better-than-average day to write a short call (17.6% vs 18.7% ITM, 46y). Only if the options rules agree (premium &gt;= 4%/40d, part of the position, not before earnings). Not a reason to sell shares</div></div><div class=card><span class='k CALL'>CALL WINDOW</span> <b>CALL WINDOW META: daily CONFL 90/1.7 hard sell 2026-10-14 @ 737.16</b><div class=dim style='margin-top:4px'>better-than-average day to write a short call (17.6% vs 18.7% ITM, 46y). Only if the options rules agree (premium &gt;= 4%/40d, part of the position, not before earnings). Not a reason to sell shares</div></div><h2>active plans</h2><div class=card><div class=scroll><table><tr><th>id</th><th>type</th><th>tranches</th><th>state</th><th>next time stop</th><th>funding</th><th>note</th></tr><tr><td colspan=7 class=dim>No active plans. Add one with <code>python plans.py --add-build SYM EUR</code> or through the weekly review.</td></tr></table></div></div><h2>margin-funded exposure (de-risk applies to these only)</h2><div class=card><span class=dim>None recorded. Debit-funded build tranches count automatically; record older margin lots with <code>python plans.py --margin-lot SYM EUR</code>.</span></div><h2>the rules (13-10-2026)</h2><div class=card>
+<p><b>BUILD</b> 1/3 now. Next 1/3 on the first buy trigger, else at 3 months. Last 1/3 on the next trigger, else at 6 months.
+Triggers: daily CONFL 20/2.0 or 90/1.7 hard buy, daily IA-MR buy, 4h ACT. Measured +1.9% more shares than weekly DCA, better in 62% of windows (46 years, 61 names).
+The time stops are part of the rule: waiting for a signal with idle cash, or requiring the trend gate, did worse than DCA.</p>
+<p><b>EXIT</b> (a sale already decided) 1/3 on each daily sell signal, the rest on the deadline. +1.0 to +1.4% better price than selling evenly.
+<b>A sell signal is never the reason to sell</b> - trim-and-buy-back on sell signals cost 16-40% against holding.</p>
+<p><b>DE-RISK</b> daily optimised trend FLAT on a name with margin-funded lots: repay that part, keep the core; buy back on the flip to LONG. Insurance, not alpha.</p>
+<p><b>CALL WINDOW</b> daily CONFL 90/1.7 hard sell on a held name: a slightly better day to write a short call (17.6% vs 18.7% ITM). The options rules still decide.</p>
+<p class=dim>Evidence: signal_value.html and the Investor project doc fit-scan-walk-forward-13-10-2026.md. Not financial advice.</p></div></div></body></html>
