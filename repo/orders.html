@@ -1,0 +1,277 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Order Book</title><style>
+:root{--bg:#10141a;--panel:#171c24;--panel2:#1c222c;--line:#262d39;--ink:#dfe6ee;--muted:#8a93a1;--dim:#5d6778;
+--accent:#5ec8d8;--pos:#4fd18b;--neg:#ff6b6b;--warn:#e0a23c;--buy:#4fd18b;--sell:#ff7aa8}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f5f6f8;--panel:#fff;--panel2:#eef0f3;--line:#dde1e7;
+--ink:#18202b;--muted:#5b6574;--dim:#8b94a3;--accent:#0f8ea1;--pos:#1a9a5a;--neg:#d64545;--warn:#b77712;--buy:#1a9a5a;--sell:#c8417a}}
+:root[data-theme="light"]{--bg:#f5f6f8;--panel:#fff;--panel2:#eef0f3;--line:#dde1e7;--ink:#18202b;--muted:#5b6574;--dim:#8b94a3;
+--accent:#0f8ea1;--pos:#1a9a5a;--neg:#d64545;--warn:#b77712;--buy:#1a9a5a;--sell:#c8417a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+header{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 18px;padding:16px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:3}
+header h1{margin:0;font-size:15px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+header h1 b{color:var(--accent);font-weight:600}
+.badge{font:12px ui-monospace,monospace;border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--muted)}
+.badge.on{color:var(--pos);border-color:var(--pos)}.badge.old{color:var(--warn);border-color:var(--warn)}.badge.off{color:var(--neg);border-color:var(--neg)}
+.hm{color:var(--muted);font-size:12.5px}
+.hl{margin-left:auto;font-size:12.5px;color:var(--accent)}
+main{max-width:1280px;margin:0 auto;padding:18px 22px 40px}
+h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:28px 0 10px;font-weight:600}
+h2 small{letter-spacing:0;text-transform:none;color:var(--dim);font-weight:400;margin-left:8px}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.kpi .k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.kpi .v{font-size:24px;font-weight:650;margin-top:4px}
+.kpi .s{font-size:12px;color:var(--dim)}
+.kpi.hot{border-color:var(--neg)}.kpi.hot .v{color:var(--neg)}
+.kpi.warm{border-color:var(--warn)}.kpi.warm .v{color:var(--warn)}
+.note{font-size:12.5px;color:var(--muted)}
+.warnbox{background:var(--panel);border:1px solid var(--warn);border-radius:10px;padding:10px 14px;font-size:13px;margin-top:12px}
+.tbl{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.th,.o summary{display:grid;grid-template-columns:44px 52px minmax(70px,1fr) 46px 92px 100px 128px minmax(150px,1.4fr) 70px;gap:10px;align-items:center;padding:8px 14px}
+.th{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);border-bottom:1px solid var(--line)}
+.o{border-top:1px solid var(--panel2)}
+.o summary{cursor:pointer;list-style:none}.o summary::-webkit-details-marker{display:none}
+.o summary:hover{background:var(--panel2)}
+.o.trig summary{background:color-mix(in srgb,var(--neg) 12%,transparent)}
+.o.touch summary{background:color-mix(in srgb,var(--warn) 12%,transparent)}
+.id{font-weight:650}.id::before{content:"▸";color:var(--dim);font-size:10px;margin-right:6px}.o[open] .id::before{content:"▾"}
+.side{font:11px ui-monospace,monospace;font-weight:700;border-radius:4px;padding:2px 0;text-align:center}
+.side.BUY{color:var(--buy);border:1px solid var(--buy)}.side.SELL{color:var(--sell);border:1px solid var(--sell)}
+.tk{font-weight:600}.tk small{display:block;font-weight:400;color:var(--dim);font-size:11px}
+.r{text-align:right}.lbl-m{display:none;color:var(--dim)}
+.px small,.c-lim small{display:block;color:var(--dim);font-size:11px}
+.up{color:var(--pos)}.dn{color:var(--neg)}
+.dist{display:flex;flex-direction:column;gap:3px}
+.bar{position:relative;height:5px;background:var(--panel2);border-radius:3px;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--accent)}
+.st{font-size:12px}
+.chip{display:inline-block;font-size:11.5px;border-radius:999px;padding:1px 8px;border:1px solid currentColor;white-space:nowrap}
+.chip.trig{color:var(--neg);font-weight:650}.chip.touch{color:var(--warn);font-weight:650}.chip.near{color:var(--accent)}
+.chip.rest{color:var(--muted)}.chip.wait{color:var(--dim)}.chip.done{color:var(--pos)}.chip.cxl{color:var(--dim)}.chip.gap{color:var(--warn)}
+.st .sub{display:block;color:var(--dim);font-size:11px;margin-top:2px}
+.eur{color:var(--muted)}
+.det{padding:4px 14px 12px 70px;font-size:13px;color:var(--muted);display:grid;gap:4px}
+.det b{color:var(--ink);font-weight:600}
+.cmd{display:inline-flex;align-items:center;gap:6px;font:12px ui-monospace,monospace;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:3px 8px;color:var(--ink);cursor:pointer}
+.cmd:hover{border-color:var(--accent)}
+.rules{display:grid;gap:6px;font-size:13px;color:var(--muted)}
+footer{color:var(--dim);font-size:11.5px;text-align:center;padding:20px}
+button.badge{background:none;cursor:pointer;font:12px ui-monospace,monospace}
+.keybox{background:var(--panel);border:1px solid var(--accent);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.keybox[hidden]{display:none}
+.keybox input,.det input{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:4px 8px;font:12.5px ui-monospace,monospace;width:150px}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:4px 10px;font:12.5px ui-sans-serif,system-ui,sans-serif;cursor:pointer}
+.btn:hover{border-color:var(--accent)}.btn.pri{border-color:var(--accent);color:var(--accent)}
+.btn.ok{border-color:var(--pos);color:var(--pos)}.btn.no{border-color:var(--neg);color:var(--neg)}
+.btn[disabled]{opacity:.5;cursor:wait}
+.acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}
+.flash{position:sticky;top:64px;z-index:4;background:var(--panel2);border:1px solid var(--pos);border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:12px}
+.flash.err{border-color:var(--neg)}.flash[hidden]{display:none}
+@media (max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}
+.th,.o summary{grid-template-columns:40px 48px minmax(60px,1fr) 88px 96px 104px minmax(120px,1.3fr)}.c-q,.c-eur{display:none}}
+@media (max-width:720px){header{position:static}header,main{padding-left:16px;padding-right:16px}.hl{margin-left:0}
+.kpis{grid-template-columns:repeat(2,1fr)}.th{display:none}
+.o summary{grid-template-columns:38px 46px minmax(0,1fr) auto;gap:4px 8px}
+.o .c-lim{grid-column:1/3;text-align:left}.lbl-m{display:inline}.o .c-bar{grid-column:3/-1}.o .c-px{grid-column:4;grid-row:1}.o .c-st{grid-column:1/-1}.det{padding-left:16px}}
+</style></head><body>
+<header><h1>Order <b>book</b></h1><span id="livebadge" class="badge off">no live feed</span>
+<button id="syncbadge" class="badge off" title="order status sync with the Google Sheet">sheet: …</button>
+<span class="hm mono">Order sheet 13-10-2026 · built 2026-10-15 16:24 · closes to 2026-10-15 · sheet synced</span>
+<a class="hl" href="index.html">all dashboards →</a></header>
+<main>
+<div id="keybox" class="keybox" hidden><b>Order key</b> — unlocks marking orders filled / cancelled / placed. Stored in this
+browser only, never in the page.
+<input id="keyin" type="password" class="mono" autocomplete="off" placeholder="key"><button id="keysave" class="btn pri">save</button>
+<button id="keyforget" class="btn">forget</button></div>
+<div id="flash" class="flash" hidden></div>
+<div class="kpis">
+<div class="kpi"><div class="k">Triggered now</div><div class="v mono" id="k-trig">0</div><div class="s">live price through the limit</div></div>
+<div class="kpi"><div class="k">Touched since placed</div><div class="v mono" id="k-touch">0</div><div class="s">probably filled — confirm</div></div>
+<div class="kpi"><div class="k">Within 2%</div><div class="v mono" id="k-near">0</div><div class="s">open orders</div></div>
+<div class="kpi"><div class="k">Open buys</div><div class="v mono" id="k-buy">€0</div><div class="s">if every buy fills</div></div>
+<div class="kpi"><div class="k">Open sells</div><div class="v mono" id="k-sell">€0</div><div class="s">if every sell fills</div></div>
+</div>
+<div class="warnbox" id="missing" style="display:none"></div>
+
+<h2>Open orders <small>placed and resting · sorted: triggered, touched, nearest first</small></h2>
+<div class="tbl"><div class="th"><span>#</span><span>side</span><span>ticker</span><span class="r c-q">qty</span><span class="r c-lim">limit</span><span class="r c-px">price</span><span class="c-bar">distance</span><span class="c-st">status</span><span class="r c-eur">≈ €</span></div><div id="sec-open"></div></div>
+<h2>Reserve <small>not placed yet · become open when the rule below fires</small></h2>
+<div class="tbl"><div class="th"><span>#</span><span>side</span><span>ticker</span><span class="r c-q">qty</span><span class="r c-lim">limit</span><span class="r c-px">price</span><span class="c-bar">distance</span><span class="c-st">status</span><span class="r c-eur">≈ €</span></div><div id="sec-waiting"></div></div>
+<div class="rules" style="margin-top:10px"><div>· each TSLA rung that fills releases the next two B orders, in order</div><div>· the MRVL fill releases B8 (META)</div></div>
+<h2>Done <small>filled or cancelled</small></h2>
+<div class="tbl"><div class="th"><span>#</span><span>side</span><span>ticker</span><span class="r c-q">qty</span><span class="r c-lim">limit</span><span class="r c-px">price</span><span class="c-bar">distance</span><span class="c-st">status</span><span class="r c-eur">≈ €</span></div><div id="sec-done"></div></div>
+<h2>How this works</h2>
+<div class="note">Prices come from the same Apps Script feed as the scanner pages, every 2 minutes; without it the page falls back to
+the last scanner close and says so. <b>Triggered</b> = the live price is through the limit now. <b>Touched</b> = a daily or 4-hour
+open or close since the order was placed went through the limit (from the scanner's price caches) — it has probably filled. Intraday
+wicks are not in those caches, so a fill on a wick shows only as a near miss: always confirm in the broker. Distances for EPA:REMX are
+measured on the US REMX listing against the US-equivalent level. <b>Marking orders:</b> unlock with your order key (the <i>sheet</i> badge), open a row and press Filled / Cancelled / Placed /
+Reopen. The change is written to the Order Book Google Sheet at once (Status + Log tabs) and shows on every device; a fill releases
+the reserve orders tied to it. The daily run syncs the sheet back into <span class="mono">orders.json</span>. Without the key, the
+copy buttons give the same command for <span class="mono">python orders_build.py</span> in <span class="mono">Python\OrderBook</span>.</div>
+</main>
+<script id="odata" type="application/json">{"orders":[{"id":"S1","side":"SELL","ticker":"TSLA","feed":"TSLA","broker":"DEGIRO","qty":5,"limit":386.0,"ccy":"USD","eur":1723,"placed":"2026-10-13","status":"open","tif":"GTC","why":"First rung into strength: above the 9-Oct close ($382.70) and ATR L5 $377.21. Covers the Roadster event (15 Oct) and the run-up to Q3 (21 Oct).","basis":"Elon trim","updated":"2026-10-15T13:53:11.797Z","ev":{"last":["2026-10-15",356.80999755859375],"touch":null,"best":["2026-10-13",375.239990234375],"lvl":386.0}},{"id":"S2","side":"SELL","ticker":"TSLA","feed":"TSLA","broker":"DEGIRO","qty":5,"limit":402.5,"ccy":"USD","eur":1796,"placed":"2026-10-13","status":"open","tif":"GTC","why":"Weekly band +1σ ($402.50).","basis":"Elon trim","updated":"2026-10-15T13:53:12.625Z","ev":{"last":["2026-10-15",356.80999755859375],"touch":null,"best":["2026-10-13",375.239990234375],"lvl":402.5}},{"id":"S3","side":"SELL","ticker":"TSLA","feed":"TSLA","broker":"DEGIRO","qty":5,"limit":418.5,"ccy":"USD","eur":1868,"placed":"2026-10-13","status":"open","tif":"GTC","why":"Weekly +1.5σ ($418.46). Most likely to fill only on a Q3 beat.","basis":"Elon trim","updated":"2026-10-15T13:53:13.174Z","ev":{"last":["2026-10-15",356.80999755859375],"touch":null,"best":["2026-10-13",375.239990234375],"lvl":418.5}},{"id":"S4","side":"SELL","ticker":"TSLA","feed":"TSLA","broker":"DEGIRO","qty":5,"limit":434.0,"ccy":"USD","eur":1937,"placed":"2026-10-13","status":"open","tif":"GTC","why":"Weekly +2σ ($434.42): a large earnings spike.","basis":"Elon trim","updated":"2026-10-15T13:53:13.836Z","ev":{"last":["2026-10-15",356.80999755859375],"touch":null,"best":["2026-10-13",375.239990234375],"lvl":434.0}},{"id":"S5","side":"SELL","ticker":"MRVL","feed":"MRVL","broker":"DEGIRO","qty":3,"limit":289.5,"ccy":"USD","eur":775,"placed":"2026-10-13","status":"open","tif":"GTC","why":"Weekly +1.5σ ($289.29), above the Investor Day close ($287.01). Takes MRVL from 19 to 16 shares.","basis":"MRVL→AVGO rotation on strength","updated":"2026-10-15T13:53:14.299Z","ev":{"last":["2026-10-15",233.66000366210938],"touch":null,"best":["2026-10-13",268.8399963378906],"lvl":289.5}},{"id":"A1","side":"BUY","ticker":"HIMS","feed":"HIMS","broker":"DEGIRO","qty":35,"limit":26.15,"ccy":"USD","eur":817,"placed":"2026-10-13","status":"open","tif":"GTC","why":"Daily gate LONG. Optimised 4h IA-MR buy $26.07, ATR L2 $26.12 (held 7 of 9), weekly −1σ $26.90. Strongest confluence on the sheet.","basis":"E01-grade, new line","updated":"2026-10-15T13:53:14.761Z","ev":{"last":["2026-10-15",27.040000915527344],"touch":null,"best":["2026-10-15",26.875],"lvl":26.15}},{"id":"A2","side":"BUY","ticker":"MU","feed":"MU","broker":"DEGIRO","qty":1,"limit":915.0,"ccy":"USD","eur":817,"placed":"2026-10-13","status":"open","tif":"GTC","why":"Daily gate LONG. Default 4h IA-MR near its buy band. Just under ATR L5 $934.44 (held 8 of 15). Weekly −1σ $891.90.","basis":"E01-grade; size capped by CXMT risk","updated":"2026-10-15T13:53:15.234Z","ev":{"last":["2026-10-15",889.4299926757812],"touch":["2026-10-14",913.9149780273438],"best":["2026-10-15",871.5800170898438],"lvl":915.0}},{"id":"A3","side":"BUY","ticker":"IREN","feed":"IREN","broker":"DEGIRO","qty":27,"limit":31.25,"ccy":"USD","eur":753,"placed":"2026-10-13","status":"open","tif":"GTC","why":"Your trigger: default 4h IA-MR buy level $31.27. ATR L2 $29.04 below; corridor −1σ ~$29.6.","basis":"your trigger (gate FLAT)","updated":"2026-10-15T13:53:15.747Z","ev":{"last":["2026-10-15",27.184999465942383],"touch":["2026-10-14",30.55500030517578],"best":["2026-10-15",27.174999237060547],"lvl":31.25}},{"id":"A4","side":"BUY","ticker":"MARA","feed":"MARA","broker":"DEGIRO","qty":115,"limit":8.6,"ccy":"USD","eur":883,"placed":"2026-10-13","status":"open","tif":"GTC","why":"Bottom of your $8.50–10.00 band, near weekly −2σ $8.87. Optimised 4h IA-MR in its buy zone. Replaces the Monday €900 order if that did not fill.","basis":"your band (gate FLAT)","updated":"2026-10-15T13:53:17.109Z","ev":{"last":["2026-10-15",7.857699871063232],"touch":["2026-10-14",8.224200248718262],"best":["2026-10-15",7.855000019073486],"lvl":8.6}},{"id":"A5","side":"BUY","ticker":"EPA:REMX","feed":"REMX","broker":"DEGIRO","qty":90,"limit":9.65,"ccy":"EUR","eur":868,"placed":"2026-10-13","status":"open","tif":"GTC","proxy":{"level":55.1,"ccy":"USD","note":"feed is US REMX; €9.65 on the UCITS line ≈ US $55.10 at the 10-Oct ratio"},"why":"Your ~55 on US REMX: ATR L3 $54.76 (held 7 of 14), weekly −2σ $55.32.","basis":"your level (gate FLAT)","updated":"2026-10-15T13:53:17.629Z","ev":{"last":["2026-10-15",54.53010177612305],"touch":["2026-10-15",54.08000183105469],"best":["2026-10-15",54.08000183105469],"lvl":55.1}},{"id":"A6","side":"BUY","ticker":"AVGO","feed":"AVGO","broker":"DEGIRO","qty":3,"limit":329.0,"ccy":"USD","eur":881,"placed":"2026-10-13","status":"open","tif":"GTC","why":"Weekly −2σ $328.87 and the optimised 4h IA-MR buy at $327.80. Your standing '+3 sh in the low 300s' add.","basis":"standing call (gate FLAT)","updated":"2026-10-15T13:53:18.101Z","ev":{"last":["2026-10-15",340.368896484375],"touch":null,"best":["2026-10-15",338.3399963378906],"lvl":329.0}},{"id":"A7","side":"BUY","ticker":"APLD","feed":"APLD","broker":"DEGIRO","qty":45,"limit":19.0,"ccy":"USD","eur":763,"placed":"2026-10-13","status":"open","tif":"GTC","why":"ATR L2 $18.87 (held 4 of 4), default 4h IA-MR buy $19.17, daily IA-MR buy $18.49.","basis":"level confluence (gate FLAT)","updated":"2026-10-15T13:53:18.566Z","ev":{"last":["2026-10-15",18.6299991607666],"touch":["2026-10-15",18.600000381469727],"best":["2026-10-15",18.600000381469727],"lvl":19.0}},{"id":"A8","side":"BUY","ticker":"UMAC","feed":"UMAC","broker":"DEGIRO","qty":50,"limit":17.1,"ccy":"USD","eur":763,"placed":"2026-10-13","status":"open","tif":"GTC","why":"ATR L3 $17.03 (held 9 of 18), bottom of InvestAnswers' $16.70–20 kill box, below his $18.71 entry. 4h and daily IA-MR in buy zones.","basis":"nibble (gate FLAT)","updated":"2026-10-15T13:53:19.086Z","ev":{"last":["2026-10-15",16.860000610351562],"touch":["2026-10-15",16.860000610351562],"best":["2026-10-15",16.860000610351562],"lvl":17.1}},{"id":"B1","side":"BUY","ticker":"IREN","feed":"IREN","broker":"DEGIRO","qty":30,"limit":29.1,"ccy":"USD","eur":779,"status":"waiting","why":"ATR L2 $29.04 (held 3 of 6) and the corridor −1σ (~$29.6).","basis":"layer 2","updated":"2026-10-15T13:53:19.577Z","ev":{"last":["2026-10-15",27.184999465942383],"touch":null,"best":null,"lvl":29.1},"wait_txt":"released when each TSLA rung that fills releases the next two B orders, in order"},{"id":"B2","side":"BUY","ticker":"MARA","feed":"MARA","broker":"DEGIRO","qty":140,"limit":7.2,"ccy":"USD","eur":900,"status":"waiting","why":"Your $7.00 opportunistic level. ATR L1 $7.15 (ladder flagged invalid); 2026 low $6.66.","basis":"layer 3","updated":"2026-10-15T13:53:20.060Z","ev":{"last":["2026-10-15",7.857699871063232],"touch":null,"best":null,"lvl":7.2},"wait_txt":"released when each TSLA rung that fills releases the next two B orders, in order"},{"id":"B3","side":"BUY","ticker":"AVGO","feed":"AVGO","broker":"DEGIRO","qty":3,"limit":305.0,"ccy":"USD","eur":817,"status":"waiting","why":"ATR L4 $303.39 and your $310 alert. Daily IA-MR buy lower at $289.","basis":"layer 2","updated":"2026-10-15T13:53:20.604Z","ev":{"last":["2026-10-15",340.368896484375],"touch":null,"best":null,"lvl":305.0},"wait_txt":"released when each TSLA rung that fills releases the next two B orders, in order"},{"id":"B4","side":"BUY","ticker":"MU","feed":"MU","broker":"DEGIRO","qty":1,"limit":810.0,"ccy":"USD","eur":723,"status":"waiting","why":"Weekly −2σ $805.12, above ATR L4 $764.54 (held 9 of 15).","basis":"layer 2","updated":"2026-10-15T13:53:21.103Z","ev":{"last":["2026-10-15",889.4299926757812],"touch":null,"best":null,"lvl":810.0},"wait_txt":"released when each TSLA rung that fills releases the next two B orders, in order"},{"id":"B5","side":"BUY","ticker":"SNDK","feed":"SNDK","broker":"DEGIRO","qty":1,"limit":1165.0,"ccy":"USD","eur":1040,"status":"waiting","why":"Weekly −2σ $1,146.67, ATR L3 $1,167.50, default 4h IA-MR buy $1,140. −35% from the September high.","basis":"deep dip","updated":"2026-10-15T13:53:21.603Z","ev":{"last":["2026-10-15",1319.050048828125],"touch":null,"best":null,"lvl":1165.0},"wait_txt":"released when each TSLA rung that fills releases the next two B orders, in order"},{"id":"B6","side":"BUY","ticker":"ALAB","feed":"ALAB","broker":"DEGIRO","qty":3,"limit":295.0,"ccy":"USD","eur":790,"status":"waiting","why":"Weekly −1σ $292.57, below ATR L4 $304.30 (held 11 of 23). −24% from the 6-Oct high. Daily gate LONG.","basis":"your 'bigger reversion'","updated":"2026-10-15T13:53:22.189Z","ev":{"last":["2026-10-15",285.6650085449219],"touch":null,"best":null,"lvl":295.0},"wait_txt":"released when each TSLA rung that fills releases the next two B orders, in order"},{"id":"B7","side":"BUY","ticker":"GOOGL","feed":"GOOGL","broker":"DEGIRO","qty":5,"limit":329.0,"ccy":"USD","eur":1468,"status":"waiting","why":"Your 'below ~330' add (+5 sh). Weekly −2σ $322.66, −1σ $336.60.","basis":"standing call","updated":"2026-10-15T13:53:23.609Z","ev":{"last":["2026-10-15",350.3599853515625],"touch":null,"best":null,"lvl":329.0},"wait_txt":"released when each TSLA rung that fills releases the next two B orders, in order"},{"id":"B8","side":"BUY","ticker":"META","feed":"META","broker":"DEGIRO","qty":2,"limit":612.0,"ccy":"USD","eur":1093,"status":"waiting","why":"ATR L5 $608.30 (held 6 of 14), just above the weekly basis $620. Your 'wait for dips'.","basis":"deep dip","updated":"2026-10-15T13:53:24.083Z","ev":{"last":["2026-10-15",730.7949829101562],"touch":null,"best":null,"lvl":612.0},"wait_txt":"released when the MRVL fill releases B8 (META)"}],"live_url":"https://script.google.com/macros/s/AKfycbwP1ie25ufM2-9Yx0G7sviGakPJUmRlAip4KtjfyZf5kkASHbC4aJu3Sdde4AmhOhAz/exec","state_url":"https://script.google.com/macros/s/AKfycbw2wbBHJjZAJ-T3kM_-3x_kumJG2dQuMPsF5r0ZuPWGP2ucscWsVouSh_z1fBJXDYeR7g/exec","release_rules":[{"on":["S1","S2","S3","S4"],"next":2,"queue":["B1","B2","B3","B4","B5","B6","B7"],"text":"each TSLA rung that fills releases the next two B orders, in order"},{"on":["S5"],"release":["B8"],"text":"the MRVL fill releases B8 (META)"}]}</script>
+<script>
+(function(){
+const B=JSON.parse(document.getElementById('odata').textContent);
+const LIVE_URL=B.live_url, POLL=120;
+let LIVE=null;
+const $=s=>document.querySelector(s);
+// ── order status sync (orders.gs web app -> Google Sheet) ─────────────────
+// The key lives in this browser's localStorage, never in the published file:
+// a visitor gets the page and the endpoint URL, and cannot read or change anything.
+const STATE_URL=B.state_url||'', KEY_STORE='vogez_orders_key_v1';
+let SYNC={on:false,msg:STATE_URL?'locked':'not connected'};
+const BYID={};B.orders.forEach(o=>BYID[o.id]=o);
+const OPEN=new Set();
+function oKey(){try{return localStorage.getItem(KEY_STORE)||''}catch(e){return ''}}
+function setKey(k){try{k?localStorage.setItem(KEY_STORE,k):localStorage.removeItem(KEY_STORE)}catch(e){}}
+function syncNote(){const el=$('#syncbadge');el.textContent='sheet: '+SYNC.msg;el.className='badge '+(SYNC.on?'on':STATE_URL&&oKey()?'old':'off')}
+function applyRow(o,s){
+  if(!o||!s||!s.status)return false;
+  if(o.updated&&s.updated&&s.updated<=o.updated)return false;
+  o.status=s.status;o.updated=s.updated;
+  if(s.status==='filled'){o.fill_date=s.date;if(s.fill_px!=null)o.fill_px=s.fill_px}
+  else if(s.status==='cancelled'){o.cancel_date=s.date}
+  else if(s.status==='open'){if(s.date)o.placed=s.date;delete o.fill_px;delete o.fill_date}
+  return true}
+async function pull(){
+  const k=oKey();
+  if(!STATE_URL){SYNC={on:false,msg:'not connected'};return syncNote()}
+  if(!k){SYNC={on:false,msg:'locked — click to unlock'};return syncNote()}
+  try{const r=await fetch(STATE_URL+'?a=status&k='+encodeURIComponent(k)+'&t='+Date.now(),{cache:'no-store'});
+    const j=await r.json();
+    if(!j||!j.ok){SYNC={on:false,msg:j&&j.locked?'key rejected':'sheet error'};syncNote();render();return}
+    for(const id in (j.rows||{}))applyRow(BYID[id],j.rows[id]);
+    SYNC={on:true,msg:'synced '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}}
+  catch(e){SYNC={on:false,msg:'not answering'}}
+  syncNote();render()}
+async function setStatus(id,status,px,src){
+  const q=new URLSearchParams({a:'set',k:oKey(),id,status,src:src||'page',t:String(Date.now())});
+  if(px)q.set('px',px);
+  const r=await fetch(STATE_URL+'?'+q.toString(),{cache:'no-store'});const j=await r.json();
+  if(!j||!j.ok)throw new Error(j&&j.locked?'key rejected':(j&&j.error)||'sheet error');
+  applyRow(BYID[id],j.row);return j}
+function releasesFor(id){const out=[];
+  for(const rule of (B.release_rules||[])){if(!(rule.on||[]).includes(id))continue;
+    if(rule.next){let n=0;for(const q of rule.queue||[]){if(n>=rule.next)break;if(BYID[q]&&BYID[q].status==='waiting'&&!out.includes(q)){out.push(q);n++}}}
+    for(const q of rule.release||[])if(BYID[q]&&BYID[q].status==='waiting'&&!out.includes(q))out.push(q)}
+  return out}
+function flash(t,err){const el=$('#flash');el.textContent=t;el.className='flash'+(err?' err':'');el.hidden=false;
+  clearTimeout(flash._t);flash._t=setTimeout(()=>el.hidden=true,err?9000:7000)}
+async function act(id,status,px){
+  if(!SYNC.on){flash('Unlock the sheet first (click the sheet badge).',true);return}
+  document.querySelectorAll('.act').forEach(b=>b.disabled=true);
+  try{await setStatus(id,status,px);
+    let rel=[];
+    if(status==='filled'){rel=releasesFor(id);for(const q of rel)await setStatus(q,'open',null,'release:'+id)}
+    flash(id+' → '+status+(px?' @ '+px:'')+(rel.length?' · released '+rel.join(', ')+' — place these in the broker now':''));
+  }catch(e){flash(id+' not saved: '+e.message,true)}
+  render()}
+const f2=v=>{if(v==null||!isFinite(v))return '—';const a=Math.abs(v);return a>=1000?v.toLocaleString(undefined,{maximumFractionDigits:0}):a>=100?v.toFixed(2):a>=1?v.toFixed(2):v.toFixed(4)};
+const pc=v=>(v>=0?'+':'')+v.toFixed(1)+'%';
+const cur=c=>c==='EUR'?'€':c==='USD'?'$':'';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function age(){if(!LIVE||!LIVE.asof)return null;const t=Date.parse(LIVE.asof);return isNaN(t)?null:(Date.now()-t)/6e4}
+function badge(){const el=$('#livebadge'),a=age();
+  if(a==null){el.className='badge off';el.textContent='no live feed';return}
+  const t=new Date(Date.parse(LIVE.asof)).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  if(a<=25){el.className='badge on';el.textContent='LIVE '+t}else{el.className='badge old';el.textContent='prices '+Math.round(a)+'m old'}}
+// quote for an order: live feed if present and sane, else the last scanner close
+function quote(o){
+  const q=LIVE&&LIVE.q&&LIVE.q[o.feed];const last=o.ev.last;
+  if(q&&q.p){const ref=last?last[1]:null;
+    if(ref&&(q.p/ref<0.5||q.p/ref>2))return {p:ref,src:'close '+last[0].slice(5),scale:true};
+    return {p:q.p,d:q.d,src:'live'}}
+  if(last)return {p:last[1],src:'close '+last[0].slice(5),stale:true};
+  return null}
+function classify(o){
+  const q=quote(o),lvl=o.ev.lvl,buy=o.side==='BUY';
+  const r={q,dist:null,kind:'rest',label:'resting',sub:''};
+  if(o.status==='filled'){r.kind='done';r.label='filled'+(o.fill_px?' @ '+f2(o.fill_px):'');r.sub=o.fill_date||'';return r}
+  if(o.status==='cancelled'){r.kind='cxl';r.label='cancelled';return r}
+  if(!q){r.kind='gap';r.label='no price';r.sub='not in feed or cache';return r}
+  r.dist=(lvl/q.p-1)*100;
+  const through=buy?q.p<=lvl:q.p>=lvl;
+  const waiting=o.status==='waiting';
+  if(through){r.kind='trig';r.label=waiting?'through limit (not placed)':'TRIGGERED';
+    r.sub=(q.src==='live'?'live price is through the limit':'last close is through the limit')+
+      (waiting?'':' — should have filled; confirm, then --fill');}
+  else if(o.ev.touch&&!waiting){r.kind='touch';r.label='touched '+o.ev.touch[0].slice(5);
+    r.sub=f2(o.ev.touch[1])+' at a 4h/daily open-close — probably filled, confirm'}
+  else if(Math.abs(r.dist)<=2){r.kind='near';r.label=waiting?'near (reserve)':'within 2%'}
+  else{r.kind=waiting?'wait':'rest';r.label=waiting?'reserve':'resting'}
+  if(waiting&&!r.sub)r.sub=o.wait_txt||'';
+  if(q.scale){r.sub='SCALE? live quote rejected, using the last close'+(r.sub?' · '+r.sub:'')}
+  return r}
+const ORDER=['trig','touch','near','rest','gap','wait','done','cxl'];
+function render(){
+  const rows=B.orders.map(o=>Object.assign({o},classify(o)));
+  const sections={open:[],waiting:[],done:[]};
+  for(const r of rows)(r.o.status==='open'?sections.open:r.o.status==='waiting'?sections.waiting:sections.done).push(r);
+  const sorter=(a,b)=>(ORDER.indexOf(a.kind)-ORDER.indexOf(b.kind))||((a.dist==null?1e9:Math.abs(a.dist))-(b.dist==null?1e9:Math.abs(b.dist)));
+  for(const k in sections){sections[k].sort(sorter);
+    const el=document.getElementById('sec-'+k);if(el)el.innerHTML=sections[k].map(row).join('')||'<div class="note" style="padding:12px 14px">none</div>'}
+  const op=sections.open;
+  const n=k=>op.filter(r=>r.kind===k).length;
+  $('#k-trig').textContent=n('trig');$('#k-touch').textContent=n('touch');
+  $('#k-near').textContent=op.filter(r=>r.dist!=null&&Math.abs(r.dist)<=2&&r.kind!=='trig'&&r.kind!=='touch').length;
+  const b=op.filter(r=>r.o.side==='BUY').reduce((s,r)=>s+(r.o.eur||0),0),s=op.filter(r=>r.o.side==='SELL').reduce((t,r)=>t+(r.o.eur||0),0);
+  $('#k-buy').textContent='€'+Math.round(b).toLocaleString();$('#k-sell').textContent='€'+Math.round(s).toLocaleString();
+  $('#k-trig').parentElement.classList.toggle('hot',n('trig')>0);$('#k-touch').parentElement.classList.toggle('warm',n('touch')>0);
+  const miss=[...new Set(B.orders.filter(o=>o.status==='open'||o.status==='waiting').filter(o=>LIVE&&LIVE.q&&!(LIVE.q[o.feed]&&LIVE.q[o.feed].p)).map(o=>o.feed))];
+  $('#missing').innerHTML=(LIVE&&miss.length)?'Not in the live feed (falling back to the last scanner close): <b class="mono">'+miss.join(', ')+'</b> — add them to the GOOGLEFINANCE sheet behind the feed.':'';
+  $('#missing').style.display=(LIVE&&miss.length)?'':'none';
+}
+function row(r){
+  const o=r.o,q=r.q,buy=o.side==='BUY';
+  const px=q?(`<span class="${q.src==='live'?'':'eur'}">${cur(o.proxy?o.proxy.ccy:o.ccy)}${f2(q.p)}</span>`+
+     (q.d!=null&&q.src==='live'?` <span class="${q.d>=0?'up':'dn'}">${pc(q.d)}</span>`:'')+`<small>${esc(q.src)}${o.proxy?' · US proxy':''}</small>`):'—';
+  const need=r.dist==null?'—':(r.kind==='trig'?'through':(buy?'needs ':'needs ')+pc(r.dist));
+  const w=r.dist==null?0:Math.max(2,Math.min(100,100-Math.abs(r.dist)*5));
+  const lim=`<span class="lbl-m">limit </span>${cur(o.ccy)}${f2(o.limit)}`+(o.proxy?`<small>≈ ${cur(o.proxy.ccy)}${f2(o.proxy.level)} on US REMX</small>`:'');
+  const best=o.ev.best?`closest since ${o.placed.slice(5)}: <b class="mono">${f2(o.ev.best[1])}</b> on ${o.ev.best[0].slice(5)} (${pc((o.ev.lvl/o.ev.best[1]-1)*100)} from limit)`:'';
+  const cmds=(o.status==='open'||o.status==='waiting')?
+    `<span><span class="cmd" data-c="python orders_build.py --fill ${o.id}">⧉ --fill ${o.id}</span> <span class="cmd" data-c="python orders_build.py --cancel ${o.id}">⧉ --cancel ${o.id}</span>${o.status==='waiting'?` <span class="cmd" data-c="python orders_build.py --release ${o.id}">⧉ --release ${o.id}</span>`:''}</span>`:'';
+  const acts=!STATE_URL?'':!SYNC.on?`<div class="acts note">Unlock the sheet (click the <b>sheet</b> badge) to mark this order.</div>`:
+    o.status==='open'?`<div class="acts"><input class="fpx" inputmode="decimal" placeholder="fill price (optional)" data-id="${o.id}">
+      <button class="btn ok act" data-id="${o.id}" data-s="filled">✓ Filled</button><button class="btn no act" data-id="${o.id}" data-s="cancelled">✕ Cancelled</button></div>`:
+    o.status==='waiting'?`<div class="acts"><button class="btn pri act" data-id="${o.id}" data-s="open">▶ Placed in broker</button><button class="btn no act" data-id="${o.id}" data-s="cancelled">✕ Cancelled</button></div>`:
+    `<div class="acts"><button class="btn act" data-id="${o.id}" data-s="open">↺ Reopen</button>${o.released_by||o.status==='cancelled'?`<button class="btn act" data-id="${o.id}" data-s="waiting">↺ Back to reserve</button>`:''}</div>`;
+  return `<details class="o ${r.kind}" data-id="${o.id}" ${OPEN.has(o.id)?'open':''}><summary>
+   <span class="id mono">${o.id}</span><span class="side ${o.side}">${o.side}</span>
+   <span class="tk">${esc(o.ticker)}<small>${esc(o.broker)}${o.tif?' · '+esc(o.tif):''}</small></span>
+   <span class="r mono c-q">${o.qty}</span>
+   <span class="r mono c-lim">${lim}</span>
+   <span class="r mono px c-px">${px}</span>
+   <span class="dist mono c-bar"><span>${need}</span><span class="bar"><i style="width:${w}%;background:${r.kind==='trig'?'var(--neg)':r.kind==='touch'?'var(--warn)':'var(--accent)'}"></i></span></span>
+   <span class="st c-st"><span class="chip ${r.kind}">${esc(r.label)}</span>${r.sub?`<span class="sub">${esc(r.sub)}</span>`:''}</span>
+   <span class="r mono eur c-eur">€${(o.eur||0).toLocaleString()}</span></summary>
+   <div class="det"><div><b>Why this level.</b> ${esc(o.why)} <span class="eur">(${esc(o.basis||'')})</span></div>
+   ${o.proxy?`<div><b>Proxy.</b> ${esc(o.proxy.note)}</div>`:''}
+   ${best?`<div>${best}</div>`:''}
+   ${o.released_by?`<div>Released by ${esc(o.released_by)} on ${esc(o.placed)}.</div>`:''}
+   ${acts}${SYNC.on?'':cmds}</div></details>`}
+document.addEventListener('toggle',e=>{const d=e.target;if(d.matches&&d.matches('details.o')){d.open?OPEN.add(d.dataset.id):OPEN.delete(d.dataset.id)}},true);
+document.addEventListener('click',e=>{const b=e.target.closest('.act');if(!b)return;e.preventDefault();
+  const inp=document.querySelector('.fpx[data-id="'+b.dataset.id+'"]');const px=inp&&inp.value.trim().replace(',','.');
+  if(px&&!isFinite(+px)){flash('fill price is not a number',true);return}
+  act(b.dataset.id,b.dataset.s,px||null)});
+$('#syncbadge').addEventListener('click',()=>{const kb=$('#keybox');kb.hidden=!kb.hidden;if(!kb.hidden)$('#keyin').focus()});
+$('#keysave').addEventListener('click',()=>{setKey($('#keyin').value.trim());$('#keyin').value='';$('#keybox').hidden=true;pull()});
+$('#keyforget').addEventListener('click',()=>{setKey('');$('#keybox').hidden=true;SYNC={on:false,msg:'locked — click to unlock'};syncNote();render()});
+document.addEventListener('click',e=>{const c=e.target.closest('.cmd');if(!c)return;e.preventDefault();
+  (navigator.clipboard?navigator.clipboard.writeText(c.dataset.c):Promise.reject()).then(()=>{const t=c.textContent;c.textContent='copied';setTimeout(()=>c.textContent=t,900)}).catch(()=>{})});
+async function load(){
+  if(!LIVE_URL){LIVE=null;badge();render();return}
+  try{const r=await fetch(LIVE_URL+(LIVE_URL.indexOf('?')<0?'?':'&')+'t='+Date.now(),{cache:'no-store'});
+    if(!r.ok)throw 0;const j=await r.json();LIVE=(j&&j.q)?j:null}catch(e){LIVE=null}
+  badge();render()}
+render();syncNote();load();pull();if(LIVE_URL)setInterval(load,POLL*1000);if(STATE_URL)setInterval(pull,POLL*1000);
+window.__orders={setLive:j=>{LIVE=j;badge();render()}};
+})();
+</script>
+<footer>order book · rebuilt daily by confluence.bat · not financial advice</footer>
+</body></html>
