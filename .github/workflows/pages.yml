@@ -34,6 +34,4 @@ jobs:
         with:
           path: .
       - id: deployment
-        uses: actions/deploy-pages@v5
-        with:
-          timeout: 1800000   # 30 min instead of the 10 min default that kept timing out
+        uses: actions/deploy-pages@v5   # GitHub caps the deploy wait at 10 min
