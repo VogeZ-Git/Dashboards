@@ -126,11 +126,24 @@ const cls=n=>n==null?'':(n>0?'pos':n<0?'neg':'');
 const COLORS=['#4da3ff','#2ecc71','#ffc93c','#a97bff','#3fe0d0','#ff7ab8','#ff9f43','#8ed1fc','#c3f584','#ff6b6b','#b39ddb'];
 let D=null, hidden=new Set(), selected=null;
 
+// liqhunt_history.json is no longer redeployed to Pages on every heartbeat
+// (see .github/workflows/pages.yml), so read the live copy from the repo first
+// and fall back to the Pages copy if raw.githubusercontent.com is unreachable.
+const LIQ_RAW='https://raw.githubusercontent.com/VogeZ-Git/dashboards/main/repo/liqhunt_history.json';
+async function fetchHistory(){
+  const bust='?t='+Date.now();
+  try{ const r=await fetch(LIQ_RAW+bust,{cache:'no-store'}); if(r.ok) return r; }catch(_){}
+  return fetch('liqhunt_history.json'+bust);
+}
+// Python's json.dump writes bare Infinity/NaN (profit_factor of a variant with no losing
+// trades), which JSON.parse rejects. Map them to 1e999 (parses as Infinity, shown as ∞) and null.
+const parseLoose=t=>JSON.parse(t.replace(/([:\[,]\s*)(-?)(Infinity|NaN)\b/g,(m,p,sg,w)=>p+(w==='NaN'?'null':sg+'1e999')));
+
 async function load(){
   try{
-    const r=await fetch('liqhunt_history.json?t='+Date.now());
+    const r=await fetchHistory();
     if(!r.ok) throw new Error('HTTP '+r.status);
-    D=await r.json();
+    D=parseLoose(await r.text());
   }catch(e){
     const isFile = location.protocol === 'file:';
     $('banner').innerHTML=`<div class="err">
@@ -145,7 +158,7 @@ async function load(){
     const pick=$('pick');
     if(pick) pick.onchange=async ev=>{
       const f=ev.target.files[0]; if(!f) return;
-      try{ D=JSON.parse(await f.text()); $('banner').innerHTML=''; render(); }
+      try{ D=parseLoose(await f.text()); $('banner').innerHTML=''; render(); }
       catch(err){ alert('That file is not a liqhunt record: '+err.message); }
     };
     return;
