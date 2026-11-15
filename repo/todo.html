@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang=en>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content='width=device-width,initial-scale=1'>
+<title>To-do</title>
+<meta name="description" content="The running to-do list for the investor stack: what to do now, the dated items already decided, the open questions, and maintenance. Updated 15-11-2026.">
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--line:#30363d;--fg:#e6edf3;--dim:#8b949e;--pos:#3fb950;--neg:#f85149;--amb:#d29922;--blue:#58a6ff;--pink:#ff7ab6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.wrap{max-width:1100px;margin:0 auto;padding:16px 16px 50px}
+h1{font-size:17px;margin:0 0 4px;letter-spacing:.05em}
+h2{font-size:12px;margin:26px 0 8px;color:var(--dim);letter-spacing:.09em;text-transform:uppercase}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 13px;margin:8px 0}
+.dim{color:var(--dim)}
+table{border-collapse:collapse;width:100%}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:12px}
+th{color:var(--dim);font-weight:500}
+tr:last-child td{border-bottom:none}
+.k{display:inline-block;padding:1px 7px;border-radius:9px;font-size:11px;font-weight:600;border:1px solid var(--line);white-space:nowrap}
+.k.OVERDUE{background:#3d1114;color:#ffb4ab;border-color:#7d2027}
+.k.DUE{background:#3d2a00;color:#f2cc60;border-color:#6b4f12}
+.k.WAITING{background:#0c2d4a;color:#a5d6ff;border-color:#1f6feb}
+.k.OPEN{background:#21262d;color:var(--dim)}
+.k.ADAPT{background:#3d0f2a;color:#ffb3d9;border-color:#8b2a63}
+tr.adapt td{background:rgba(255,122,182,.07)}
+tr.done .it,tr.done .note{opacity:.42;text-decoration:line-through;text-decoration-color:var(--dim)}
+.note{color:var(--dim)}
+.it b{color:var(--fg)}
+code{background:#0b0f14;padding:1px 5px;border-radius:4px}
+a{color:var(--blue)}
+.scroll{overflow-x:auto}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0 2px}
+.btn{font:inherit;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);
+  background:#0b0f14;border:1px solid var(--line);border-radius:7px;padding:6px 12px;cursor:pointer}
+.btn:hover{color:var(--fg)}
+.btn[aria-pressed=true]{color:var(--fg);border-color:var(--blue)}
+.btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+input.tick{accent-color:var(--pos);width:14px;height:14px;cursor:pointer}
+.count{margin-left:auto;color:var(--dim);font-size:11px}
+.foot{margin-top:26px;font-size:11px;color:var(--dim);border-top:1px solid var(--line);padding-top:10px}
+@media(max-width:760px){.wrap{padding:10px 10px 30px}th:nth-child(3),td:nth-child(3){white-space:nowrap}}
+@media print{body{background:#fff;color:#000}.card{border-color:#bbb;background:#fff}.bar{display:none}}
+</style>
+</head>
+<body><div class=wrap>
+
+<h1>TO-DO</h1>
+<div class=dim>the running list for the investor stack &middot; updated <b>15-11-2026</b> &middot;
+<a href="simple_plan.html">the simple plan</a> &middot; <a href="index.html">all dashboards</a></div>
+
+<div class=bar>
+  <button class=btn id=f-all aria-pressed=true>all</button>
+  <button class=btn id=f-open aria-pressed=false>open only</button>
+  <button class=btn id=f-clear aria-pressed=false>clear my ticks</button>
+  <span class=count id=count></span>
+</div>
+
+<h2>do now <span class="dim" style="text-transform:none;letter-spacing:0">&mdash; the things with a cost attached to waiting</span></h2>
+<div class=card><div class=scroll><table>
+<tr><th style="width:26px"></th><th>item</th><th style="width:120px">when</th><th style="width:96px">status</th><th>note</th></tr>
+<tr data-id="x-catchup"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Run <code>python x_list_harvest.py --catchup --headed</code></td><td class=dim>now</td><td><span class="k OVERDUE">OVERDUE</span></td><td class=note>Never run since the STAGNANT_LIMIT fix. The 15-11 08:40 run stopped at <b>post cap reached</b> (151). Still truncating every run; the 07-13 Nov gap is unrecovered.</td></tr>
+<tr data-id="ta-sa"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Place <b>TA</b> (sell TSLA 18 @ $384.40) + <b>SA</b> (sell 45 SOL)</td><td class=dim>Mon 16-11</td><td><span class="k DUE">DUE</span></td><td class=note>Or fold into 22-11 (the bulletin default). The only live portfolio item. &rarr; <a href='simple_plan.html'>simple plan</a></td></tr>
+<tr data-id="prime-rows"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Prime sheet: extend Degiro-Current ranges to row 2000</td><td class=dim>this week &middot; ~15 min</td><td><span class="k DUE">DUE</span></td><td class=note>Transactions reach row 1053, formulas read to 1000. Every export since 29-10 is wrong: TSLA 328 vs 303, SPCX 39 vs 79, cash &minus;&euro;6.2k vs &minus;&euro;10.7k. Everything downstream inherits it.</td></tr>
+<tr data-id="prime-paste"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Paste into Prime: the 10-11 STRF sale + Degiro rows from 31-10</td><td class=dim>this week</td><td><span class="k OPEN">OPEN</span></td><td class=note>Do it after the range fix, not before.</td></tr>
+<tr data-id="oauth"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Publish the Gmail OAuth client (&ldquo;In production&rdquo;)</td><td class=dim>before 22-11</td><td><span class="k DUE">DUE</span></td><td class=note>Token refreshed fine 15-11 07:39, so nothing is broken now. In Testing the refresh token dies after 7 days &mdash; that is why the pipeline failed 07-11 to 13-11.</td></tr>
+</table></div></div>
+<h2>dated &mdash; already decided <span class="dim" style="text-transform:none;letter-spacing:0">&mdash; no thinking required, just the date</span></h2>
+<div class=card><div class=scroll><table>
+<tr><th style="width:26px"></th><th>item</th><th style="width:120px">when</th><th style="width:96px">status</th><th>note</th></tr>
+<tr data-id="tb-sb"><td><input type=checkbox class=tick aria-label="done"></td><td class=it><b>TB</b> sell TSLA 18 (Fri 20-11 close &minus;1.5%) + <b>SB</b> sell 45 SOL</td><td class=dim>Sun 22-11</td><td><span class="k WAITING">WAITING</span></td><td class=note>Hard deadline: Degiro debit &euro;10.7k must be 0 after this.</td></tr>
+<tr data-id="mstr-msci"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>MSTR index deletion &mdash; <b>do nothing</b></td><td class=dim>Mon 30-11</td><td><span class="k OPEN">OPEN</span></td><td class=note>~$2.8bn of index selling (JPMorgan). Don't sell into a forced seller.</td></tr>
+<tr data-id="tc-sc"><td><input type=checkbox class=tick aria-label="done"></td><td class=it><b>TC</b> sell TSLA 18 + <b>SC</b> sell 45 SOL</td><td class=dim>Sun 06-12</td><td><span class="k WAITING">WAITING</span></td><td class=note>Last tranche. Also the monthly decision slot.</td></tr>
+<tr data-id="avgo-q4"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Broadcom Q4 print</td><td class=dim>Wed 09-12</td><td><span class="k OPEN">OPEN</span></td><td class=note>Your first-ranked AI case. Same day as the FOMC.</td></tr>
+<tr data-id="c320"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Close the Jan-27 320C, spare Degiro cash &rarr; Saxo</td><td class=dim>Tue 15-12</td><td><span class="k WAITING">WAITING</span></td><td class=note>Cash reaches ~8%.</td></tr>
+<tr class=adapt data-id="review-0201"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Annual review &mdash; decide four things</td><td class=dim>Fri 02-01</td><td><span class="k ADAPT">ADAPT</span></td><td class=note>&#9312; the Dec-28 400 synthetic &middot; &#9313; remaining TSLA delta (~&euro;30k) &middot; &#9314; bitcoin bag 35% &rarr; 23% &middot; &#9315; world index <i>or</i> the AI sleeve. All four are new &mdash; see the pink rows on the simple plan.</td></tr>
+<tr data-id="crcl"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>CRCL backstop: buy back the 120P + sell the 50P</td><td class=dim>Fri 15-01</td><td><span class="k DUE">DUE</span></td><td class=note>Hard date, the 50P expires. The spike route is no longer the base case.</td></tr>
+<tr data-id="mstr-bitc"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>MSTR &rarr; BITC decision</td><td class=dim>Sat 07-02</td><td><span class="k OPEN">OPEN</span></td><td class=note>Already in your calendar.</td></tr>
+</table></div></div>
+<h2>open questions <span class="dim" style="text-transform:none;letter-spacing:0">&mdash; nothing moves until you answer these</span></h2>
+<div class=card><div class=scroll><table>
+<tr><th style="width:26px"></th><th>item</th><th style="width:120px">when</th><th style="width:96px">status</th><th>note</th></tr>
+<tr class=adapt data-id="elon-math"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Check the Elon-cap arithmetic: ~50% or ~43%?</td><td class=dim>open</td><td><span class="k ADAPT">ADAPT</span></td><td class=note>Claude gets &euro;170k &minus; &euro;18.7k &minus; &euro;6.9k + &euro;10.2k on &euro;307k = <b>~50%</b> after the full tranche program; the 14-11 bulletin says ~43%. If the bulletin is right, several pink rows collapse and &#9312; is far less urgent.</td></tr>
+<tr class=adapt data-id="portfolio-review"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Decide what happens to <code>portfolio_review.html</code></td><td class=dim>open</td><td><span class="k ADAPT">ADAPT</span></td><td class=note>Untracked, but already listed in the locally-modified <code>index.html</code>. Commit it and your full position review is on the <b>public</b> Pages site. Otherwise drop it from the index or move it out of the repo.</td></tr>
+</table></div></div>
+<h2>maintenance <span class="dim" style="text-transform:none;letter-spacing:0">&mdash; no deadline, real value</span></h2>
+<div class=card><div class=scroll><table>
+<tr><th style="width:26px"></th><th>item</th><th style="width:120px">when</th><th style="width:96px">status</th><th>note</th></tr>
+<tr data-id="gitattributes"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Add <code>.gitattributes</code> for the CRLF churn</td><td class=dim>open</td><td><span class="k OPEN">OPEN</span></td><td class=note>Whole dashboard files show as changed on every run.</td></tr>
+<tr data-id="liqhunt-push"><td><input type=checkbox class=tick aria-label="done"></td><td class=it><code>liqhunt_recorder.git_push()</code> only stages <code>repo/liqhunt_history.json</code></td><td class=dim>open</td><td><span class="k OPEN">OPEN</span></td><td class=note>Any other dashboard file you or Claude edits needs its own commit, or it never reaches the site.</td></tr>
+<tr data-id="x-cursor"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Give the X harvester a date-range cursor</td><td class=dim>open</td><td><span class="k OPEN">OPEN</span></td><td class=note><code>DAYS=7</code> plus a post cap means a missed day is unrecoverable without --catchup.</td></tr>
+</table></div></div>
+
+<div class=foot>
+<b>How this stays current.</b> The list in this file is the source of truth &mdash; ask Claude to add, close or re-date an item and it edits
+<code>repo/todo.html</code> and commits it; it reaches the site on the next push.
+&nbsp;&middot;&nbsp; <b>Your ticks are yours alone.</b> They are stored in this browser only, do not sync to your phone and do not change the file,
+so a ticked item is still open for everyone else until it is actually removed here.
+&nbsp;&middot;&nbsp; Dates and figures come from the 14-11 master action plan, the simple plan and the 15-11 allocation review. Not financial advice.
+</div>
+
+</div>
+<script>
+(function(){
+  var KEY='vz-todo-ticks-v1', state={};
+  try{state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){state={}}
+  var rows=[].slice.call(document.querySelectorAll('tr[data-id]'));
+  var openOnly=false;
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+  function paint(){
+    var open=0;
+    rows.forEach(function(r){
+      var id=r.getAttribute('data-id'), done=!!state[id];
+      r.classList.toggle('done',done);
+      r.querySelector('.tick').checked=done;
+      r.hidden=openOnly&&done;
+      if(!done)open++;
+    });
+    document.getElementById('count').textContent=open+' open of '+rows.length;
+  }
+  rows.forEach(function(r){
+    r.querySelector('.tick').addEventListener('change',function(e){
+      state[r.getAttribute('data-id')]=e.target.checked; save(); paint();
+    });
+  });
+  function press(id,on){var b=document.getElementById(id);b.setAttribute('aria-pressed',on?'true':'false')}
+  document.getElementById('f-all').addEventListener('click',function(){openOnly=false;press('f-all',1);press('f-open',0);paint()});
+  document.getElementById('f-open').addEventListener('click',function(){openOnly=true;press('f-all',0);press('f-open',1);paint()});
+  document.getElementById('f-clear').addEventListener('click',function(){state={};save();paint()});
+  paint();
+})();
+</script>
+</body></html>
