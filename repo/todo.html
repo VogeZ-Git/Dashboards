@@ -48,7 +48,7 @@ input.tick{accent-color:var(--pos);width:14px;height:14px;cursor:pointer}
 <body><div class=wrap>
 
 <h1>TO-DO</h1>
-<div class=dim>the running list for the investor stack &middot; updated <b>15-11-2026 19:45</b> &middot;
+<div class=dim>the running list for the investor stack &middot; updated <b>15-11-2026 20:10</b> &middot;
 <a href="simple_plan.html">the simple plan</a> &middot; <a href="index.html">all dashboards</a></div>
 
 <div class=bar>
@@ -66,7 +66,6 @@ input.tick{accent-color:var(--pos);width:14px;height:14px;cursor:pointer}
 <tr data-id="prime-paste"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Paste into Prime: the 10-11 STRF sale + Degiro rows from 31-10</td><td class=dim>this week</td><td><span class="k OPEN">OPEN</span></td><td class=note>After the range fix, not before.</td></tr>
 <tr data-id="oauth"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Publish the Gmail OAuth client (&ldquo;In production&rdquo;)</td><td class=dim>before 22-11</td><td><span class="k DUE">DUE</span></td><td class=note>Token refreshed fine 15-11 07:39, so nothing is broken now. In Testing the refresh token dies after 7 days &mdash; that is why the pipeline failed 07-11 to 13-11.</td></tr>
 <tr data-id="x-verify"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Check the next X harvest log for <code>auto catch-up</code></td><td class=dim>next run</td><td><span class="k WAITING">WAITING</span></td><td class=note>The cursor is seeded to 07-11, so the next run should raise its own caps and close the gap. If the log still says <b>post cap reached</b> and <b>coverage not advanced</b>, run <code>python x_list_harvest.py --catchup --headed</code> by hand.</td></tr>
-<tr data-id="mail-test"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Run <code>python x_list_harvest.py --test-mail</code></td><td class=dim>now &middot; 10 sec</td><td><span class="k DUE">DUE</span></td><td class=note>Mail is switched back on. This sends one test message to vogez.trading@gmail.com and settles why it stopped. If it prints <b>no SMTP password</b>, put a 16-character Gmail <b>App Password</b> (Google Account &rarr; Security &rarr; App passwords) in <code>%LOCALAPPDATA%/XHarvest/smtp_pass.txt</code> and run it again.</td></tr>
 </table></div></div>
 <h2>dated &mdash; already decided <span class="dim" style="text-transform:none;letter-spacing:0">&mdash; no thinking required, just the date</span></h2>
 <div class=card><div class=scroll><table>
@@ -90,6 +89,7 @@ input.tick{accent-color:var(--pos);width:14px;height:14px;cursor:pointer}
 <h2>housekeeping <span class="dim" style="text-transform:none;letter-spacing:0">&mdash; no deadline, five minutes each</span></h2>
 <div class=card><div class=scroll><table>
 <tr><th style="width:26px"></th><th>item</th><th style="width:120px">when</th><th style="width:96px">status</th><th>note</th></tr>
+<tr data-id="mail-test"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Run <code>python x_list_harvest.py --test-mail</code></td><td class=dim>parked 15-11</td><td><span class="k OPEN">OPEN</span></td><td class=note><b>Parked &mdash; nothing depends on it.</b> The harvest keeps collecting either way; posts land in <code>Output/</code> and the dashboards as always. When you want the mail: this sends one test message to vogez.trading@gmail.com and reports which Gmail port works. If it prints <b>no SMTP password</b>, put a 16-character Gmail <b>App Password</b> (Google Account &rarr; Security &rarr; App passwords) in <code>%LOCALAPPDATA%/XHarvest/smtp_pass.txt</code> and run it again.</td></tr>
 <tr data-id="gc-locks"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Clear the <code>stale-*</code> files under <code>.git</code></td><td class=dim>whenever</td><td><span class="k OPEN">OPEN</span></td><td class=note>Claude cannot delete inside your folders, so git's lock and temp files were renamed out of the way instead. Harmless, but they accumulate: delete anything in <code>Git/Dashboards/.git</code> starting with <code>stale-</code> or <code>tmp_obj_</code>.</td></tr>
 <tr data-id="to-delete"><td><input type=checkbox class=tick aria-label="done"></td><td class=it>Empty <code>Investor/_to_delete/</code></td><td class=dim>whenever</td><td><span class="k OPEN">OPEN</span></td><td class=note>Holds the three zero-byte junk files that were published on the site (<code>REM</code>, <code>and</code>, <code>redirected</code>) plus earlier scratch.</td></tr>
 </table></div></div>
