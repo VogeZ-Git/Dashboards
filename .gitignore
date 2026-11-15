@@ -1,0 +1,4 @@
+# Pages kept local on purpose. confluence.bat publishes with `git add -A`, so
+# anything dropped in repo/ goes PUBLIC on the next run unless it is listed here.
+repo/portfolio_review.html
+repo/_*.html

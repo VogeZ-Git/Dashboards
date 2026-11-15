@@ -1,0 +1,4 @@
+# 15-11-2026: pin line-ending handling so it does not depend on a machine-level
+# core.autocrlf. This matches what the index already holds (LF) and what the
+# generators write on Windows (CRLF in the working tree) - no rewrite, no churn.
+* text=auto
