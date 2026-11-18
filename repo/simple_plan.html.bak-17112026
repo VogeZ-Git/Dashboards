@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang=en>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content='width=device-width,initial-scale=1'>
+<title>The Simple Plan</title>
+<meta name="description" content="The plan to February on one page: four rules, the one number and every dated action to mid-January, plus a second tab with the rev-3 proposed allocation sized on EUR 300k. Adaptations marked in pink.">
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--line:#30363d;--fg:#e6edf3;--dim:#8b949e;--pos:#3fb950;--neg:#f85149;--amb:#d29922;--blue:#58a6ff;--pink:#ff7ab6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.wrap{max-width:1100px;margin:0 auto;padding:16px 16px 50px}
+h1{font-size:17px;margin:0 0 4px;letter-spacing:.05em}
+h2{font-size:12px;margin:26px 0 8px;color:var(--dim);letter-spacing:.09em;text-transform:uppercase}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 13px;margin:8px 0}
+.dim{color:var(--dim)}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--dim);font-weight:500}
+tr:last-child td{border-bottom:none}
+.k{display:inline-block;padding:1px 7px;border-radius:9px;font-size:11px;font-weight:600;border:1px solid var(--line);white-space:nowrap}
+.k.DONE{background:#0f2f1a;color:#9ae6b4;border-color:#1f6f3d}
+.k.OVERDUE{background:#3d1114;color:#ffb4ab;border-color:#7d2027}
+.k.DUE{background:#3d2a00;color:#f2cc60;border-color:#6b4f12}
+.k.WAITING{background:#0c2d4a;color:#a5d6ff;border-color:#1f6feb}
+.k.TRIGGER{background:#2a1f3d;color:#d2a8ff;border-color:#6e40c9}
+.k.OPEN{background:#21262d;color:var(--dim)}
+.k.ADAPT{background:#3d0f2a;color:#ffb3d9;border-color:#8b2a63}
+.k.ALIGNED{background:#0f2f1a;color:#9ae6b4;border-color:#1f6f3d}
+.rules{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.rule{background:#0b0f14;border:1px solid var(--line);border-radius:6px;padding:9px 10px;text-align:center;font-weight:600}
+.big{background:#0b0f14;border:1px solid var(--line);border-left:3px solid var(--pos);border-radius:6px;padding:11px 13px;margin:8px 0}
+.big b{font-size:15px}
+.num{font-size:19px;font-weight:700;letter-spacing:.02em}
+.ok{color:var(--pos)}.warn{color:var(--amb)}.bad{color:var(--neg)}.blue{color:var(--blue)}.pink{color:var(--pink)}
+mark{background:#3d0f2a;color:#ffb3d9;padding:0 4px;border-radius:3px}
+.card.adapt{border-left:3px solid var(--pink)}
+tr.adapt td{background:rgba(255,122,182,.07)}
+code{background:#0b0f14;padding:1px 5px;border-radius:4px}
+.scroll{overflow-x:auto}
+.tabs{display:flex;gap:6px;margin:14px 0 2px;flex-wrap:wrap}
+.tab{font:inherit;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--dim);
+  background:#0b0f14;border:1px solid var(--line);border-bottom-color:transparent;
+  border-radius:7px 7px 0 0;padding:7px 14px;cursor:pointer}
+.tab:hover{color:var(--fg)}
+.tab[aria-selected=true]{color:var(--fg);background:var(--panel);border-color:var(--line);
+  box-shadow:inset 0 2px 0 var(--blue)}
+.tab.pinktab[aria-selected=true]{box-shadow:inset 0 2px 0 var(--pink);color:var(--pink)}
+.tab:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.panes{border-top:1px solid var(--line);padding-top:2px}
+.r{text-align:right}
+ul{margin:6px 0;padding-left:20px}li{margin:3px 0}
+.foot{margin-top:26px;font-size:11px;color:var(--dim);border-top:1px solid var(--line);padding-top:10px}
+@media(max-width:760px){.wrap{padding:10px 10px 30px}.rules{grid-template-columns:repeat(2,1fr)}}
+@media print{body{background:#fff;color:#000}.card,.rule,.big{border-color:#bbb;background:#fff}.dim{color:#555}}
+</style>
+</head>
+<body><div class=wrap>
+
+<h1>THE SIMPLE PLAN</h1>
+<div class=dim>the plan to February on one page &middot; written 10-11-2026 (CRCL added) &middot; <span class=warn>status reviewed 15-11-2026</span> &middot; <span class=pink>allocation proposal checked against it 15-11 &mdash; every adaptation is marked in pink</span> &middot; <a href="todo.html">to-do list</a></div>
+
+<div class=tabs role=tablist aria-label="views">
+  <button class=tab id=tb-plan role=tab aria-controls=pane-plan aria-selected=true>the plan</button>
+  <button class="tab pinktab" id=tb-alloc role=tab aria-controls=pane-alloc aria-selected=false>proposed allocation &middot; rev 3</button>
+</div>
+<div class=panes>
+<section id=pane-plan role=tabpanel aria-labelledby=tb-plan>
+
+<h2>the four rules</h2>
+<div class=rules>
+  <div class=rule>no borrowed money</div>
+  <div class=rule>no new single-name bets</div>
+  <div class=rule>no new tools</div>
+  <div class=rule>one decision a month</div>
+</div>
+
+<div class=big>
+  <b>Worried? Check one number: Saxo margin used.</b><br>
+  <span class=dim>Under 50% &rarr; do nothing.</span>
+  <div style="margin-top:7px">Last read: <span class="num ok">36.5%</span>
+  <span class=dim>(broker, 10-11) &middot; model puts it ~37&ndash;40% at 13-11, unverified</span></div>
+  <div class="dim" style="margin-top:4px">Well inside the line. On this number alone, the answer today is do nothing.</div>
+</div>
+
+<h2>do this &mdash; the whole plan in one table</h2>
+<div class=card><div class=scroll><table>
+<tr><th>when</th><th>do</th><th>&asymp; &euro;</th><th>effect</th></tr>
+
+<tr><td><b>Mon 16-11</b></td>
+<td><b>TA</b> sell TSLA 18 @ $384.40 &middot; <b>SA</b> sell 45 SOL</td>
+<td class=ok>+9.5k</td>
+<td><span class="k OVERDUE">OVERDUE</span> since 08-11 &mdash; the one live item on this page</td></tr>
+
+<tr><td><b>Sun 22-11</b></td>
+<td><b>TB</b> sell TSLA 18 (Fri 20-11 close &minus;1.5%) &middot; <b>SB</b> sell 45 SOL</td>
+<td class=ok>+9.5k</td>
+<td><span class="k DUE">DEADLINE</span> Degiro debit &euro;10.7k &rarr; 0</td></tr>
+
+<tr><td>Mon 30-11</td><td>MSTR index deletion &mdash; <b>do nothing</b></td><td class=dim>&mdash;</td>
+<td><span class="k OPEN">NO ACTION</span> don't sell into forced selling</td></tr>
+
+<tr><td><b>Sun 06-12</b></td><td><b>TC</b> sell TSLA 18 &middot; <b>SC</b> sell 45 SOL</td><td class=ok>+9.5k</td>
+<td><span class="k WAITING">ON TRACK</span> last tranche</td></tr>
+
+<tr><td><b>Tue 15-12</b></td><td>close the Jan-27 <b>320C</b>, spare Degiro cash &rarr; Saxo</td><td class=ok>+7.0k</td>
+<td><span class="k WAITING">ON TRACK</span> cash reaches ~8%</td></tr>
+
+<tr><td>resting</td><td>TSLA S3/S4 (5 @ 418.50 / 434) &middot; MRVL S6 (9 @ 272.50)</td><td class=ok>+3.7k</td>
+<td><span class="k OPEN">LEAVE THEM</span> no action</td></tr>
+
+<tr><td><b>Fri 15-01</b></td><td><b>CRCL</b>: buy back the 120P + sell the 50P</td><td class=bad>&minus;4&ndash;5k</td>
+<td><span class="k DUE">HARD DATE</span> the spike route is gone</td></tr>
+
+<tr class=adapt><td><b>Fri 02-01</b></td>
+<td>decide four things: <b class=pink>&#9312; the Dec-28 400 synthetic</b> &middot; <b class=pink>&#9313; the remaining TSLA delta (~&euro;30k)</b> &middot; <b class=pink>&#9314; bitcoin bag 35% &rarr; 23%</b> &middot; <b class=pink>&#9315; world index <i>or</i> the AI sleeve</b></td>
+<td class=dim>&mdash;</td>
+<td><span class="k ADAPT">THE REAL WORK</span> <b class=pink>all four are new &mdash; see the pink section below</b></td></tr>
+
+<tr><td>until then</td><td><b>no new buys, no new options, no new names</b></td><td class=dim>&mdash;</td>
+<td><span class="k OPEN">THE RULE</span> it is doing most of the work</td></tr>
+</table></div></div>
+
+<div class=big style="border-left-color:var(--amb)">
+<b>Where that leaves you.</b> Degiro debt gone &middot; net cash &minus;3.1% &rarr; <span class=ok>~+8%</span> &middot;
+Elon bag 59% &rarr; <span class=warn>~50%</span> &mdash; <b>still above the 45% cap</b>, which is why &#9312; on 02-01 matters.
+<div class="dim" style="margin-top:5px">Everything above except &#9312;&ndash;&#9315; is already decided. You are only being asked to place <b>TA</b> and <b>SA</b>.</div>
+</div>
+
+<h2>the same list, with the status behind each line</h2>
+<div class=card><div class=scroll><table>
+<tr><th>date</th><th>action</th><th>status at 15-11</th></tr>
+
+<tr><td>Sun 08-11</td>
+<td>The four orders: IBIT call &middot; sell STRF &middot; sell 18 TSLA (TA) &middot; sell 45 SOL (SA)</td>
+<td><span class="k DONE">STRF DONE</span> sold 10-11.
+<span class="k OVERDUE">TA + SA OVERDUE</span> not placed; the 14-11 bulletin calls TA overdue and moves it to <b>Mon 16-11, or fold into 22-11 (default 22-11)</b>.
+<span class="k OPEN">IBIT call</span> not separately confirmed in the bulletin.</td></tr>
+
+<tr><td>Sun 22-11</td>
+<td>Sell 18 TSLA (TB) + 45 SOL (SB) &rarr; Degiro debt gone</td>
+<td><span class="k WAITING">ON TRACK</span> TB carries a trigger: <b>Fri 20-11 close &minus;1.5%</b>. Degiro debit is &euro;10.7k and the limit goes to 0 after 22-11.</td></tr>
+
+<tr><td>Sun 06-12</td>
+<td>Sell 18 TSLA (TC) + 45 SOL (SC) &mdash; the last one</td>
+<td><span class="k WAITING">ON TRACK</span> bulletin note: decide against merger terms if announced first. <span class=dim>See the merger line below &mdash; terms before 06-12 now look unlikely.</span></td></tr>
+
+<tr><td>Tue 15-12</td>
+<td>Close the 320C, move spare Degiro cash to Saxo</td>
+<td><span class="k WAITING">ON TRACK</span> alert level TSLA ~492; the 320C is worth ~35 shares.</td></tr>
+
+<tr><td>on a spike</td>
+<td>CRCL &ge; $95&ndash;103 <span class=dim>(or BTC $100k / IBIT $56.50)</span>: buy back the 120P, sell the 50P. The 120C: keep or close.</td>
+<td><span class="k TRIGGER">FAR AWAY</span> BTC closed 13-11 at <b>$68.1k</b> &mdash; about 32% below the $100k alternative trigger &mdash; and has lost all three key pricing levels. <b>The spike route is no longer the base case.</b></td></tr>
+
+<tr><td>Fri 15-01</td>
+<td>CRCL backstop: buy back the 120P + sell the 50P at the latest (the 50P expires that day)</td>
+<td><span class="k DUE">NOW THE BASE CASE</span> on the spike being out of reach, this is the route that actually executes. It is a hard date, not a choice.</td></tr>
+
+<tr><td>in between</td>
+<td>No new buys. New ideas (NVDA, memory, AMZN) wait for 02-01 &mdash; with cash, no synthetics, no debt.</td>
+<td><span class="k WAITING">HOLDING</span> see what the wait has cost and saved, below.</td></tr>
+</table></div></div>
+
+<h2>from February</h2>
+<div class=card>
+<ul>
+<li><b>02-01</b> pick the split: world index + a capped TSLA/BTC sleeve <span class=pink>&mdash; the allocation proposal needs ~&euro;22k of single-name buying, which this rule forbids. Decide which one survives.</span></li>
+<li>every month, savings &rarr; world index</li>
+<li>trim TSLA/BTC <b>only on strength</b>, with the orders set once</li>
+<li>long-dated options decided on 02-01</li>
+</ul>
+</div>
+
+<h2 class=pink>the allocation proposal, checked against this plan &mdash; 15-11</h2>
+<div class="card adapt">
+<p><b>Most of the proposal is already this plan.</b> The &asymp;36% TSLA target, the tranche sequence, the 02-01 split, the CRCL exit and &ldquo;no adds&rdquo; are all written here or in the Synopsis files. <b class=pink>Six things are genuinely new, and every one of them is marked in pink below.</b> Nothing on this page has been overwritten &mdash; the plan as decided still stands until you change it at 02-01.</p>
+</div>
+
+<div class=card><div class=scroll><table>
+<tr><th>item</th><th>the plan, as decided</th><th>the proposal</th><th>verdict</th></tr>
+
+<tr><td>TSLA weight</td><td>&asymp;36% target (asset map, 14-11)</td><td>36%</td>
+<td><span class="k ALIGNED">ALIGNED</span> not a new idea</td></tr>
+
+<tr class=adapt><td><b class=pink>Elon-cap arithmetic</b></td>
+<td>bulletin: &asymp;43% after 3 tranches + the 320C close &mdash; under the 45% cap</td>
+<td><mark>&asymp;50%</mark> &mdash; &euro;170k &minus; &euro;18.7k (54 sh) &minus; &euro;6.9k (320C) + &euro;10.2k SPCX/ECHO on a &euro;307k book</td>
+<td><span class="k ADAPT">CORRECTION</span> <b class=pink>the planned program does not reach the cap.</b> Check this figure &mdash; if the bulletin is right, ignore the rest of this row</td></tr>
+
+<tr class=adapt><td><b class=pink>Dec-28 400 synthetic</b></td>
+<td>no line anywhere in the plan or the asset map</td>
+<td><mark>close it, or decide it at 02-01</mark></td>
+<td><span class="k ADAPT">NEW</span> the 303 shares are already &asymp;34% of book. <b class=pink>The whole overshoot is option delta</b> &mdash; 320C &asymp;20 sh + synthetic &asymp;166 sh &asymp; &euro;66k &asymp; 21 points. Selling 18 real shares at a time shrinks the leg you want to keep and leaves the leg causing the breach</td></tr>
+
+<tr><td>TA/SA &middot; TB/SB &middot; TC/SC</td><td>overdue, 22-11, 06-12</td><td>place them, unchanged</td>
+<td><span class="k ALIGNED">ALIGNED</span> stage one needs no new decision</td></tr>
+
+<tr><td>SOL</td><td>REDUCE to ~3&ndash;4% via SA/SB/SC</td><td>5%</td>
+<td><span class="k ALIGNED">PLAN WINS</span> the proposal is <i>less</i> decisive than what you already decided &mdash; keep 3&ndash;4%</td></tr>
+
+<tr class=adapt><td><b class=pink>bitcoin bag</b></td><td>hold; cap set at 02-01; MSTR&rarr;BITC on 07-02</td>
+<td><mark>35% &rarr; 23%</mark> &mdash; MSTR 11.1&rarr;4, BITC 3.1&rarr;0 into IBIT, ASST 3.2&rarr;0</td>
+<td><span class="k ADAPT">SIZE + DATE</span> direction matches your files; <b class=pink>the size (&asymp;&euro;37k) and a date earlier than 02-01 are new.</b> MSCI deletion 30-11 argues for not front-running it</td></tr>
+
+<tr class=adapt><td><b class=pink>SPCX</b></td><td>hold 79, no adds, weight decided 02-01</td><td><mark>2.8% &rarr; 6%</mark></td>
+<td><span class="k ADAPT">CONFLICT</span> an add the plan has parked; 08-12 unlock sits in between</td></tr>
+
+<tr class=adapt><td><b class=pink>AI sleeve</b></td><td>no new buys before 02-01; from February savings &rarr; world index</td>
+<td><mark>+&asymp;&euro;22k of buying</mark> &mdash; MU +8.0, RKLB +4.3, IREN +2.9, META +2.9, AVGO +2.1, GOOGL +1.6</td>
+<td><span class="k ADAPT">THE REAL CHOICE</span> <b class=pink>a world-index default and this target cannot both happen.</b> One is a passive core, the other a concentrated active book. 02-01 decides it</td></tr>
+
+<tr><td>NVDA</td><td>hold; nothing to do under the simple plan</td><td>7.1% &rarr; 6% (ceiling ~9%)</td>
+<td><span class="k ALIGNED">NO ACTION</span> inside your own ceiling either way</td></tr>
+
+<tr><td>CRCL</td><td>exit on a spike, backstop 15-01</td><td>exit</td>
+<td><span class="k ALIGNED">ALIGNED</span> already decided 05-11; the backstop is the live route</td></tr>
+
+<tr class=adapt><td><b class=pink>cash</b></td><td>7% by year-end; ~8% after the tranches</td><td><mark>5%</mark> &mdash; the difference is spent on the AI sleeve</td>
+<td><span class="k ADAPT">LOWER</span> only coherent if the AI-sleeve row is accepted; otherwise keep 7&ndash;8%</td></tr>
+</table></div></div>
+
+<div class="card adapt">
+<p><b>The size of the whole thing, stated plainly.</b> Gross exposure is <b>&asymp;127%</b> of a &euro;307k book; the target is 100% of &euro;300k. So <b class=pink>&asymp;&euro;83k of the required selling is de-leveraging, not rotation</b> &mdash; at &asymp;&euro;9.5k a tranche that is nine tranches, roughly four months at fortnightly pace and considerably longer under one-decision-a-month. <b>The target is reachable, but not inside 2026 and not without a decision on the option sleeve.</b></p>
+<p class=dim>Honest caveat on where the proposal came from: its headline numbers (36% TSLA, the 45% Elon cap, spot over MSTR, AVGO 3.5%, GOOGL 3%) are reproductions of your own <i>Allocation Test &mdash; 3m to 1y risk-reward (23-10-2026)</i> and your own Synopsis calls. It is not independent confirmation of them. The six pink rows are the only places it says something your files do not.</p>
+</div>
+
+<h2>status review &mdash; 15-11-2026</h2>
+<div class=card>
+<p><b class=ok>The plan still holds. Nothing in the last five days breaks its logic, and the one number it tells you to watch is comfortably inside its line.</b> Four things changed underneath it, and three of them create a dated decision.</p>
+
+<p><b class=bad>1. The safety line on concentration is crossed, and the fix is the overdue order.</b>
+The Elon bag is ~<b>59%</b> of the book against a <b>45%</b> cap. The plan's own answer to that is the TSLA tranche sequence &mdash; and TA, the first one, is the order that did not get placed on 08-11. The bulletin's default is to fold it into 22-11. That default is the single live item on this page. <mark>Allocation check 15-11: the tranche sequence on its own gets the bag to ~50%, not under 45% &mdash; see the pink rows above.</mark></p>
+
+<p><b class=warn>2. A dated forced seller has appeared in MSTR, and the plan has no line for it.</b>
+MSCI has <b>confirmed Strategy's index deletion, effective the 30 November close</b>, with JPMorgan sizing index-fund selling at <b>~$2.8bn</b>. MSTR is ~11.1% of the book. The bulletin records this as an open decision with a default of <i>no action, hold to 02-01</i>. That default is unchanged by the news &mdash; but it is now being taken against a confirmed and sized seller on a known date, instead of a possibility. <span class=dim>Deciding to do nothing is still a decision; this page exists so it is a deliberate one.</span></p>
+
+<p><b class=warn>3. The CRCL exit has effectively switched routes.</b>
+The plan offered two ways out: a spike, or the 15-01 backstop. With BTC at $68.1k and below all three of its key pricing levels, and the CRCL trigger at $95&ndash;103, the spike is no longer the likely path. <b>Plan for 15-01 as the route that happens</b>, and treat a spike as the surprise rather than the plan.</p>
+
+<p><b class=blue>4. The merger question that hangs over the 06-12 tranche has gone quiet.</b>
+Prediction markets moved to ~<b>8.5%</b> for a merger announcement in calendar 2026, down from ~20% at end-October; Tesla's annual meeting on <b>3 December</b> carries no merger item on the ballot; and Bloomberg reports a push to announce in H1 2027. <b>Terms landing before 06-12 now look unlikely, so TC should be expected to proceed as written.</b></p>
+
+<p><b>What the "wait until 02-01" rule has cost and saved, stated honestly.</b>
+The three names the plan defers are NVDA, memory and AMZN. Since 10-11: <b>NVDA</b> has fallen through a founder-CEO resignation to a sixth straight down week (the wait saved money so far), while <b>MU</b> rose <b>+12.8%</b> in the week to 13-11 and Goldman lifted its target to $1,250 (the wait cost money so far). <span class=dim>That is the rule working as designed &mdash; it trades upside for not having to be right under pressure. Both legs are recorded here so the trade-off stays visible rather than being remembered selectively.</span></p>
+
+<p><b>Macro, for context only &mdash; it changes nothing on this page.</b>
+October PPI came in at <b>6.5%</b> year on year, the highest since November 2022; the 10-year reached <b>5.16%</b>; prediction markets put ~<b>90%</b> on a December hike, with Fed speakers openly discussing two more or 50bp. <span class=dim>A plan whose rules are "no borrowed money, no new buys until 02-01" is the right shape for that backdrop, which is the main reason nothing here needs rewriting.</span></p>
+</div>
+
+<h2>the book, as the plan sees it</h2>
+<div class=card><div class=scroll><table>
+<tr><th>line</th><th>reading at 13&ndash;14-11</th><th>limit</th></tr>
+<tr><td>Saxo margin used</td><td class=ok>36.5% (broker 10-11); ~37&ndash;40% model 13-11</td><td>50% / 60%</td></tr>
+<tr class=adapt><td>Elon bag</td><td class=bad>~59%</td><td>45% &mdash; <b>crossed</b> &middot; <span class=pink>full program lands ~50%, not 43%</span></td></tr>
+<tr><td>Degiro debit</td><td class=warn>&euro;10.7k</td><td>0 after 22-11</td></tr>
+<tr><td>Net cash</td><td class=warn>~&minus;&euro;9.6k (&minus;3.1%)</td><td>7% by year-end; ~8% after 3 tranches + the 320C close</td></tr>
+<tr><td>Book size</td><td>~&euro;307k</td><td class=dim>&mdash;</td></tr>
+</table></div></div>
+
+<h2>resting orders already in place</h2>
+<div class=card><div class=scroll><table>
+<tr><th>name</th><th>level</th><th>size</th><th>note</th></tr>
+<tr><td>TSLA S3 / S4</td><td>418.50 / 434</td><td>5 each</td><td>resting at Degiro</td></tr>
+<tr><td>TSLA 320C</td><td>alert ~492</td><td>1 contract</td><td>close at the 15-12 review</td></tr>
+<tr class=adapt><td class=pink>TSLA Dec-28 400 synthetic</td><td class=dim>&mdash;</td><td>&asymp;166 sh delta</td><td class=pink>no order, no review date, not in the asset map &mdash; the largest single lever on the Elon weight</td></tr>
+<tr><td>MRVL S6</td><td>272.50</td><td>9</td><td>resting, dormant</td></tr>
+<tr><td>CRCL synthetic</td><td>95&ndash;103 / BTC 100k / IBIT 56.50</td><td>1 each</td><td>buy back 120P, sell 50P; backstop 15-01</td></tr>
+</table></div></div>
+
+</section>
+
+<section id=pane-alloc role=tabpanel aria-labelledby=tb-alloc hidden>
+
+<h2 class=pink>proposed allocation &mdash; revision 3</h2>
+<div class="card adapt">
+<p><b>What this is.</b> Your own bets, resized by case strength and risk/reward, then corrected against the Synopsis files and your <i>Allocation Test (23-10-2026)</i>. Sized on <b>&euro;300,000</b> at the 13-11 closes from <code>prices_cache.csv</code>, EUR/USD 1.124.</p>
+<p class=dim>It is a proposal, not a decision. Most of it reproduces your own 23-10 optimiser and your own Synopsis calls, so it is not independent confirmation of them. <b class=pink>Pink marks every line that conflicts with the plan as decided.</b> The plan tab has the row-by-row check.</p>
+</div>
+
+<h2>the six bets</h2>
+<div class=card><div class=scroll><table>
+<tr><th>bag</th><th class=r>target</th><th class=r>now</th><th>holds</th><th>cap</th></tr>
+<tr><td><b>Elon</b></td><td class=r><b>42%</b></td><td class="r bad">59%</td><td>TSLA 36 &middot; SPCX 6</td><td>45% &mdash; crossed today</td></tr>
+<tr><td><b>Bitcoin</b></td><td class=r><b>23%</b></td><td class="r warn">~35%</td><td>BTC 13 &middot; IBIT 4 &middot; MSTR 4 &middot; MTPLF 2</td><td>set at 02-01</td></tr>
+<tr><td><b>AI &amp; big tech</b></td><td class=r><b>21.5%</b></td><td class=r>~8.7%</td><td>NVDA 6 &middot; MU 5 &middot; AVGO 3.5 &middot; GOOGL 3 &middot; META 2.5 &middot; MRVL 1.5</td><td>NVDA &le; ~9%</td></tr>
+<tr><td><b>Solana</b></td><td class=r><b>5%</b></td><td class=r>6.3%</td><td>SOL spot</td><td class=pink>your own call is 3&ndash;4%</td></tr>
+<tr><td><b>Cash</b></td><td class=r><b>5%</b></td><td class="r bad">&minus;3.1%</td><td>&mdash;</td><td class=pink>plan says 7&ndash;8%</td></tr>
+<tr><td><b>Small lines</b></td><td class=r><b>3.5%</b></td><td class=r>~13%</td><td>IREN 1.75 &middot; RKLB 1.75</td><td>rule 4: don't cut for tidiness</td></tr>
+</table></div></div>
+
+<h2>every line, sized on &euro;300,000</h2>
+<div class=card><div class=scroll><table>
+<tr><th>line</th><th class=r>now</th><th class=r>target</th><th class=r>on &euro;300k</th><th class=r>price 13-11</th><th class=r>units</th><th>note</th></tr>
+<tr><td><b>TSLA</b></td><td class=r>55%</td><td class=r><b>36%</b></td><td class=r>&euro;108,000</td><td class=r>$390.22</td><td class=r><b>311 sh</b></td><td>already the plan's target</td></tr>
+<tr><td><b>BTC</b></td><td class=r>9.3%</td><td class=r><b>13%</b></td><td class=r>&euro;39,000</td><td class=r>$68,156</td><td class=r><b>0.643 BTC</b></td><td>spot earns 0.38/unit risk vs MSTR 0.31</td></tr>
+<tr class=adapt><td><b>SPCX</b></td><td class=r>2.6%</td><td class=r><b>6%</b></td><td class=r>&euro;18,000</td><td class=r>$139.11</td><td class=r><b>145 sh</b></td><td class=pink>an add the plan parked to 02-01; 08-12 unlock first</td></tr>
+<tr><td><b>NVDA</b></td><td class=r>7.1%</td><td class=r><b>6%</b></td><td class=r>&euro;18,000</td><td class=r>$162.85</td><td class=r><b>124 sh</b></td><td>2nd on return per unit of risk; ceiling ~9%</td></tr>
+<tr class=adapt><td><b>MU</b></td><td class=r>2.3%</td><td class=r><b>5%</b></td><td class=r>&euro;15,000</td><td class=r>$778.31</td><td class=r><b>22 sh</b></td><td class=pink>+&euro;8.0k of buying &mdash; parked by "no adds"</td></tr>
+<tr class=adapt><td><b>SOL</b></td><td class=r>6.3%</td><td class=r><b>5%</b></td><td class=r>&euro;15,000</td><td class=r>~$80</td><td class=r><b>211 SOL</b></td><td class=pink>your own call is lower: reduce to 3&ndash;4% via SA/SB/SC</td></tr>
+<tr class=adapt><td><b>Cash</b></td><td class="r bad">&minus;3.1%</td><td class=r><b>5%</b></td><td class=r>&euro;15,000</td><td class="r dim">&mdash;</td><td class="r dim">&mdash;</td><td class=pink>plan targets 7&ndash;8%; the gap is spent on the AI sleeve</td></tr>
+<tr><td><b>IBIT</b></td><td class=r>4.5%</td><td class=r><b>4%</b></td><td class=r>&euro;12,000</td><td class=r>$38.94</td><td class=r><b>346 sh</b></td><td>the destination for BITC</td></tr>
+<tr class=adapt><td><b>MSTR</b></td><td class=r>11.1%</td><td class=r><b>4%</b></td><td class=r>&euro;12,000</td><td class=r>$111.62</td><td class=r><b>121 sh</b></td><td class=pink>plan: no trims before 02-01; MSCI deletion 30-11</td></tr>
+<tr class=adapt><td><b>AVGO</b></td><td class=r>2.7%</td><td class=r><b>3.5%</b></td><td class=r>&euro;10,500</td><td class=r>$347.01</td><td class=r><b>34 sh</b></td><td class=pink>your own first-ranked case; Q4 print 9 December</td></tr>
+<tr class=adapt><td><b>GOOGL</b></td><td class=r>2.4%</td><td class=r><b>3%</b></td><td class=r>&euro;9,000</td><td class=r>$295.77</td><td class=r><b>34 sh</b></td><td class=pink>add condition met 06-11 at $284.78, parked</td></tr>
+<tr class=adapt><td><b>META</b></td><td class=r>1.5%</td><td class=r><b>2.5%</b></td><td class=r>&euro;7,500</td><td class=r>$641.69</td><td class=r><b>13 sh</b></td><td class=pink>parked by "no adds"</td></tr>
+<tr><td><b>MTPLF</b></td><td class=r>2%</td><td class=r><b>2%</b></td><td class=r>&euro;6,000</td><td class=r>&yen;219 (3350.T)</td><td class="r dim">needs EUR/JPY</td><td>unchanged</td></tr>
+<tr class=adapt><td><b>IREN</b></td><td class="r dim">&ndash;</td><td class=r><b>1.75%</b></td><td class=r>&euro;5,250</td><td class=r>$18.17</td><td class=r><b>325 sh</b></td><td class=pink>the 25-10 add was cancelled by you on 07-11</td></tr>
+<tr class=adapt><td><b>RKLB</b></td><td class="r dim">&ndash;</td><td class=r><b>1.75%</b></td><td class=r>&euro;5,250</td><td class=r>$61.53</td><td class=r><b>96 sh</b></td><td class=pink>build parked; you hold 20</td></tr>
+<tr><td><b>MRVL</b></td><td class="r dim">&ndash;</td><td class=r><b>1.5%</b></td><td class=r>&euro;4,500</td><td class=r>$156.76</td><td class=r><b>32 sh</b></td><td>S6 keeps resting at 272.50</td></tr>
+<tr><td colspan=7 class=dim style="padding-top:9px"><b>to zero</b></td></tr>
+<tr><td>BITC</td><td class=r>3.1%</td><td class=r>0%</td><td class="r dim">&mdash;</td><td class="r dim">&mdash;</td><td class="r dim">&mdash;</td><td>fee, custodian and redeemability not on file &mdash; use IBIT</td></tr>
+<tr><td>ASST</td><td class=r>2.9%</td><td class=r>0%</td><td class="r dim">&mdash;</td><td class="r dim">&mdash;</td><td class="r dim">&mdash;</td><td>47% senior claims; your file calls the trim evidence strongest</td></tr>
+<tr><td>CRCL</td><td class=r>2%</td><td class=r>0%</td><td class="r dim">&mdash;</td><td class="r dim">&mdash;</td><td class="r dim">&mdash;</td><td>already decided &mdash; backstop 15-01</td></tr>
+<tr><td>STRK / STRD</td><td class=r>1.7%</td><td class=r>0%</td><td class="r dim">&mdash;</td><td class="r dim">&mdash;</td><td class="r dim">&mdash;</td><td>rate-exposed with the 10y at 5.2%</td></tr>
+<tr><td>ECHO</td><td class=r>0.7%</td><td class=r>0%</td><td class="r dim">&mdash;</td><td class="r dim">&mdash;</td><td class="r dim">&mdash;</td><td>rumour-grade, or no data</td></tr>
+<tr><td><b>total</b></td><td class=r><b>127.1%</b></td><td class=r><b>100%</b></td><td class=r><b>&euro;300,000</b></td><td class="r dim">&mdash;</td><td class="r dim">&mdash;</td><td class=dim>the 27-point gap is the leverage</td></tr>
+</table></div></div>
+
+<div class=big style="border-left-color:var(--pink)">
+<b>The size of it.</b> Gross exposure is <b>~127%</b> of a &euro;307k book against a 100% target, so
+<b class=pink>~&euro;83k of the required selling is de-leveraging, not rotation</b> &mdash; nine tranches at
+&euro;9.5k each, about four months fortnightly and longer under one-decision-a-month.
+<div class="dim" style="margin-top:5px">Reachable, but not inside 2026, and not without a decision on the option sleeve. Three errors were corrected from revisions 1&ndash;2: AVGO was wrongly zeroed, NVDA wrongly cut to 5%, and CRCL wrongly described as having no case file.</div>
+</div>
+
+</section>
+</div>
+
+<div class=foot>
+Source: the mail <i>"The Simple Plan &mdash; updated poster (10-11, CRCL added)"</i>, 10-11-2026, which replaced the 07-11 version.
+Status column and the review section built from <i>[weekly-review] bulletin context 14-11-2026</i> and the research logs for 13&ndash;15 November.
+Prices: BTC $68.1k, SOL ~$80, EUR/USD 1.124 at the 13-11 close. <span class=pink>Pink marks the adaptations proposed by the 15-11 allocation review; they are proposals, not decisions, and nothing already agreed has been changed on this page.</span>
+&nbsp;&middot;&nbsp; This page is a transcription of a plan already decided, plus what the data has done to it since. It is a record, not advice &mdash; and it is not financial advice.
+</div>
+
+</div>
+<script>
+(function(){
+  var tabs=[].slice.call(document.querySelectorAll('.tab'));
+  function show(id){
+    tabs.forEach(function(t){
+      var on=t.id===id;
+      t.setAttribute('aria-selected',on?'true':'false');
+      document.getElementById(t.getAttribute('aria-controls')).hidden=!on;
+    });
+    try{location.hash=id==='tb-alloc'?'allocation':'plan'}catch(e){}
+  }
+  tabs.forEach(function(t){
+    t.addEventListener('click',function(){show(t.id)});
+    t.addEventListener('keydown',function(e){
+      var i=tabs.indexOf(t);
+      if(e.key==='ArrowRight'||e.key==='ArrowLeft'){
+        e.preventDefault();
+        var n=tabs[(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];
+        n.focus();show(n.id);
+      }
+    });
+  });
+  if((location.hash||'').toLowerCase().indexOf('alloc')>-1)show('tb-alloc');
+})();
+</script>
+</body></html>
