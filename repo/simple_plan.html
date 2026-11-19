@@ -58,7 +58,7 @@ ul{margin:6px 0;padding-left:20px}li{margin:3px 0}
 <body><div class=wrap>
 
 <h1>THE SIMPLE PLAN</h1>
-<div class=dim>the plan to February on one page &middot; written 10-11-2026 (CRCL added) &middot; <span class=warn>status reviewed 15-11-2026</span> &middot; <span class=pink>allocation proposal checked against it 15-11 &mdash; every adaptation is marked in pink</span> &middot; <a href="todo.html">to-do list</a></div>
+<div class=dim>the plan to February on one page &middot; written 10-11-2026 (CRCL added) &middot; <span class=warn>status reviewed 15-11-2026</span> &middot; <span class=blue>MSTR &rarr; BITC order added 19-11</span> &middot; <span class=pink>allocation proposal checked against it 15-11 &mdash; every adaptation is marked in pink</span> &middot; <a href="todo.html">to-do list</a></div>
 
 <div class=tabs role=tablist aria-label="views">
   <button class=tab id=tb-plan role=tab aria-controls=pane-plan aria-selected=true>the plan</button>
@@ -98,7 +98,7 @@ ul{margin:6px 0;padding-left:20px}li{margin:3px 0}
 <td><span class="k DUE">DEADLINE</span> Degiro debit &euro;10.7k &rarr; 0</td></tr>
 
 <tr><td>Mon 30-11</td><td>MSTR index deletion &mdash; <b>do nothing</b></td><td class=dim>&mdash;</td>
-<td><span class="k OPEN">NO ACTION</span> don't sell into forced selling</td></tr>
+<td><span class="k OPEN">NO ACTION</span> don't sell into forced selling &middot; <span class=blue>MSTR &asymp;1.00&times; net NAV (18-11)</span></td></tr>
 
 <tr><td><b>Sun 06-12</b></td><td><b>TC</b> sell TSLA 18 &middot; <b>SC</b> sell 45 SOL</td><td class=ok>+9.5k</td>
 <td><span class="k WAITING">ON TRACK</span> last tranche</td></tr>
@@ -119,6 +119,17 @@ ul{margin:6px 0;padding-left:20px}li{margin:3px 0}
 
 <tr><td>until then</td><td><b>no new buys, no new options, no new names</b></td><td class=dim>&mdash;</td>
 <td><span class="k OPEN">THE RULE</span> it is doing most of the work</td></tr>
+
+<tr><td><b>Sun 07-02</b></td>
+<td><b>MA</b> GTC sell 90 MSTR @ 1.20&times; net NAV/sh &middot; <b>MB</b> GTC sell 90 MSTR @ 1.35&times; &middot; Degiro &middot; <a href="#mstr">price table</a></td>
+<td class=dim>rotation</td>
+<td><span class="k TRIGGER">SET ONCE</span> half of MSTR &rarr; BITC, keeps 86&ndash;112% of the BTC exposure</td></tr>
+
+<tr><td>on each fill</td><td>buy <b>BITC</b> at Degiro with all proceeds, same day</td><td class=dim>rotation</td>
+<td><span class="k TRIGGER">ON FILL</span> &asymp;0.15&ndash;0.19 BTC per rung</td></tr>
+
+<tr><td>1st Sun / month</td><td>re-price MA / MB <b>up</b> if BTC is above its level at placement</td><td class=dim>&mdash;</td>
+<td><span class="k OPEN">WHILE OPEN</span> never sell below 1.0&times;</td></tr>
 </table></div></div>
 
 <div class=big style="border-left-color:var(--amb)">
@@ -160,6 +171,10 @@ Elon bag 59% &rarr; <span class=warn>~50%</span> &mdash; <b>still above the 45% 
 <tr><td>in between</td>
 <td>No new buys. New ideas (NVDA, memory, AMZN) wait for 02-01 &mdash; with cash, no synthetics, no debt.</td>
 <td><span class="k WAITING">HOLDING</span> see what the wait has cost and saved, below.</td></tr>
+
+<tr><td>Sun 07-02</td>
+<td>MSTR half &rarr; BITC: two GTC rungs, MA 90 sh @ 1.20&times; and MB 90 sh @ 1.35&times; net NAV/sh</td>
+<td><span class="k WAITING">SET 07-02</span> <span class=blue>18-11: $90.32 against &asymp;$90 net NAV/sh = 1.00&times; &mdash; neither rung fills today. The 07-02 calendar event carries the price table.</span></td></tr>
 </table></div></div>
 
 <h2>from February</h2>
@@ -169,7 +184,33 @@ Elon bag 59% &rarr; <span class=warn>~50%</span> &mdash; <b>still above the 45% 
 <li>every month, savings &rarr; world index</li>
 <li>trim TSLA/BTC <b>only on strength</b>, with the orders set once</li>
 <li>long-dated options decided on 02-01</li>
+<li><span class=blue><b>07-02</b> MSTR: half into BITC through two limit rungs, set once &mdash; <a href="#mstr">table below</a></span></li>
 </ul>
+</div>
+
+<h2 id=mstr class=blue>MSTR &rarr; BITC &mdash; the 07-02 order, set once &middot; added 19-11</h2>
+<div class=card>
+<div class=dim>Now (18-11): 361 MSTR @ <b>$90.32</b> &middot; net NAV/sh &asymp;<b>$90</b> &rarr; <b class=warn>1.00&times;</b> &middot; NAV leverage <b>1.38&times;</b> &middot; MSTR = <b>39%</b> of the bitcoin bag's BTC exposure</div>
+<div class=scroll><table>
+<tr><th>#</th><th>when</th><th>action</th><th>trigger</th><th class=r>size</th><th>where</th></tr>
+<tr><td>1</td><td>Fri 02-01</td><td>confirm the MSTR end state in the bitcoin-bag split</td><td class=dim>&mdash;</td><td class=r>361 &rarr; 181 sh</td><td class=dim>&mdash;</td></tr>
+<tr><td>2</td><td>Sun 07-02</td><td>GTC limit sell <b>MA</b></td><td>&ge; 1.20&times; net NAV/sh</td><td class=r>90 sh</td><td>Degiro</td></tr>
+<tr><td>3</td><td>Sun 07-02</td><td>GTC limit sell <b>MB</b></td><td>&ge; 1.35&times; net NAV/sh</td><td class=r>90 sh</td><td>Degiro</td></tr>
+<tr><td>4</td><td>fill day</td><td>buy BITC with all proceeds</td><td>MA or MB fills</td><td class=r>&asymp;0.15&ndash;0.19 BTC / rung</td><td>Degiro</td></tr>
+<tr><td>5</td><td>1st Sun / month</td><td>re-price MA / MB up</td><td>BTC above placement level</td><td class=r>&mdash;</td><td>Degiro</td></tr>
+</table></div></div>
+
+<div class=card><div class=scroll><table>
+<tr><th class=r>BTC</th><th class=r>net NAV/sh</th><th class=r>MA 1.20&times;</th><th class=r>MB 1.35&times;</th><th class=r>BTC exposure kept MA / MB</th></tr>
+<tr><td class=r>$60k</td><td class=r>$85</td><td class=r><b>$103</b></td><td class=r><b>$115</b></td><td class=r>86% / 97%</td></tr>
+<tr><td class=r>$70k</td><td class=r>$105</td><td class=r><b>$126</b></td><td class=r><b>$142</b></td><td class=r>91% / 102%</td></tr>
+<tr><td class=r>$80k</td><td class=r>$125</td><td class=r><b>$150</b></td><td class=r><b>$169</b></td><td class=r>94% / 106%</td></tr>
+<tr><td class=r>$90k</td><td class=r>$145</td><td class=r><b>$174</b></td><td class=r><b>$196</b></td><td class=r>97% / 109%</td></tr>
+<tr><td class=r>$100k</td><td class=r>$165</td><td class=r><b>$198</b></td><td class=r><b>$223</b></td><td class=r>100% / 112%</td></tr>
+</table></div>
+<div class=dim style="margin-top:7px">Net NAV/sh = (850,849 BTC &times; BTC price &minus; $14.49bn of debt and preferreds net of the USD reserve) &divide; 427.68M shares, 15-11 8-K. Or read CEBE Tracker's CEBE mNAV directly. &ldquo;Kept&rdquo; = BTC exposure after the swap per euro swapped; from &asymp;1.38&times; up the swap <i>adds</i> exposure.</div>
+<div style="margin-top:7px"><b>End state:</b> 181 MSTR + &asymp;0.33&ndash;0.36 BTC-equivalent in BITC (&asymp;+70% on the 0.467 spot BTC). <b>Never sell below 1.0&times;.</b></div>
+<div class=dim style="margin-top:5px">Why: net BTC per share is flat since late June at today's BTC price (&minus;7% at $100k against the June balance sheet); NAV leverage fell 1.60&times; &rarr; 1.36&times; and keeps falling while Strategy retires STRC with stock. Full work: <code>Investment Cases\Microstrategy (MSTR)\Net BTC per share - Saylor vs InvestAnswers (19-11-2026).md</code></div>
 </div>
 
 <h2 class=pink>the allocation proposal, checked against this plan &mdash; 15-11</h2>
@@ -201,7 +242,7 @@ Elon bag 59% &rarr; <span class=warn>~50%</span> &mdash; <b>still above the 45% 
 
 <tr class=adapt><td><b class=pink>bitcoin bag</b></td><td>hold; cap set at 02-01; MSTR&rarr;BITC on 07-02</td>
 <td><mark>35% &rarr; 23%</mark> &mdash; MSTR 11.1&rarr;4, BITC 3.1&rarr;0 into IBIT, ASST 3.2&rarr;0</td>
-<td><span class="k ADAPT">SIZE + DATE</span> direction matches your files; <b class=pink>the size (&asymp;&euro;37k) and a date earlier than 02-01 are new.</b> MSCI deletion 30-11 argues for not front-running it</td></tr>
+<td><span class="k ADAPT">SIZE + DATE</span> direction matches your files; <b class=pink>the size (&asymp;&euro;37k) and a date earlier than 02-01 are new.</b> MSCI deletion 30-11 argues for not front-running it<br><span class=blue>19-11 MSTR check: cutting the bag at &asymp;1.0&times; mNAV sells BTC exposure at the low; the 07-02 rungs swap MSTR into BITC and keep it &mdash; <a href="#mstr">MSTR order</a></span></td></tr>
 
 <tr class=adapt><td><b class=pink>SPCX</b></td><td>hold 79, no adds, weight decided 02-01</td><td><mark>2.8% &rarr; 6%</mark></td>
 <td><span class="k ADAPT">CONFLICT</span> an add the plan has parked; 08-12 unlock sits in between</td></tr>
@@ -256,6 +297,7 @@ October PPI came in at <b>6.5%</b> year on year, the highest since November 2022
 <tr><td>Degiro debit</td><td class=warn>&euro;10.7k</td><td>0 after 22-11</td></tr>
 <tr><td>Net cash</td><td class=warn>~&minus;&euro;9.6k (&minus;3.1%)</td><td>7% by year-end; ~8% after 3 tranches + the 320C close</td></tr>
 <tr><td>Book size</td><td>~&euro;307k</td><td class=dim>&mdash;</td></tr>
+<tr><td class=blue>MSTR net mNAV</td><td class=warn>&asymp;1.00&times; ($90.32, 18-11)</td><td>rungs 1.20&times; / 1.35&times; from 07-02</td></tr>
 </table></div></div>
 
 <h2>resting orders already in place</h2>
@@ -331,6 +373,7 @@ October PPI came in at <b>6.5%</b> year on year, the highest since November 2022
 Source: the mail <i>"The Simple Plan &mdash; updated poster (10-11, CRCL added)"</i>, 10-11-2026, which replaced the 07-11 version.
 Status column and the review section built from <i>[weekly-review] bulletin context 14-11-2026</i> and the research logs for 13&ndash;15 November.
 Prices: BTC $68.1k, SOL ~$80, EUR/USD 1.124 at the 13-11 close. <span class=pink>Pink marks the adaptations proposed by the 15-11 allocation review; they are proposals, not decisions, and nothing already agreed has been changed on this page.</span>
+<span class=blue>Blue marks the MSTR &rarr; BITC order added 19-11: balance sheet from the 15-11 8-K via CEBE Tracker (850,849 BTC, 427.68M shares, $14.49bn net senior claims), MSTR close 18-11 from <code>prices_cache.csv</code>.</span>
 &nbsp;&middot;&nbsp; This page is a transcription of a plan already decided, plus what the data has done to it since. It is a record, not advice &mdash; and it is not financial advice.
 </div>
 
