@@ -78,7 +78,7 @@ button.badge{background:none;cursor:pointer;font:12px ui-monospace,monospace}
 </style></head><body>
 <header><h1>Order <b>book</b></h1><span id="livebadge" class="badge off">no live feed</span>
 <button id="syncbadge" class="badge off" title="order status sync with the Google Sheet">sheet: …</button>
-<span class="hm mono">Master action plan 14-11-2026 (simple plan) · built 2026-11-21 09:35 · closes to 2026-11-20 · sheet synced</span>
+<span class="hm mono">Master action plan 14-11-2026 (simple plan) · built 2026-11-22 09:57 · closes to 2026-11-20 · sheet synced</span>
 <a class="hl" href="index.html">all dashboards →</a></header>
 <main>
 <div id="keybox" class="keybox" hidden><b>Order key</b> — unlocks marking orders filled / cancelled / placed. Stored in this
@@ -94,7 +94,7 @@ browser only, never in the page.
 <div class="kpi"><div class="k">Open sells</div><div class="v mono" id="k-sell">€0</div><div class="s">if every sell fills</div></div>
 </div>
 <div class="warnbox" id="missing" style="display:none"></div>
-
+<div class="warnbox">This book was due for review on <b>2026-11-21</b>. Re-check every resting order against the current week's review before relying on it.</div>
 <h2>Open orders <small>placed and resting · sorted: triggered, touched, nearest first</small></h2>
 <div class="tbl"><div class="th"><span>#</span><span>side</span><span>ticker</span><span class="r c-q">qty</span><span class="r c-lim">limit</span><span class="r c-px">price</span><span class="c-bar">distance</span><span class="c-st">status</span><span class="r c-eur">≈ €</span></div><div id="sec-open"></div></div>
 <h2>Reserve <small>not placed yet · become open when the rule below fires</small></h2>
